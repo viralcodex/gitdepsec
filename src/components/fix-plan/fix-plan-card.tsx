@@ -37,8 +37,8 @@ const FixPlanCard = (props: FixPlanCardProps) => {
     isFixPlanLoading,
     isFixPlanGenerated: fixPlanComplete,
   } = useFixPlanState();
-  const { manifestData, setManifestData } = useGraphState();
-  const { fixPlanError, setFixPlanError } = useErrorState();
+  const { manifestData } = useGraphState();
+  const { fixPlanError } = useErrorState();
 
   const [showFixPlans, setShowFixPlans] = useState<Record<string, boolean>>({});
   const [isExpandedAll, setIsExpandedAll] = useState(true);

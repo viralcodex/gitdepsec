@@ -41,7 +41,7 @@ interface ErrorState {
   error: string | null;
   manifestError: string[];
   branchError: string | null;
-  fixPlanError: Record<string, string> | null;
+  fixPlanError: Record<string, string>;
   setError: (error: string | null) => void;
   setManifestError: (error: string[] | null) => void;
   setBranchError: (error: string | null) => void;
@@ -174,7 +174,7 @@ interface AppStore
           error: null,
           manifestError: [],
           branchError: null,
-          fixPlanError: null,
+          fixPlanError: {},
           setError: (error: string | null) => set({ error }),
           setManifestError: (manifestError: string[] | null) =>
             set((s) => ({
@@ -184,14 +184,14 @@ interface AppStore
               ],
             })),
           setBranchError: (branchError: string | null) => set({ branchError }),
-          setFixPlanError: (fixPlanError: Record<string, string> | null) =>
+          setFixPlanError: (fixPlanError: Record<string, string>) =>
             set({ fixPlanError }),
           resetErrorState: () =>
             set({
               error: null,
               manifestError: [],
               branchError: null,
-              fixPlanError: null,
+              fixPlanError: {},
             }),
 
           // Graph State
