@@ -1,8 +1,5 @@
-//this file is used to get the manifest data from the backend.
-//then we will feed the dependencies to the vulnerability scanner
-
 import { analyseDependencies } from "@/lib/api";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useCallback } from "react";
 import {
   Dependency,
   EcosystemGraphMap,
@@ -14,22 +11,28 @@ import {
   Vulnerability,
 } from "@/constants/model";
 import { manifestFiles } from "@/constants/constants";
+import { useErrorState, useGraphState } from "@/store/app-store";
 
-//and then based on the results we will create a graph
 export const useGraph = (
-  setError: (error: string) => void,
-  setManifestError: (error: string[]) => void,
   username?: string,
   repo?: string,
   branch?: string,
   file?: string,
   forceRefresh: boolean = false
 ) => {
-  const [dependencies, setDependencies] = useState<GroupedDependencies>({});
-  const [manifestData, setManifestData] =
-    useState<ManifestFileContentsApiResponse | null>(null);
-  const [graphData, setGraphData] = useState<EcosystemGraphMap>({});
-  const [loading, setLoading] = useState(true);
+  const { setError, setManifestError } = useErrorState();
+  const {
+    dependencies,
+    setDependencies,
+    setManifestData,
+    setGraphData,
+    setLoading,
+  } = useGraphState();
+  // const [dependencies, setDependencies] = useState<GroupedDependencies>({});
+  // const [manifestData, setManifestData] =
+  //   useState<ManifestFileContentsApiResponse | null>(null);
+  // const [graphData, setGraphData] = useState<EcosystemGraphMap>({});
+  // const [loading, setLoading] = useState(true);
 
   const fetchDependencies = useCallback(
     async (
@@ -41,7 +44,13 @@ export const useGraph = (
     ) => {
       try {
         const manifestData: ManifestFileContentsApiResponse =
-          await analyseDependencies(username!, repo!, branch!, file!, forceRefresh);
+          await analyseDependencies(
+            username!,
+            repo!,
+            branch!,
+            file!,
+            forceRefresh
+          );
         // console.log(
         //   "Manifest Data:",
         //   manifestData,
@@ -84,7 +93,7 @@ export const useGraph = (
         return;
       }
     },
-    [setManifestError, setError]
+    [setManifestData, setDependencies, setLoading, setManifestError, setError]
   );
 
   const createGraphData = useCallback(
@@ -258,25 +267,21 @@ export const useGraph = (
     //   file,
     //   refreshTrigger,
     // });
-    // Pass forceRefresh flag directly
     fetchDependencies(username, repo, branch, file, forceRefresh);
-  }, [branch, file, repo, username, fetchDependencies, forceRefresh]);
+  }, [
+    branch,
+    file,
+    repo,
+    username,
+    fetchDependencies,
+    forceRefresh,
+    setLoading,
+  ]);
 
   useEffect(() => {
     if (Object.keys(dependencies).length > 0) {
       const newGraphData = createGraphData(dependencies);
       setGraphData(newGraphData);
     }
-  }, [dependencies, createGraphData]);
-
-  return {
-    dependencies,
-    setDependencies,
-    graphData,
-    setGraphData,
-    manifestData,
-    setManifestData,
-    loading,
-    setLoading,
-  };
+  }, [dependencies, createGraphData, setGraphData]);
 };

@@ -1,9 +1,18 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import * as d3 from "d3";
+import { select, Selection } from "d3-selection";
+import { scaleLinear } from "d3-scale";
+import { drag, D3DragEvent } from "d3-drag";
+import { zoom, zoomIdentity, ZoomBehavior } from "d3-zoom";
 import {
-  EcosystemGraphMap,
+  forceSimulation,
+  forceLink,
+  forceManyBody,
+  SimulationNodeDatum,
+  SimulationLinkDatum,
+} from "d3-force";
+import {
   GraphEdge,
   GraphNode,
   Relation,
@@ -14,45 +23,30 @@ import EmptyCard from "./empty-card";
 import DiagramControls from "./diagram-controls";
 import DiagramProgress from "./diagram-progress";
 import ErrorBadge from "./error-badge";
+import { useGraphState, useDiagramState, useErrorState } from "@/store/app-store";
 
 interface DepDiagramProps {
   svgRef: React.RefObject<SVGSVGElement | null>;
-  graphData?: EcosystemGraphMap;
   selectedEcosystem?: string;
   className?: string;
-  isLoading?: boolean;
   isMobile?: boolean;
   windowSize: { width: number; height: number };
-  isDiagramExpanded?: boolean;
-  isNodeClicked?: boolean;
-  isFixPlanLoading: boolean;
-  error: string;
-  manifestError: string[];
-  onNodeClick?: (g: GraphNode) => void;
-  setIsLoading?: (loading: boolean) => void;
-  setIsMobile?: (isMobile: boolean) => void;
-  setWindowSize: (size: { width: number; height: number }) => void;
-  setIsDiagramExpanded?: (isDiagramExpanded: boolean) => void;
-  setIsFixPlanLoading: (isFixPlanLoading: boolean) => void;
-  generateFixPlan: () => void;
+  onNodeClick?: (g: GraphNode | null) => void;
 }
 
 const DepDiagram = ({
   svgRef,
-  graphData,
   selectedEcosystem,
-  isLoading,
   isMobile,
   windowSize,
-  isDiagramExpanded,
-  isNodeClicked,
-  manifestError,
   onNodeClick,
-  setIsDiagramExpanded,
 }: DepDiagramProps) => {
+  // Store hooks
+  const { graphData, loading: isLoading } = useGraphState();
+  const { isDiagramExpanded, selectedNode, setIsDiagramExpanded, setSelectedNode } = useDiagramState();
+  const { manifestError } = useErrorState();
   const [centerNode, setCenterNode] = useState<GraphNode>();
   const [isDragging, setIsDragging] = useState(false);
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [highlightedPath, setHighlightedPath] = useState<Set<GraphNode>>(
     new Set<GraphNode>()
   );
@@ -61,8 +55,8 @@ const DepDiagram = ({
   );
   const [scale, setScale] = useState<number>(0.8);
   const resetRef = useRef<() => void>(() => {});
-  const zoomRef = useRef<d3.ZoomBehavior<SVGSVGElement, unknown> | null>(null);
-  const svgSelectionRef = useRef<d3.Selection<
+  const zoomRef = useRef<ZoomBehavior<SVGSVGElement, unknown> | null>(null);
+  const svgSelectionRef = useRef<Selection<
     SVGSVGElement,
     unknown,
     null,
@@ -86,7 +80,7 @@ const DepDiagram = ({
     // Calculate dimensions first, regardless of data availability
     const calculatedWidth = isMobile
       ? windowSize.width - 20
-      : isNodeClicked
+      : selectedNode
         ? windowSize.width * 0.64 - 20
         : windowSize.width - 100;
 
@@ -131,7 +125,7 @@ const DepDiagram = ({
       centerPositionY: calculatedCenterPositionY,
       nodes: nodes
     };
-  }, [graphData, selectedEcosystem, isMobile, windowSize.width, windowSize.height, isNodeClicked, isDiagramExpanded]);
+  }, [graphData, selectedEcosystem, isMobile, windowSize.width, windowSize.height, selectedNode, isDiagramExpanded]);
 
    const getHighlightedPathAndEdges = useCallback(
      (selectedId: string) => {
@@ -241,7 +235,6 @@ const DepDiagram = ({
     //   return;
     // }
     
-    // Use the data from graphData directly to avoid stale closures
     const { nodes: currentNodes, edges: currentEdges } = currentData;
 
     // Capture the current scale value to use throughout this effect
@@ -264,13 +257,11 @@ const DepDiagram = ({
 
     // console.log("Rendering graph:", nodes, edges);
 
-    const colorScale = d3
-      .scaleLinear<string>()
+    const colorScale = scaleLinear<string>()
       .domain([0, 10])
       .range(["#58b368", "#e53935"]);
 
-    const svg = d3
-      .select(svgRef.current)
+    const svg = select(svgRef.current)
       .attr("width", width)
       .attr("height", height)
       .attr(
@@ -342,7 +333,7 @@ const DepDiagram = ({
       .enter()
       .append("circle")
       .attr("filter", (d) => {
-        return d.id === selectedNodeId ? "url(#node-glow)" : null;
+        return d.id === selectedNode?.id ? "url(#node-glow)" : null;
       })
       .attr("r", (d) => {
         if (d.type === Relation.PRIMARY) return 25;
@@ -352,7 +343,7 @@ const DepDiagram = ({
       })
       .attr("stroke", (d) => {
         if (
-          d.id === selectedNodeId ||
+          d.id === selectedNode?.id ||
           highlightedPath.has(d) ||
           d.type === Relation.CENTER
         )
@@ -360,14 +351,14 @@ const DepDiagram = ({
         return "#ffffff";
       })
       .attr("stroke-width", (d) => {
-        if (d.id === selectedNodeId) return 4; // Thicker border for selected
+        if (d.id === selectedNode?.id) return 4; // Thicker border for selected
         if (highlightedPath.has(d)) return 2; // Medium border for path
         return 1.5;
       })
       .attr("fill", (d) => {
         if (d.type === Relation.CENTER) return "#EDEDED";
         if (d.vulnCount === 0) return "#EDEDED";
-        if (d.id === selectedNodeId) return "#FFD700";
+        if (d.id === selectedNode?.id) return "#FFD700";
         if (highlightedPath.has(d)) return "#FFF55C";
         return colorScale(d.severity || 0);
       })
@@ -382,8 +373,7 @@ const DepDiagram = ({
             : "not-allowed"
       )
       .call(
-        d3
-          .drag<SVGCircleElement, GraphNode>()
+        drag<SVGCircleElement, GraphNode>()
           .on("start", dragstarted)
           .on("drag", dragged)
           .on("end", dragended)
@@ -395,18 +385,19 @@ const DepDiagram = ({
           onNodeClick
         ) {
           console.log("EVENT", event, d);
-          if (selectedNodeId === d.id) {
-            setSelectedNodeId(null);
+          if (selectedNode && selectedNode.id === d.id) {
+            setSelectedNode(null);
             setHighlightedPath(new Set<GraphNode>());
             setHighlightedEdges(new Set<string>());
+            onNodeClick(null);
           } else {
-            setSelectedNodeId(d.id);
+            setSelectedNode(d);
             const { pathNodes, pathEdges } = getHighlightedPathAndEdges(d.id);
             setHighlightedPath(pathNodes);
             setHighlightedEdges(pathEdges);
+            onNodeClick(d);
+            setTimeout(() => center(d.id), 200);
           }
-          onNodeClick(d);
-          setTimeout(() => center(d.id), 200); // Center after state updates
         }
       });
 
@@ -434,8 +425,7 @@ const DepDiagram = ({
         )
         .datum(centerNode as GraphNode)
         .call(
-          d3
-            .drag<SVGImageElement, GraphNode>()
+          drag<SVGImageElement, GraphNode>()
             .on("start", dragstarted)
             .on("drag", dragged)
             .on("end", dragended)
@@ -496,8 +486,7 @@ const DepDiagram = ({
       .style("fill", "#FDFDFD");
 
     // D3 zoom behavior
-    const zoom = d3
-      .zoom<SVGSVGElement, unknown>()
+    const zoomBehavior = zoom<SVGSVGElement, unknown>()
       .scaleExtent([0.2, 2])
       .on("start", () => setIsDragging(true))
       .on("zoom", (event) => {
@@ -508,18 +497,16 @@ const DepDiagram = ({
         setScale(event.transform.k);
       });
 
-    zoomRef.current = zoom;
-    svg.call(zoom);
+    zoomRef.current = zoomBehavior;
+    svg.call(zoomBehavior);
 
     // Force simulation for positioning nodes
-    const simulation = d3
-      .forceSimulation(currentNodes)
+    const simulation = forceSimulation(currentNodes)
       .force(
         "edge",
-        d3
-          .forceLink(currentEdges)
-          .id((d: d3.SimulationNodeDatum) => (d as GraphNode).id)
-          .distance((d: d3.SimulationLinkDatum<d3.SimulationNodeDatum>) => {
+        forceLink(currentEdges)
+          .id((d: SimulationNodeDatum) => (d as GraphNode).id)
+          .distance((d: SimulationLinkDatum<SimulationNodeDatum>) => {
             const edge = d as GraphEdge;
             switch (edge.type) {
               case Relation.PRIMARY:
@@ -532,7 +519,7 @@ const DepDiagram = ({
       )
       .force(
         "charge",
-        d3.forceManyBody().strength((d: d3.SimulationNodeDatum) => {
+        forceManyBody().strength((d: SimulationNodeDatum) => {
           const node = d as GraphNode;
           let baseCharge = -700;
           switch (node.type) {
@@ -575,19 +562,19 @@ const DepDiagram = ({
           if (d.type === Relation.CENTER) return "#EDEDED";
           if (d.vulnCount === 0) return "#EDEDED";
 
-          if (d.id === selectedNodeId) return "#FFD700";
+          if (d.id === selectedNode?.id) return "#FFD700";
 
           if (highlightedPath.has(d)) return "#FFE55C";
 
           return colorScale(d.severity || 0);
         })
         .attr("stroke", (d) => {
-          if (d.id === selectedNodeId) return "#FEFEFE";
+          if (d.id === selectedNode?.id) return "#FEFEFE";
           if (highlightedPath.has(d)) return "#FEFEFE";
           return "#fff";
         })
         .attr("stroke-width", (d) => {
-          if (d.id === selectedNodeId) return 3;
+          if (d.id === selectedNode?.id) return 3;
           if (highlightedPath.has(d)) return 2;
           return 1.5;
         });
@@ -615,7 +602,7 @@ const DepDiagram = ({
     }
 
     function dragstarted(
-      event: d3.D3DragEvent<SVGCircleElement, GraphNode, SVGGElement>,
+      event: D3DragEvent<SVGCircleElement, GraphNode, SVGGElement>,
       d: GraphNode
     ) {
       setIsDragging(true);
@@ -625,7 +612,7 @@ const DepDiagram = ({
     }
 
     function dragged(
-      event: d3.D3DragEvent<SVGCircleElement, GraphNode, SVGGElement>,
+      event: D3DragEvent<SVGCircleElement, GraphNode, SVGGElement>,
       d: GraphNode
     ) {
       d.fx = event.x;
@@ -633,7 +620,7 @@ const DepDiagram = ({
     }
 
     function dragended(
-      event: d3.D3DragEvent<SVGCircleElement, GraphNode, SVGGElement>,
+      event: D3DragEvent<SVGCircleElement, GraphNode, SVGGElement>,
       d: GraphNode
     ) {
       setIsDragging(false);
@@ -643,16 +630,16 @@ const DepDiagram = ({
     }
 
     function center(targetNodeId?: string) {
-      const nodeIdToCenter = targetNodeId || selectedNodeId;
+      const nodeIdToCenter = targetNodeId || selectedNode?.id;
       let targetNode: GraphNode | undefined;
       if (nodeIdToCenter && nodes) {
-        const selectedNode = nodes.find((n) => n.id === nodeIdToCenter);
+        const foundNode = nodes.find((n) => n.id === nodeIdToCenter);
         if (
-          selectedNode &&
-          typeof selectedNode.x === "number" &&
-          typeof selectedNode.y === "number"
+          foundNode &&
+          typeof foundNode.x === "number" &&
+          typeof foundNode.y === "number"
         ) {
-          targetNode = selectedNode;
+          targetNode = foundNode;
         }
       }
       // Only fall back to center node if no target was found and no specific ID was requested
@@ -678,13 +665,13 @@ const DepDiagram = ({
         //   height,
         //   currentScale,
         // });
-        const transform = d3.zoomIdentity.translate(tx, ty).scale(currentScale);
-        svg.transition().duration(0).call(zoom.transform, transform);
+        const transform = zoomIdentity.translate(tx, ty).scale(currentScale);
+        svg.transition().duration(0).call(zoomBehavior.transform, transform);
       }
     }
 
     // Center the graph on initial load
-    if (!selectedNodeId && centerNodeData) {
+    if (!selectedNode && centerNodeData) {
       center();
     }
 
@@ -704,7 +691,7 @@ const DepDiagram = ({
   }, [
     graphData,
     selectedEcosystem,
-    selectedNodeId,
+    selectedNode,
     width,
     height,
     scaleWidth,
@@ -716,50 +703,49 @@ const DepDiagram = ({
     highlightedEdges,
     isMobile,
     onNodeClick,
-    isNodeClicked,
   ]);
 
   useEffect(() => {
-    if (!isNodeClicked) {
+    if (!selectedNode) {
       setHighlightedEdges(new Set<string>());
       setHighlightedPath(new Set<GraphNode>());
-      setSelectedNodeId(null);
+      setSelectedNode(null);
     }
-  }, [isNodeClicked]);
+  }, [selectedNode, setSelectedNode]);
 
   useEffect(() => {
     if (resetRef.current) {
-      resetRef.current.call(selectedNodeId);
+      resetRef.current.call(selectedNode); //IMPORTANT: maintain 'this' context
     }
-  }, [width, height, selectedNodeId]);
+  }, [width, height, selectedNode]);
 
   const handleZoomIn = () => {
     if (svgSelectionRef.current && zoomRef.current && svgRef.current) {
-      const selection = d3.select(svgRef.current);
+      const selection = select(svgRef.current);
       selection.transition().duration(300).call(zoomRef.current.scaleBy, 1.5);
     }
   };
 
   const handleZoomOut = () => {
     if (svgSelectionRef.current && zoomRef.current && svgRef.current) {
-      const selection = d3.select(svgRef.current);
+      const selection = select(svgRef.current);
       selection.transition().duration(300).call(zoomRef.current.scaleBy, 0.67);
     }
   };
 
   const handleResetZoom = () => {
     if (svgSelectionRef.current && zoomRef.current && svgRef.current) {
-      setSelectedNodeId(null);
+      setSelectedNode(null);
       setCenterNode(undefined);
       // setHighlightedPath(new Set<GraphNode>());
       // setHighlightedEdges(new Set<string>());
-      const selection = d3.select(svgRef.current);
+      const selection = select(svgRef.current);
       zoomRef.current.scaleTo(selection, 1);
     }
   };
 
   const getNodePathBadge = () => {
-    if (!selectedNodeId || highlightedPath.size === 0) return null;
+    if (!selectedNode || highlightedPath.size === 0) return null;
     const badgePath = Array.from(highlightedPath)
       .reverse()
       .map((node) => node.label)
@@ -828,15 +814,10 @@ const DepDiagram = ({
 
 export default React.memo(DepDiagram, (prevProps, nextProps) => {
   return (
-    prevProps.graphData === nextProps.graphData &&
     prevProps.selectedEcosystem === nextProps.selectedEcosystem &&
-    prevProps.isNodeClicked === nextProps.isNodeClicked &&
     prevProps.windowSize.width === nextProps.windowSize.width &&
     prevProps.windowSize.height === nextProps.windowSize.height &&
-    prevProps.isDiagramExpanded === nextProps.isDiagramExpanded &&
-    prevProps.isLoading === nextProps.isLoading &&
     prevProps.isMobile === nextProps.isMobile &&
-    prevProps.manifestError === nextProps.manifestError &&
     prevProps.svgRef === nextProps.svgRef
   );
 });

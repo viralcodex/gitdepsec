@@ -8,61 +8,28 @@ import { cn, verifyUrl } from "@/lib/utils";
 import { LucideArrowBigRight, LucideLoader2, RefreshCcwDot } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Dependency, EcosystemGraphMap } from "@/constants/model";
 import HeaderToggle from "./header-toggle";
 import HeaderOptions from "./header-options";
 import { ButtonGroup } from "./ui/button-group";
+import { useRepoState, useGraphState, useDiagramState, useErrorState, useUIState } from "@/store/app-store";
 
 interface TopHeaderProps {
-  className?: string;
-  isLoading?: boolean;
-  error?: string;
-  isDiagramExpanded?: boolean;
-  branch: string;
-  branches: string[];
-  selectedBranch: string | null;
-  loadingBranches: boolean;
-  branchError: string;
   inputUrl: string;
-  hasMore: boolean;
-  totalBranches: number;
-  loadNextPage: () => void;
-  setError: (error: string) => void;
-  setDependencies: (dependencies: {
-    [technology: string]: Dependency[];
-  }) => void;
-  setGraphData: (graphData: EcosystemGraphMap) => void;
-  setLoading: (loading: boolean) => void;
-  setIsFileHeaderOpen: (open: boolean) => void;
-  setIsNodeClicked: (isClicked: boolean) => void;
-  setIsDiagramExpanded?: (isExpanded: boolean) => void;
-  resetGraphSvg: () => void;
-  setSelectedBranch: (branch: string | null) => void;
-  setBranchError: (error: string) => void;
   handleInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   onRefresh: () => void;
+  resetGraphSvg: () => void;
+  addButtonRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const TopHeaderGithub = (props: TopHeaderProps) => {
-  const {
-    isLoading,
-    isDiagramExpanded,
-    inputUrl,
-    branches,
-    selectedBranch,
-    loadingBranches,
-    hasMore,
-    totalBranches,
-    loadNextPage,
-    setIsFileHeaderOpen,
-    setIsNodeClicked,
-    setLoading,
-    setSelectedBranch,
-    setBranchError,
-    handleInputChange,
-    onRefresh,
-    resetGraphSvg
-  } = props;
+  const { inputUrl, handleInputChange, onRefresh, resetGraphSvg, addButtonRef } = props;
+  
+  // Store hooks
+  const { branches, selectedBranch, loadingBranches } = useRepoState();
+  const { loading, setLoading } = useGraphState();
+  const { isDiagramExpanded } = useDiagramState();
+  const { setBranchError } = useErrorState();
+  const { setFileHeaderOpen } = useUIState();
   const [result, setResult] = useState<{ sanitizedUsername: string; sanitizedRepo: string, branch: string }>();
   const router = useRouter();
 
@@ -82,15 +49,11 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
       return;
     }
     const { sanitizedUsername, sanitizedRepo } = result;
-    // console.log("Sanitized Username:", sanitizedUsername);
-    // console.log("Sanitized Repo:", sanitizedRepo);
     if (!branches || branches.length === 0) {
-      console.log("No branches available to select");
       return;
     }
 
     setLoading(true);
-    setIsNodeClicked(false);
     setBranchError("");
 
     // Check if we're on the same page with same parameters
@@ -100,13 +63,10 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
     )}`;
 
     if (currentUrl.includes(newUrl.slice(1))) {
-      console.log(newUrl.slice(1));
-      console.log("Same URL detected, showing existing data");
-      setLoading(false); // Reset loading state and show existing data
+      setLoading(false);
       return;
     } else {
       // Different URL - navigate normally
-      // Clear existing data before navigation to ensure clean state
       resetGraphSvg();
       router.push(newUrl);
     }
@@ -117,11 +77,12 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
       return;
     }
     setLoading(true);
-    setIsNodeClicked(false);
     setBranchError("");
     onRefresh();
   };
-  const isDisabled = () => {return isLoading || loadingBranches || !result};
+
+  const isDisabled = () => {return loading || loadingBranches || !result};
+
   return (
     <form
       onSubmit={handleSubmit}
@@ -136,9 +97,9 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
         <Card className="relative max-h-[200px] bg-background sm:max-w-[700px] w-full border-2 border-accent mx-auto mt-4 flex justify-center p-4 gap-4 sm:flex-row flex-col">
           <HeaderToggle
             from="github"
-            setIsFileHeaderOpen={setIsFileHeaderOpen}
+            setIsFileHeaderOpen={setFileHeaderOpen}
           />
-          <HeaderOptions data={result} />
+          <HeaderOptions data={result} addButtonRef={addButtonRef} />
           <Input
             className="sm:w-[60%] h-13 border-1"
             placeholder="https://github.com/username/repo"
@@ -149,14 +110,6 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
         <div className="sm:w-[35%] sm:max-w-[35%] h-13">
           <Dropdown
             className="shadow-none border-input border-1 h-full text-sm px-3 overflow-x-auto"
-            branches={branches}
-            selectedBranch={selectedBranch}
-            onSelectBranch={setSelectedBranch}
-            loadingBranches={loadingBranches}
-            setError={setBranchError}
-            hasMore={hasMore}
-            totalBranches={totalBranches}
-            loadNextPage={loadNextPage}
           />
         </div>
           <ButtonGroup className="sm:flex-row" role="group" aria-label="Repository actions">
@@ -166,8 +119,8 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
               disabled={isDisabled()}
               aria-label="Analyse GitHub repository"
             >
-              {isLoading ? (
-                <LucideLoader2 className="animate-spin" strokeWidth={3} aria-hidden="true" />
+              {loading ? (
+                <LucideLoader2 className="animate-spin" strokeWidth={3} />
               ) : (
                 <span className="flex flex-row items-center justify-center gap-x-2">
                   <span className="sm:hidden">Analyse</span>
@@ -182,8 +135,8 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
               disabled={isDisabled()}
               aria-label="Refresh repository analysis"
             >
-              {isLoading ? (
-                <LucideLoader2 className="animate-spin" strokeWidth={3} aria-hidden="true" />
+              {loading ? (
+                <LucideLoader2 className="animate-spin" strokeWidth={3} />
               ) : (
                 <span className="flex flex-row items-center justify-center gap-x-2">
                   <span className="sm:hidden">Refresh</span>

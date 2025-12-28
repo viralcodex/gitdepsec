@@ -1,7 +1,5 @@
 import {
   useState,
-  Dispatch,
-  SetStateAction,
   useEffect,
   RefObject,
 } from "react";
@@ -9,31 +7,17 @@ import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Download, RefreshCcw, X, Eye, EyeOff } from "lucide-react";
 import { cn, depVulnCount } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
-import { ManifestFileContentsApiResponse } from "@/constants/model";
 import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import GlobalFixPlan from "./global-fix-plan";
 import IndividualFixPlan from "./indv-fix-plan";
+import { useFixPlanState, useGraphState, useErrorState } from "@/store/app-store";
 
 interface FixPlanCardProps {
   onClose: () => void;
   onDownload: () => void;
   ecosystemOptions?: string[];
-  fixPlan: Record<string, string>;
-  optimisationPlan: string;
-  globalFixPlan: string;
-  conflictResolutionPlan?: string;
-  strategyPlan: string;
-  manifestData: ManifestFileContentsApiResponse | null;
-  fixPlanError: Record<string, string>;
-  fixPlanComplete: boolean;
-  isFixPlanLoading: boolean;
   fixPlanRef: RefObject<HTMLDivElement | null>;
-  setFixPlanError: Dispatch<SetStateAction<Record<string, string>>>;
-  setFixPlanComplete: Dispatch<SetStateAction<boolean>>;
-  setManifestData: Dispatch<
-    SetStateAction<ManifestFileContentsApiResponse | null>
-  >;
   regenerateFixPlan: (regenerateFixPlan: boolean) => void;
 }
 
@@ -41,17 +25,20 @@ const FixPlanCard = (props: FixPlanCardProps) => {
   const {
     onClose,
     onDownload,
-    fixPlan,
-    globalFixPlan,
-    optimisationPlan,
-    conflictResolutionPlan,
-    manifestData,
     regenerateFixPlan,
-    fixPlanError,
-    isFixPlanLoading,
-    fixPlanComplete,
     fixPlanRef,
   } = props;
+
+  const {
+    fixPlan,
+    globalFixPlan,
+    fixOptimizationPlan: optimisationPlan,
+    conflictResolutionPlan,
+    isFixPlanLoading,
+    isFixPlanGenerated: fixPlanComplete,
+  } = useFixPlanState();
+  const { manifestData } = useGraphState();
+  const { fixPlanError } = useErrorState();
 
   const [showFixPlans, setShowFixPlans] = useState<Record<string, boolean>>({});
   const [isExpandedAll, setIsExpandedAll] = useState(true);

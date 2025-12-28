@@ -41,7 +41,8 @@
     "react-window": "^1.8.11",
     "remove-markdown": "^0.6.2",
     "tailwind-merge": "^3.3.1",
-    "uuid": "^13.0.0"
+    "uuid": "^13.0.0",
+    "zustand": "^5.0.9"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

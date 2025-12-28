@@ -1,8 +1,6 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { Check, ChevronsUpDown, Loader } from "lucide-react";
-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,49 +16,53 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useErrorState, useRepoState } from "@/store/app-store";
 
 interface DropdownProps {
-  branches: string[];
-  selectedBranch: string | null;
-  onSelectBranch: (branch: string) => void;
-  loadingBranches: boolean;
-  setError: (error: string) => void;
   className?: string;
   isBranchDropdown?: boolean;
-  hasMore: boolean;
-  totalBranches: number;
-  loadNextPage: () => void;
+  ecosystems?: string[];
+  selectedEcosystem?: string;
+  onEcosystemChange?: (ecosystem: string) => void;
 }
 
 export function Dropdown({
-  branches,
-  selectedBranch,
-  loadingBranches,
-  hasMore,
-  loadNextPage,
-  onSelectBranch,
-  setError,
   className,
   isBranchDropdown = true,
+  ecosystems = [],
+  selectedEcosystem,
+  onEcosystemChange,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [shouldOpen, setShouldOpen] = useState(false);
+  const {
+    branches,
+    selectedBranch,
+    loadingBranches,
+    hasMore,
+    loadNextPage,
+    setSelectedBranch,
+  } = useRepoState();
+  const { setError } = useErrorState();
 
-  // Effect to determine if the dropdown should open based on branches
+  // Effect to determine if the dropdown should open
   useEffect(() => {
-    if (branches.length) {
+    const items = isBranchDropdown ? branches : ecosystems;
+    if (items.length) {
       setShouldOpen(true);
-      setError("");
     } else {
       setShouldOpen(false);
       setOpen(false);
     }
-  }, [branches, setError]);
+  }, [branches, ecosystems, isBranchDropdown, setError]);
 
   const handleOpenChange = (nextOpen: boolean) => {
-    if (loadingBranches) return;
+    // Only block for loading if it's a branch dropdown
+    if (isBranchDropdown && loadingBranches) return;
     if (nextOpen && !shouldOpen) {
-      setError("Please enter a valid GitHub repository URL first.");
+      if (isBranchDropdown) {
+        setError("Please enter a valid GitHub repository URL first.");
+      }
       setOpen(false);
       return;
     }
@@ -85,22 +87,25 @@ export function Dropdown({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          aria-label="branch-dropdown"
-          aria-haspopup="listbox"
-          disabled={loadingBranches || !shouldOpen}
+          disabled={
+            isBranchDropdown ? loadingBranches || !shouldOpen : !shouldOpen
+          }
           className={cn(
-            "text-md w-full text-input justify-between overflow-y-hidden overflow-x-scroll scrollbar-background-hidden border-[3px] border-black p-4 transition-transform hover:text-secondary-foreground hover:-translate-x-0.5 hover:-translate-y-0.5 hover:transform hover:bg-gray-300 max-sm:w-full sm:p-6 group",
-            !branches || branches.length === 0 ? "opacity-60 cursor-not-allowed" : "",
+            "text-md w-full text-input justify-between overflow-y-hidden overflow-x-scroll scrollbar-background-hidden border-[3px] border-black p-6 transition-transform hover:text-secondary-foreground hover:bg-gray-300 max-sm:w-full group",
+            isBranchDropdown && (!branches || branches.length === 0)
+              ? "opacity-60 cursor-not-allowed"
+              : "",
+            !isBranchDropdown && !ecosystems.length
+              ? "opacity-60 cursor-not-allowed"
+              : "",
             className
           )}
         >
-          {loadingBranches && !branches.length
-            ? "Loading branches..."
-            : selectedBranch
-              ? selectedBranch
-              : isBranchDropdown
-                ? "Select Branch..."
-                : "Select ecosystem"}
+          {isBranchDropdown
+            ? loadingBranches
+              ? "Loading branches..."
+              : selectedBranch || "Select Branch..."
+            : selectedEcosystem || "Select ecosystem"}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -108,53 +113,91 @@ export function Dropdown({
         className={cn("p-0 border-black border-[3px]", className)}
       >
         <Command className="max-h-[400px] rounded-md">
-          <CommandInput
-            placeholder={
-              isBranchDropdown ? "Search Branch..." : "Search Ecosystem..."
-            }
-            className="h-9"
-          />
+          {!ecosystems && (
+            <CommandInput
+              placeholder={
+                isBranchDropdown ? "Search Branch..." : "Search Ecosystem..."
+              }
+              className="h-9"
+            />
+          )}
           <CommandList
             onScroll={handleScroll}
             className="max-h-[350px] scrollbar-background-bg scrollbar-background-thumb"
           >
-            {!branches.length && !loadingBranches ? (
-              <CommandEmpty>No branch found</CommandEmpty>
+            {isBranchDropdown ? (
+              // Branch dropdown mode
+              !branches.length && !loadingBranches ? (
+                <CommandEmpty>No branch found</CommandEmpty>
+              ) : (
+                <CommandGroup className="">
+                  {branches.map((branch) => (
+                    <CommandItem
+                      key={branch}
+                      value={branch}
+                      onSelect={(value: string) => {
+                        setSelectedBranch(value);
+                        setOpen(false);
+                      }}
+                      className="whitespace-normal break-all cursor-pointer"
+                    >
+                      {branch}
+                      <Check
+                        className={cn(
+                          "ml-auto",
+                          selectedBranch === branch
+                            ? "opacity-100"
+                            : "opacity-0"
+                        )}
+                      />
+                    </CommandItem>
+                  ))}
+                  {/* Loading indicator for pagination */}
+                  {loadingBranches && branches.length > 0 && (
+                    <CommandItem disabled className="justify-center">
+                      <div className="flex items-center gap-2">
+                        <Loader className="h-4 w-4 animate-spin" />
+                      </div>
+                    </CommandItem>
+                  )}
+                </CommandGroup>
+              )
+            ) : // Ecosystem dropdown mode
+            !ecosystems.length ? (
+              <CommandEmpty>No ecosystem found</CommandEmpty>
             ) : (
-              <CommandGroup>
-                {branches.map((branch) => (
+              <CommandGroup className="m-2">
+                {ecosystems.map((ecosystem) => (
                   <CommandItem
-                    key={branch}
-                    value={branch}
+                    key={ecosystem}
+                    value={ecosystem}
                     onSelect={(value: string) => {
-                      onSelectBranch(value);
+                      onEcosystemChange?.(value);
                       setOpen(false);
                     }}
                     className="whitespace-normal break-all cursor-pointer"
                   >
-                    {branch}
+                    {ecosystem}
                     <Check
                       className={cn(
                         "ml-auto",
-                        selectedBranch === branch ? "opacity-100" : "opacity-0"
+                        selectedEcosystem === ecosystem
+                          ? "opacity-100"
+                          : "opacity-0"
                       )}
                     />
                   </CommandItem>
                 ))}
-                {/* Loading indicator for pagination */}
-                {loadingBranches && branches.length > 0 && (
-                  <CommandItem disabled className="justify-center">
-                    <div className="flex items-center gap-2">
-                      <Loader className="h-4 w-4 animate-spin" />
-                    </div>
-                  </CommandItem>
-                )}
               </CommandGroup>
             )}
           </CommandList>
-          {!hasMore && branches.length > 0 && (
+          {isBranchDropdown && !hasMore && branches.length > 0 ? (
             <div className="p-2 text-center text-xs text-accent border-t">
               All {branches.length} branches loaded
+            </div>
+          ) : (
+            <div className="p-2 text-center text-xs text-accent border-t">
+              Scroll to load more branches...
             </div>
           )}
         </Command>

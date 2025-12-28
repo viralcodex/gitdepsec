@@ -7,46 +7,68 @@ import {
 import React from "react";
 import { PlusCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import { useSavedHistoryState } from "@/store/app-store";
 
 interface HeaderOptionsProps {
   data?: { [key: string]: string | null } | null;
+  addButtonRef?: React.RefObject<HTMLDivElement | null>;
 }
-const HeaderOptions = ({ data }: HeaderOptionsProps) => {
+const HeaderOptions = ({ data, addButtonRef }: HeaderOptionsProps) => {
+  const { savedHistoryItems, setSavedHistoryItems } = useSavedHistoryState();
+
   const addGithubPreference = () => {
     if (!data) {
       toast.error("No history to save!");
       return;
     }
-    const existingPrefs = JSON.parse(
-      localStorage.getItem("githubHistory") || "[]"
-    ) as Array<{ [key: string]: string | null }>;
-    if (existingPrefs.length >= 10) {
-      toast.error("Maximum of 10 items can be saved!", {style: {maxWidth: '500px'}});
+  
+    if( !data.sanitizedUsername || !data.sanitizedRepo ){
+      toast.error("Incomplete data to save history!");
       return;
     }
-    if(existingPrefs.some(pref => 
-      pref.sanitizedUsername === data.sanitizedUsername &&
-      pref.sanitizedRepo === data.sanitizedRepo &&
-      pref.branch === data.branch
-    )) {
-      toast.error("This history item already exists!");
-      return;
+
+    const dateKey = new Date().toLocaleDateString("en-US", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+
+    const newHistoryItem = {
+      sanitizedUsername: data.sanitizedUsername || "",
+      sanitizedRepo: data.sanitizedRepo || "",
+      branch: data.branch || "",
+    };
+
+    const updatedHistory = { ...savedHistoryItems };
+
+    if (updatedHistory[dateKey]) {
+      // Check for duplicates before adding
+      const isDuplicate = updatedHistory[dateKey].some(
+        (item) =>
+          item.sanitizedUsername === newHistoryItem.sanitizedUsername &&
+          item.sanitizedRepo === newHistoryItem.sanitizedRepo &&
+          item.branch === newHistoryItem.branch
+      );
+      if (!isDuplicate) {
+        updatedHistory[dateKey].unshift(newHistoryItem);
+      }
+      else{
+        toast.error("This history entry already exists!");
+        return;
+      }
+    } else {
+      updatedHistory[dateKey] = [newHistoryItem];
     }
-    localStorage.setItem(
-      "githubHistory",
-      JSON.stringify(existingPrefs.concat([data || {}]))
-    );
-
-    window.dispatchEvent(new Event("githubHistoryUpdated"));
-
+    setSavedHistoryItems(updatedHistory);
     toast.success("GitHub History Added!");
-    console.log(localStorage.getItem("githubHistory"));
   };
+
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <div
+            ref={addButtonRef}
             onClick={addGithubPreference}
             className="bg-accent rounded-2xl p-1 cursor-pointer absolute -top-3 -left-3"
           >
