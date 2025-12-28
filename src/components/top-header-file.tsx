@@ -67,6 +67,7 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
           ? "hidden"
           : "w-full flex flex-col items-center justify-center"
       )}
+      aria-label="File analysis form"
     >
       <div className="flex flex-col items-center justify-center px-4 pt-4 w-full">
         <Card className="relative max-h-[200px] bg-background sm:max-w-[700px] w-full border-2 border-accent mx-auto mt-4 flex justify-between p-4 gap-4 sm:flex-row flex-col">
@@ -79,6 +80,7 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
                 setInputFile(e.target.files?.[0] || null);
                 setError("");
               }}
+              aria-label="Upload manifest file for analysis"
             />
           </div>
           <div className="border-1 rounded-md text-accent text-md flex flex-col items-center justify-center sm:w-[42%] w-full p-2">

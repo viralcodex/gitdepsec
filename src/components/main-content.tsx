@@ -114,10 +114,10 @@ const MainContent = () => {
             <span className="font-bold text-muted-foreground text-sm sm:text-base">
               or
             </span>
-            <div className="flex-grow h-px bg-white" />
+            <div className="flex-grow h-px bg-white" aria-hidden="true" />
           </div>
           <div className="flex flex-grow w-full flex-col items-start justify-center my-2">
-            <label className="block text-md font-bold text-primary-foreground mb-2">
+            <label htmlFor="manifest-file-input" className="block text-md font-bold text-primary-foreground mb-2">
               Upload a manifest file{" "}
               <span className="italic font-semibold">
                 (.json, .yaml, .xml, .txt)
@@ -125,6 +125,7 @@ const MainContent = () => {
               - Max 5MB
             </label>
             <Input
+              id="manifest-file-input"
               className="flex-1 rounded-md border-[3px] border-black px-3 text-base font-bold placeholder:text-base placeholder:font-normal sm:px-4 sm:py-4 cursor-pointer"
               type="file"
               onChange={(e) => {
@@ -134,11 +135,12 @@ const MainContent = () => {
               disabled={inputUrl !== ""}
             />
           </div>
-          <div className="flex w-full items-center justify-center gap-x-4">
+          <div className="flex w-full items-center justify-center gap-x-4" role="group" aria-label="Form actions">
             <Button
               className="cursor-pointer bg-accent text-black border-[3px] border-black p-4 px-4 text-base transition-transform hover:text-accent-foreground hover:-translate-x-0.5 hover:-translate-y-0.5 hover:transform hover:bg-primary-foreground sm:p-6 sm:px-6 sm:text-lg disabled:cursor-not-allowed"
               type="submit"
               disabled={isDisabled()}
+              aria-label="Analyse repository dependencies"
             >
               Analyse
             </Button>

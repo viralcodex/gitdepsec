@@ -6,12 +6,10 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import TopHeaderGithub from "../../../components/top-header-github";
 import { GraphNode } from "@/constants/model";
 import TopHeaderFile from "@/components/top-header-file";
-import DependencyDetailsCard from "@/components/dependency-sidebar/dependency-sidebar";
 import {
   downloadFixPlanPDF,
 } from "@/lib/utils";
 import toast from "react-hot-toast";
-import FixPlanCard from "@/components/fix-plan/fix-plan-card";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
   useRepoState,
@@ -38,6 +36,16 @@ const DepDiagram = dynamic(() => import("@/components/dependency-diagram"), {
   ssr: false,
   loading: () => <DiagramProgress />,
 });
+
+// Lazy load heavy components to improve initial load time
+const DependencyDetailsCard = dynamic(
+  () => import("@/components/dependency-sidebar/dependency-sidebar"),
+  { ssr: false }
+);
+const FixPlanCard = dynamic(
+  () => import("@/components/fix-plan/fix-plan-card"),
+  { ssr: false }
+);
 
 const Page = () => {
   const params = useParams<{ username: string; repo: string }>();

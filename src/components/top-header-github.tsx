@@ -91,6 +91,7 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
           ? "hidden"
           : "w-full flex flex-col items-center justify-center"
       )}
+      aria-label="GitHub repository analysis form"
     >
       <div className="flex flex-col items-center justify-center px-4 pt-4 w-full">
         <Card className="relative max-h-[200px] bg-background sm:max-w-[700px] w-full border-2 border-accent mx-auto mt-4 flex justify-center p-4 gap-4 sm:flex-row flex-col">
@@ -104,25 +105,26 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
             placeholder="https://github.com/username/repo"
             value={inputUrl}
             onChange={handleInputChange}
+            aria-label="GitHub repository URL"
           />
         <div className="sm:w-[35%] sm:max-w-[35%] h-13">
           <Dropdown
             className="shadow-none border-input border-1 h-full text-sm px-3 overflow-x-auto"
           />
         </div>
-          <ButtonGroup className="sm:flex-row">
+          <ButtonGroup className="sm:flex-row" role="group" aria-label="Repository actions">
             <Button
               className="flex-1 sm:h-13 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
               type="submit"
               disabled={isDisabled()}
-              aria-label="submit-github-repo"
+              aria-label="Analyse GitHub repository"
             >
               {loading ? (
                 <LucideLoader2 className="animate-spin" strokeWidth={3} />
               ) : (
                 <span className="flex flex-row items-center justify-center gap-x-2">
                   <span className="sm:hidden">Analyse</span>
-                  <LucideArrowBigRight strokeWidth={3} />
+                  <LucideArrowBigRight strokeWidth={3} aria-hidden="true" />
                 </span>
               )}
             </Button>
@@ -131,14 +133,14 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
               type="button"
               onClick={onRefreshAnalysis}
               disabled={isDisabled()}
-              aria-label="refresh-github-repo"
+              aria-label="Refresh repository analysis"
             >
               {loading ? (
                 <LucideLoader2 className="animate-spin" strokeWidth={3} />
               ) : (
                 <span className="flex flex-row items-center justify-center gap-x-2">
                   <span className="sm:hidden">Refresh</span>
-                  <RefreshCcwDot strokeWidth={3} />
+                  <RefreshCcwDot strokeWidth={3} aria-hidden="true" />
                 </span>
               )}
             </Button>

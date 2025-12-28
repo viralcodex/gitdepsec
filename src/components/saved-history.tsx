@@ -124,7 +124,7 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
           ref={toggleBarRef}
           id="togglebar"
           className={cn(
-            "absolute bg-accent-foreground w-4 h-[100%] rounded-r-xl right-0 opacity-20 hover:opacity-100 cursor-pointer"
+            "absolute bg-accent-foreground w-4 h-[100%] rounded-r-xl right-0 opacity-20 hover:opacity-100 cursor-pointer border-none"
           )}
           onClick={toggleHistoryCard}
         />
