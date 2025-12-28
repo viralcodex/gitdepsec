@@ -1,8 +1,8 @@
 import rateLimit from 'express-rate-limit';
 
 export const generalRateLimiter = rateLimit({
-  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 10 * 60 * 1000, // 10 minutes
-  max: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 100, // limit each IP to 100 requests per windowMs
+  windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 10 * 60 * 10000, // 10 minutes
+  max: Number(process.env.RATE_LIMIT_MAX_REQUESTS) || 1000, // limit each IP to 100 requests per windowMs
   message: {
     error: 'Too many requests, please try again later in 20 minutes.',
   },

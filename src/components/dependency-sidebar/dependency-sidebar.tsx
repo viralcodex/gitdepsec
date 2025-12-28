@@ -13,20 +13,18 @@ import DependencyAIDetails from "./dependency-ai-details";
 import { getAiVulnerabilitiesSummary } from "@/lib/api";
 import Image from "next/image";
 import { useTextSelection } from "@/providers/textSelectionProvider";
+import { useGraphState } from "@/store/app-store";
 
 interface DependencyDetailsProps {
   node: GraphNode;
-  dependencies: { [technology: string]: Dependency[] };
   isMobile?: boolean;
-  isOpen?: boolean;
-  isDiagramExpanded?: boolean;
   onClose?: () => void;
-  setIsMobile?: (isMobile: boolean) => void;
-  setIsDiagramExpanded?: (expanded: boolean) => void;
 }
 
 const DependencyDetailsCard = (props: DependencyDetailsProps) => {
-  const { node, dependencies, onClose, isMobile } = props;
+  const { node, onClose, isMobile } = props;
+
+  const { dependencies } = useGraphState();
 
   const { setSelectedDependency } = useTextSelection();
   const [isCopied, setIsCopied] = useState<boolean>(false);

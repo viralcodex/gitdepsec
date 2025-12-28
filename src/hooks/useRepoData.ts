@@ -1,46 +1,31 @@
 "use client";
 
-import { useState, useEffect } from 'react';
-import { getRepoBranches } from '@/lib/api';
-import { verifyUrl } from '@/lib/utils';
-
+import { useEffect, useCallback } from "react";
+import { getRepoBranches } from "@/lib/api";
+import { verifyUrl, getRepoKeyFromUrl } from "@/lib/utils";
+import { useErrorState, useRepoState, store } from "@/store/app-store";
 export const useRepoData = (url: string | null) => {
-  const [branches, setBranches] = useState<string[]>([]);
-  const [selectedBranch, setSelectedBranch] = useState<string | null>(null);
-  const [loadingBranches, setLoadingBranches] = useState<boolean>(false);
-  const [branchError, setBranchError] = useState<string>("");
-  const [page, setPage] = useState<number>(1);
-  const [hasMore, setHasMore] = useState<boolean>(true);
-  const [totalBranches, setTotalBranches] = useState<number>(0);
-  const [currentUrl, setCurrentUrl] = useState<string | null>(null);
-  
   const pageSize = 100;
+  const {
+    page,
+    currentUrl,
+    loadedRepoKey,
+    setBranches,
+    setSelectedBranch,
+    setLoadingBranches,
+    setHasMore,
+    setTotalBranches,
+    setCurrentUrl,
+    setLoadedRepoKey,
+    resetRepoState,
+  } = useRepoState();
 
-  useEffect(() => {
-    if (!url) {
-      setBranches([]);
-      setSelectedBranch(null);
-      setLoadingBranches(false);
-      setBranchError("");
-      setPage(1);
-      setHasMore(true);
-      setTotalBranches(0);
-      setCurrentUrl(null);
-      return;
-    }
+  const { setBranchError } = useErrorState();
 
-    // Reset pagination state only when URL actually changes
-    if (url !== currentUrl) {
-      setPage(1);
-      setBranches([]);
-      setHasMore(true);
-      setTotalBranches(0);
-      setBranchError("");
-      setCurrentUrl(url);
-      return; // Return early to let the next effect cycle handle the fetch
-    }
+  const fetchBranches = useCallback(
+    async (repoKey: string) => {
+      if (!url) return;
 
-    const fetchBranches = async () => {
       const result = verifyUrl(url, setBranchError);
       if (!result) {
         setLoadingBranches(false);
@@ -50,8 +35,7 @@ export const useRepoData = (url: string | null) => {
       const { sanitizedUsername, sanitizedRepo } = result;
 
       setLoadingBranches(true);
-      console.log('Fetching page:', page, 'for URL:', url);
-      
+
       const branchesResponse = await getRepoBranches(
         sanitizedUsername,
         sanitizedRepo,
@@ -61,72 +45,81 @@ export const useRepoData = (url: string | null) => {
 
       if (branchesResponse.error) {
         setBranchError(branchesResponse.error);
-        setBranches([]);
-        setSelectedBranch(null);
-        setHasMore(false);
-        setTotalBranches(0);
+        resetRepoState();
       } else {
-        console.log('Received branches:', branchesResponse.branches?.length, 'hasMore:', branchesResponse.hasMore, 'page:', page);
         // For first page, replace branches. For subsequent pages, append them
         if (page === 1) {
-          if(branchesResponse.defaultBranch && !branchesResponse.branches?.includes(branchesResponse.defaultBranch)) {
-            setBranches([branchesResponse.defaultBranch, ...(branchesResponse.branches || [])]);
-          }
-          else
-          {
+          if (
+            branchesResponse.defaultBranch &&
+            !branchesResponse.branches?.includes(branchesResponse.defaultBranch)
+          ) {
+            setBranches([
+              branchesResponse.defaultBranch,
+              ...(branchesResponse.branches || []),
+            ]);
+          } else {
             setBranches(branchesResponse.branches || []);
           }
           setSelectedBranch(branchesResponse.defaultBranch ?? null);
+          setLoadedRepoKey(repoKey);
         } else {
-          setBranches(prevBranches => {
-            const newBranchesToAdd = branchesResponse.branches || [];
-            console.log('Previous branches:', prevBranches.length, 'New branches to add:', newBranchesToAdd);
-            const uniqueBranches = Array.from(new Set([...prevBranches, ...newBranchesToAdd]));
-            console.log('Total branches now:', uniqueBranches.length, 'Duplicates removed:', prevBranches.length + newBranchesToAdd.length - uniqueBranches.length);
-            return uniqueBranches;
-          });
+          // Get current branches from store to avoid stale closure
+          const currentBranches = store.getState().branches;
+          const newBranchesToAdd = branchesResponse.branches || [];
+          const uniqueBranches = Array.from(
+            new Set([...currentBranches, ...newBranchesToAdd])
+          );
+          setBranches(uniqueBranches);
         }
         setHasMore(branchesResponse.hasMore!);
         setTotalBranches(branchesResponse.total || 0);
+        setBranchError("");
       }
-      
       setLoadingBranches(false);
-    };
+    },
+    [
+      url,
+      page,
+      setBranchError,
+      setLoadingBranches,
+      resetRepoState,
+      setHasMore,
+      setTotalBranches,
+      setSelectedBranch,
+      setLoadedRepoKey,
+      setBranches,
+    ]
+  );
 
-    // Only add debounce for the first page (URL change), not for pagination
-    if (page === 1 && url === currentUrl) {
-      const debounceTimeout = setTimeout(fetchBranches, 500);
+  useEffect(() => {
+    if (!url) {
+      resetRepoState();
+      return;
+    }
+
+    const repoKey = getRepoKeyFromUrl(url);
+    if (!repoKey) {
+      // Invalid URL - verify it to set the error message
+      verifyUrl(url, setBranchError);
+      return;
+    }
+
+    if (url !== currentUrl) {
+      setCurrentUrl(url);
+    }
+
+    // Case 1: New repo (not cached) - fetch branches with debounce
+    if (loadedRepoKey !== repoKey && page === 1) {
+      if (currentUrl && currentUrl !== url) {
+        // Different repo - reset state first
+        resetRepoState();
+      }
+      const debounceTimeout = setTimeout(() => fetchBranches(repoKey), 400);
       return () => clearTimeout(debounceTimeout);
-    } else if (page > 1) {
-      // For pagination, fetch immediately without debounce
-      fetchBranches();
     }
-  }, [url, page, pageSize, currentUrl]);
-
-  const loadNextPage = () => {
-    console.log('loadNextPage called:', { hasMore, loadingBranches, currentPage: page });
-    if(hasMore && !loadingBranches) {
-      console.log('Loading next page:', page + 1);
-      setPage(prevPage => {
-        const nextPage = prevPage + 1;
-        console.log('Setting page from', prevPage, 'to', nextPage);
-        return nextPage;
-      });
-    } else {
-      console.log('Cannot load next page:', { hasMore, loadingBranches });
+    // Case 2: Same repo (cached) - only fetch if loading next page
+    if (loadedRepoKey === repoKey && page > 1) {
+      fetchBranches(repoKey);
     }
-  }
-
-  return {
-    branches,
-    selectedBranch,
-    setSelectedBranch,
-    loadingBranches,
-    branchError,
-    setBranchError,
-    setBranches,
-    hasMore,
-    totalBranches,
-    loadNextPage,
-  };
+  }, [url, page, currentUrl, loadedRepoKey, fetchBranches, resetRepoState, setCurrentUrl, setBranchError]);
 };

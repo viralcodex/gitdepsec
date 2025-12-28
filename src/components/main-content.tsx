@@ -1,86 +1,54 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { Input } from "./ui/input";
 import { Dropdown } from "./ui/dropdown";
 import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useRouter } from "next/navigation";
-import { verifyFile, verifyUrl } from "@/lib/utils";
-import { uploadFile } from "@/lib/api";
 import toast from "react-hot-toast";
-import { useRepoBranch } from "@/providers/repoBranchProvider";
+import { useRepoState, useErrorState } from "@/store/app-store";
+import { store } from "@/store/app-store";
+import { useRepoData } from "@/hooks/useRepoData";
+import useFileUpload from "@/hooks/useFileUpload";
+import { AlertTriangle } from "lucide-react";
 
 const MainContent = () => {
-  const [url, setUrl] = useState<string>("");
-  const [debouncedUrl, setDebouncedUrl] = useState<string>("");
-  const [file, setFile] = useState<File | null>(null);
-  const [newFileName, setNewFileName] = useState<string>("");
-  const [uploaded, setUploaded] = useState<boolean>(false);
   const {
     branches,
     selectedBranch,
-    setSelectedBranch,
     loadingBranches,
-    branchError,
-    setBranchError,
-    hasMore,
-    totalBranches,
-    loadNextPage,
-    setCurrentUrl,
-  } = useRepoBranch();
-
+    loadedRepoKey
+  } = useRepoState();
+  const { branchError, setBranchError } = useErrorState();
+  const { inputFile: file, setInputFile: setFile, uploaded, setUploaded, newFileName, setNewFileName } = useFileUpload();
+  const [inputUrl, setInputUrl] = useState<string>("");
+  const [debouncedUrl, setDebouncedUrl] = useState<string>("");
+  
   const router = useRouter();
+  
+  //CUSTOM HOOK
+  useRepoData(debouncedUrl);
 
-  // Debounce URL input changes
+  // Debounce the URL input
   useEffect(() => {
     const handler = setTimeout(() => {
-      setDebouncedUrl(url);
-    }, 750);
+      setDebouncedUrl(inputUrl);
+    }, 250);
     return () => clearTimeout(handler);
-  }, [url]);
+  }, [inputUrl]);
 
-  // Update global provider URL when debounced URL changes
+  // Clear local state when input is cleared
   useEffect(() => {
-    if (debouncedUrl && verifyUrl(debouncedUrl, setBranchError)) {
-      setBranchError("");
-      setCurrentUrl(debouncedUrl); // Update the global provider URL
-    } else if (!debouncedUrl) {
-      setCurrentUrl(""); // Clear the global provider URL when input is empty
+    if (!inputUrl) {
+      setBranchError(null);
     }
-  }, [debouncedUrl, setBranchError, setCurrentUrl]);
-
-  useEffect(() => {
-    if (file) {
-      setUploaded(false);
-      const result = verifyFile(file, setBranchError, setFile);
-      if (!result) {
-        setFile(null);
-        setUploaded(false);
-        return;
-      }
-      setBranchError("");
-      void uploadFile(file)
-        .then((response) => {
-          console.log("File uploaded successfully");
-          toast.success("File uploaded successfully");
-          setNewFileName(response.newFileName);
-          setUploaded(true);
-          return true;
-        })
-        .catch((err) => {
-          console.error("Error uploading file:", err);
-          setBranchError("Failed to upload file. Please try again later.");
-          setUploaded(false);
-        });
-      
-    }
-  }, [file, setBranchError]);
+  }, [inputUrl, setBranchError]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!url && !file) {
+    if (!debouncedUrl && !file) {
       setBranchError("Please enter a GitHub URL or upload a manifest file.");
       return;
     }
@@ -95,65 +63,52 @@ const MainContent = () => {
       return;
     }
 
-    // Handle form submission logic here
-    const result = verifyUrl(url, setBranchError);
-
-    if (!result) {
-      return; // Error will be set in verifyRepoUrl
+    if (debouncedUrl && !file && loadedRepoKey) {
+      const branchParam = selectedBranch
+        ? `?branch=${encodeURIComponent(selectedBranch)}`
+        : "";
+      router.push(`/${loadedRepoKey}${branchParam}`);
     }
-
-    const { sanitizedUsername, sanitizedRepo } = result;
-
-    if (url && !file) {
-      const branchParam = selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : '';
-      router.push(
-        `/${encodeURIComponent(sanitizedUsername)}/${encodeURIComponent(sanitizedRepo)}${branchParam}`
-      );
-    }
-  };
-
-  const clear = () => {
-    setFile(null);
-    setUrl("");
-    setSelectedBranch(null);
-    setBranchError("");
-    setUploaded(false);
-    setNewFileName("");
   };
 
   const isDisabled = () => {
     return (
       loadingBranches ||
-      (!url && !file) ||
+      (!inputUrl && !file) ||
       (file !== null && !uploaded) ||
-      ((!branches ||
-      !branches.length) && (!file))
+      ((!branches || !branches.length) && !file)
     );
   };
 
   return (
-    <Card className="w-full max-w-3xl border-[3px] border-black bg-gray-200/50 p-4 sm:p-8 shadow-[0px_0px_10px_0px_#FFFFFF]">
+    <Card className="w-full max-w-3xl border-[3px] border-black bg-gray-300/60 p-4 sm:p-8 shadow-[0px_0px_10px_0px_#FFFFFF] backdrop-blur-[1px]">
       <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
         <div className="flex flex-row gap-3 sm:flex-row sm:gap-4">
-          <Input
-            onChange={(e) => setUrl(e.target.value)}
-            className="flex-1 rounded-md border-[3px] border-black px-3 py-4 text-base font-bold placeholder:text-base placeholder:font-normal sm:px-4 sm:py-6 sm:text-lg sm:placeholder:text-lg"
-            placeholder="https://github.com/username/repo"
-            disabled={file !== null}
-          />
+          <div className="flex-1 flex flex-col">
+            <Input
+              onChange={(e) => setInputUrl(e.target.value)}
+              value={inputUrl}
+              className={`flex-1 rounded-md border-[3px] px-3 py-2 text-base font-bold placeholder:text-base placeholder:font-normal sm:px-4 sm:py-4 sm:text-lg sm:placeholder:text-lg ${
+                branchError ? "border-red-600" : "border-black"
+              }`}
+              placeholder="https://github.com/username/repo"
+              disabled={file !== null}
+              aria-invalid={!!branchError}
+              aria-describedby={branchError ? "url-error" : undefined}
+            />
+            {branchError && (
+              <p
+                id="url-error"
+                className="text-red-600 text-xs max-w-x px-2 py-1 mt-0.5 font-semibold rounded-md backdrop-blur-lg"
+              >
+                <AlertTriangle className="inline-block mr-1 h-6 w-6" />
+                {branchError}
+              </p>
+            )}
+          </div>
         </div>
         <div className="flex w-full flex-col items-center justify-center gap-y-2">
-          <Dropdown
-            branches={branches}
-            selectedBranch={selectedBranch}
-            onSelectBranch={setSelectedBranch}
-            loadingBranches={loadingBranches && file === null}
-            setError={setBranchError}
-            hasMore={hasMore}
-            totalBranches={totalBranches}
-            loadNextPage={loadNextPage}
-            className=""
-          />
+          <Dropdown />
           <div className="flex items-center w-full gap-x-2 mt-2">
             <div className="flex-grow h-px bg-white" />
             <span className="font-bold text-muted-foreground text-sm sm:text-base">
@@ -174,9 +129,9 @@ const MainContent = () => {
               type="file"
               onChange={(e) => {
                 setFile(e.target.files?.[0] || null);
-                setBranchError("");
+                setBranchError(null);
               }}
-              disabled={url !== ""}
+              disabled={inputUrl !== ""}
             />
           </div>
           <div className="flex w-full items-center justify-center gap-x-4">
@@ -190,17 +145,20 @@ const MainContent = () => {
             <Button
               className="cursor-pointer bg-accent-foreground text-accent border-[3px] border-black p-4 px-4 text-base transition-transform hover:text-accent-foreground hover:-translate-x-0.5 hover:-translate-y-0.5 hover:transform hover:bg-primary-foreground sm:p-6 sm:px-6 sm:text-lg"
               type="reset"
-              onClick={clear}
+              onClick={() => {
+                store.getState().clearForm();
+                setInputUrl("");
+                setDebouncedUrl("");
+                setFile(null);
+                setNewFileName("");
+                setUploaded(false);
+                setBranchError(null);
+              }}
             >
               Clear
             </Button>
           </div>
         </div>
-        {branchError && (
-          <p className="text-red-500 text-sm flex w-full items-center justify-center">
-            {branchError}
-          </p>
-        )}
       </form>
     </Card>
   );

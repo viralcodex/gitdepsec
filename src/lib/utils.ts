@@ -45,6 +45,17 @@ export const verifyUrl = (
   return { sanitizedUsername, sanitizedRepo };
 };
 
+/**
+ * Extract repo key from GitHub URL for caching purposes
+ * @param url - The GitHub repository URL
+ * @returns Repo key in format "owner/repo" or null if invalid
+ */
+export const getRepoKeyFromUrl = (url: string): string | null => {
+  const result = verifyUrl(url);
+  if (!result) return null;
+  return `${decodeURIComponent(result.sanitizedUsername)}/${decodeURIComponent(result.sanitizedRepo)}`;
+};
+
 /*
 * verify the uploaded manifest file
 * @param file - The uploaded file to verify

@@ -5,7 +5,6 @@ import Header from "@/components/header";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "@/providers/themeProvider";
 import { NetworkStatusProvider } from "@/providers/networkStatusProvider";
-import RepoBranchProvider from "@/providers/repoBranchProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,13 +60,11 @@ export default function RootLayout({
       <body className="flex h-screen flex-col bg-background bg-repeat bg-[size:300px_300px] bg-[url('/bg.svg')] bg-blend-multiply relative">
         <SpeedInsights/>
         <ThemeProvider>
-          <RepoBranchProvider>
-            <NetworkStatusProvider>
-                <Header />
-                <main className="flex-grow pt-16">{children}</main>
-                <Toaster />
-            </NetworkStatusProvider>
-          </RepoBranchProvider>
+          <NetworkStatusProvider>
+            <Header />
+            <main className="flex-grow pt-16">{children}</main>
+            <Toaster />
+          </NetworkStatusProvider>
         </ThemeProvider>
       </body>
     </html>
