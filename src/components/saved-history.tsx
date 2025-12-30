@@ -88,7 +88,7 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
   };
 
   const refreshHistory = () => {
-    const persistedData = localStorage.getItem("gitvulsafe_storage");
+    const persistedData = localStorage.getItem("gitdepsec_storage");
     if (persistedData) {
       try {
         const parsed = JSON.parse(persistedData);
@@ -167,7 +167,7 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
                   >
                     {date}
                   </h4>
-                  <hr className="" />
+                  <hr className="mr-3" />
                   <ul className="my-1 list-disc ml-3 mr-0 text-accent">
                     {items.map((hist, index) => (
                       <li

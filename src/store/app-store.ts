@@ -298,7 +298,7 @@ interface AppStore
           },
         }),
         {
-          name: "gitvulsafe_storage",
+          name: "gitdepsec_storage",
           partialize: (state) => ({
             branches: state.branches,
             selectedBranch: state.selectedBranch,
@@ -310,7 +310,7 @@ interface AppStore
           }),
         }
       ),
-      { name: "Gitvulsafe" }
+      { name: "GitDepSec" }
     )
   );
 

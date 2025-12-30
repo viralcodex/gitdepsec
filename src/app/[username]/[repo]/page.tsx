@@ -6,9 +6,7 @@ import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import TopHeaderGithub from "../../../components/top-header-github";
 import { GraphNode } from "@/constants/model";
 import TopHeaderFile from "@/components/top-header-file";
-import {
-  downloadFixPlanPDF,
-} from "@/lib/utils";
+import { downloadFixPlanPDF } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
@@ -36,15 +34,13 @@ const DepDiagram = dynamic(() => import("@/components/dependency-diagram"), {
   ssr: false,
   loading: () => <DiagramProgress />,
 });
-
-// Lazy load heavy components to improve initial load time
 const DependencyDetailsCard = dynamic(
   () => import("@/components/dependency-sidebar/dependency-sidebar"),
-  { ssr: false }
+  { ssr: true }
 );
 const FixPlanCard = dynamic(
   () => import("@/components/fix-plan/fix-plan-card"),
-  { ssr: false }
+  { ssr: true }
 );
 
 const Page = () => {
@@ -62,7 +58,7 @@ const Page = () => {
 
   // Store selectors
   const { currentUrl } = useRepoState();
-  const { resetFileState } = useFileState();
+  const { setUploaded, setNewFileName, resetFileState } = useFileState();
   const { error } = useErrorState();
   const { graphData } = useGraphState();
   const {
@@ -72,14 +68,18 @@ const Page = () => {
     setFixPlanDialogOpen,
     resetUIState,
   } = useUIState();
-  const { selectedNode, setSelectedNode, resetDiagramState } 
-    = useDiagramState();
+  const { selectedNode, setSelectedNode, resetDiagramState } =
+    useDiagramState();
 
   // Custom hooks
   const { generateFixPlan } = useFixPlanGeneration({ username, repo, branch });
-  const { inputFile, setInputFile, setUploaded, setNewFileName } = useFileUpload();
+  const { inputFile, setInputFile } = useFileUpload();
   const { windowSize } = useWindowSize();
-  const { inputUrl, handleInputChange } = useUrlInput({ username, repo, branch});
+  const { inputUrl, handleInputChange } = useUrlInput({
+    username,
+    repo,
+    branch,
+  });
   useBranchSync({ branchParam: branch });
   useGraph(username, repo, branch, file, forceRefresh);
   useRepoData(currentUrl);
@@ -117,7 +117,7 @@ const Page = () => {
   //Handle navigation event to close everything
   useEffect(() => {
     const handleNavigation = () => {
-      resetFileState()
+      resetFileState();
       resetUIState();
     };
     window.addEventListener("popstate", handleNavigation);
@@ -131,14 +131,9 @@ const Page = () => {
 
   const handleNodeClick = useCallback(
     (node: GraphNode | null) => {
-      if (selectedNode && selectedNode.id !== node?.id) {
-        setSelectedNode(node);
-        return;
-      }
-      // Otherwise, open sidebar with the clicked node
       setSelectedNode(node);
     },
-    [selectedNode, setSelectedNode]
+    [setSelectedNode]
   );
 
   const handleDetailsCardClose = () => {
@@ -182,7 +177,8 @@ const Page = () => {
           selectedNode && !isMobile
             ? "w-[65%] flex flex-col items-center justify-center"
             : "flex-1"
-        }>
+        }
+      >
         <SavedHistory addButtonRef={addButtonRef} />
         {fileHeaderOpen ? (
           <TopHeaderFile

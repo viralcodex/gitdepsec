@@ -4,7 +4,12 @@ import { progressSSE } from "@/lib/api";
 import toast from "react-hot-toast";
 import { progressSteps } from "@/constants/constants";
 
-const DiagramProgress = () => {
+interface DiagramProgressProps {
+  width?: number;
+  height?: number;
+}
+
+const DiagramProgress = ({ width, height }: DiagramProgressProps) => {
   const [progress, setProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState("Initializing");
   const [dots, setDots] = useState<string>("");
@@ -50,19 +55,44 @@ const DiagramProgress = () => {
   },[currentStep]); 
 
   return (
-    <div className="space-y-2 sm:w-[25%] w-[75%]" role="region" aria-label="Analysis progress">
-      <Progress value={progress} className="w-full border-1 h-4" aria-label="Progress bar" />
-      <div className="text-sm text-muted-foreground px-1 xl:text-lg" aria-live="polite" aria-atomic="true">
-        <div className="flex flex-row items-center text-sm">
-          <span aria-label={`Current step: ${currentStep}`}>
-            {currentStep}
-          </span>
-          <span className="inline-block w-4 text-left" aria-hidden="true">
-            {dots}
-          </span>
-        </div>
-        <div className="flex justify-between items-center text-sm">
-          <span className="" aria-label={`Progress: ${progress} percent complete`}>{progress}%</span>
+    <div
+      className="border-1 border-accent rounded-xl bg-black/50 flex items-center justify-center relative overflow-hidden"
+      style={{ width, height }}
+      role="region"
+      aria-label="Analysis progress"
+    >
+      {/* Background image for visual appeal */}
+      <div
+        className="absolute -z-1 inset-0 bg-[url('/progress.webp')] bg-cover bg-center opacity-75"
+        aria-hidden="true"
+      />
+      <div className="space-y-2 sm:w-[40%] w-[50%] relative z-10">
+        <Progress
+          value={progress}
+          className="w-full border-1 h-4"
+          aria-label="Progress bar"
+        />
+        <div
+          className="text-sm text-white px-1 xl:text-lg"
+          aria-live="polite"
+          aria-atomic="true"
+        >
+          <div className="flex flex-row items-center text-sm">
+            <span aria-label={`Current step: ${currentStep}`}>
+              {currentStep}
+            </span>
+            <span className="inline-block w-4 text-left" aria-hidden="true">
+              {dots}
+            </span>
+          </div>
+          <div className="flex justify-between items-center text-sm">
+            <span
+              className=""
+              aria-label={`Progress: ${progress} percent complete`}
+            >
+              {progress}%
+            </span>
+          </div>
         </div>
       </div>
     </div>

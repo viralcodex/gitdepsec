@@ -70,7 +70,7 @@ export function AiDialog({ isOpen, onClose, onSubmit }: AiDialogProps) {
                 sharing your key, you can also <b>self-host</b> this app by
                 following the instructions here...{" "}
                 <Link
-                  href="https://github.com/viralcodex/gitvulsafe#readme"
+                  href="https://github.com/viralcodex/gitdepsec#readme"
                   className="underline text-primary-foreground dark:text-[hsl(var(--text-color-link))] transition-colors duration-200 hover:text-muted-foreground"
                 >
                   README

@@ -7,7 +7,7 @@ import { Button } from "./ui/button";
 import { Card } from "./ui/card";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
-import { useRepoState, useErrorState } from "@/store/app-store";
+import { useRepoState, useErrorState, useFileState } from "@/store/app-store";
 import { store } from "@/store/app-store";
 import { useRepoData } from "@/hooks/useRepoData";
 import useFileUpload from "@/hooks/useFileUpload";
@@ -21,7 +21,8 @@ const MainContent = () => {
     loadedRepoKey
   } = useRepoState();
   const { branchError, setBranchError } = useErrorState();
-  const { inputFile: file, setInputFile: setFile, uploaded, setUploaded, newFileName, setNewFileName } = useFileUpload();
+  const { inputFile: file, setInputFile: setFile } = useFileUpload();
+  const { newFileName, uploaded, setUploaded, resetFileState } = useFileState();
   const [inputUrl, setInputUrl] = useState<string>("");
   const [debouncedUrl, setDebouncedUrl] = useState<string>("");
   
@@ -149,12 +150,9 @@ const MainContent = () => {
               type="reset"
               onClick={() => {
                 store.getState().clearForm();
+                resetFileState();
                 setInputUrl("");
-                setDebouncedUrl("");
-                setFile(null);
-                setNewFileName("");
-                setUploaded(false);
-                setBranchError(null);
+                setBranchError("");
               }}
             >
               Clear

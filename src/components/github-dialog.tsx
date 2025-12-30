@@ -59,7 +59,7 @@ export function GithubDialog({ isOpen, onClose, onSubmit }: GithubDialogProps) {
                 sharing your token, You can also self-host this app by following
                 the instructions here...{" "}
                 <Link
-                  href="https://github.com/viralcodex/gitvulsafe#readme"
+                  href="https://github.com/viralcodex/gitdepsec#readme"
                   className="underline text-primary-foreground dark:text-[hsl(var(--text-color-link))] transition-colors duration-200 hover:text-muted-foreground"
                 >
                   README

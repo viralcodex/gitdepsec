@@ -22,15 +22,14 @@ const nextConfig: NextConfig = {
       '@radix-ui/react-tabs',
       '@radix-ui/react-tooltip',
     ],
-    turbopackFileSystemCacheForDev: true, // Enable filesystem cache in development
-    turbopackClientSideNestedAsyncChunking: true, // Enable nested async chunking on client side
-    turbopackFileSystemCacheForBuild: true, // Enable filesystem cache during build
-    optimizeCss: true, // Enable CSS optimization
-    scrollRestoration: true, // Enable scroll restoration
-    cssChunking: true, // Enable CSS chunking
-    inlineCss: true, // Enable CSS inlining
-    turbopackRemoveUnusedExports: true, // Enable removal of unused exports
-    turbopackRemoveUnusedImports: true, // Enable removal of unused imports
+    cssChunking: true,
+    scrollRestoration: true,
+    optimizeCss: true,
+    inlineCss: true,
+    turbopackRemoveUnusedExports: true,
+    turbopackMinify: true,
+    turbopackTreeShaking:true,
+    optimisticClientCache: true,
   },
 };
 

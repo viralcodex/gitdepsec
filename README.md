@@ -1,5 +1,5 @@
-# GitVulSafe
-GitVulSafe is a dependencies vulnerabilities visualizer with AI powered insights to help you resolve them and ship code more secure and faster.
+# GitDepSec
+GitDepSec is a dependencies vulnerabilities visualizer with AI powered insights to help you resolve them and ship code more secure and faster.
 
 # Features
  - Popular programming ecosystems supported (names from <a href='https://osv.dev/'>OSV.dev</a>)
@@ -73,7 +73,7 @@ Clone the repository and open the repository in any text editor/IDE you like.
   ```
 # Ideation and Motivation
 I came across <a href='https://gitdiagram.com/'>GitDiagram</a> where I made some contributions to the repository, I also had some idea to before this to build something like a visualisation for vulnerable dependencies, which can help people find, see and resolve them easily.
-So there began the development for **GitVulSafe**. You will see the inspiration in my code.
+So there began the development for **GitDepSec**. You will see the inspiration in my code.
 
 # AI Information
   Currently I am using Gemini AI API for the generation features using different JSON schemas to provide a structured and uniform response throughout.

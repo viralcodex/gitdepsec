@@ -84,6 +84,7 @@ export function Dropdown({
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
+          aria-label={isBranchDropdown ? "Select Branch Dropdown" : "Select Ecosystem Dropdown"}
           variant="outline"
           role="combobox"
           aria-expanded={open}

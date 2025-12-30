@@ -6,7 +6,7 @@ import toast from "react-hot-toast";
 import { useErrorState, useFileState } from "@/store/app-store";
 
 export const useFileUpload = () => {
-  const { newFileName, uploaded, setNewFileName, setUploaded } =
+  const { setNewFileName, setUploaded } =
     useFileState();
 
   const [inputFile, setInputFile] = useState<File | null>(null);
@@ -41,10 +41,6 @@ export const useFileUpload = () => {
   return {
     inputFile,
     setInputFile,
-    uploaded,
-    setUploaded,
-    newFileName,
-    setNewFileName,
   };
 };
 

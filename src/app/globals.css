@@ -131,6 +131,32 @@
   display: none;
 }
 
+@property --angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+#generate-fix-plan-button::before, #ai-fix-plan-tab::after {
+  content: '';
+  position: absolute;
+  z-index: -11;
+  background-image: conic-gradient(from var(--angle), #ff4545, #00ff99, #006aff, #ff0095, #ff4545);
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  border-radius: inherit;
+  width: calc(100% + 4px);
+  height: calc(100% + 4px);
+  animation: 5s gradient-spin linear infinite; /* don't use spin as it is reserved in tailwind */
+}
+
+@keyframes gradient-spin {
+  to {
+    --angle: 360deg;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
