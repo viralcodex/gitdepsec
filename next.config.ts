@@ -28,7 +28,6 @@ const nextConfig: NextConfig = {
     inlineCss: true,
     turbopackRemoveUnusedExports: true,
     turbopackMinify: true,
-    turbopackTreeShaking:true,
     optimisticClientCache: true,
   },
 };
