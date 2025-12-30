@@ -3,8 +3,8 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "404 - Page Not Found | GitVulSafe",
-  description: "The page you're looking for doesn't exist. Return to GitVulSafe to analyze your dependencies for security vulnerabilities.",
+  title: "404 - Page Not Found | GitDepSec",
+  description: "The page you're looking for doesn't exist. Return to GitDepSec to analyze your dependencies for security vulnerabilities.",
 };
 
 export default function NotFound() {

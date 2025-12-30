@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn, verifyUrl } from "@/lib/utils";
 import { LucideArrowBigRight, LucideLoader2, RefreshCcwDot } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -113,37 +114,51 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
           />
         </div>
           <ButtonGroup className="sm:flex-row" role="group" aria-label="Repository actions">
-            <Button
-              className="flex-1 sm:h-13 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
-              type="submit"
-              disabled={isDisabled()}
-              aria-label="Analyse GitHub repository"
-            >
-              {loading ? (
-                <LucideLoader2 className="animate-spin" strokeWidth={3} />
-              ) : (
-                <span className="flex flex-row items-center justify-center gap-x-2">
-                  <span className="sm:hidden">Analyse</span>
-                  <LucideArrowBigRight strokeWidth={3} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
-            <Button
-              className="flex-1 sm:h-13 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
-              type="button"
-              onClick={onRefreshAnalysis}
-              disabled={isDisabled()}
-              aria-label="Refresh repository analysis"
-            >
-              {loading ? (
-                <LucideLoader2 className="animate-spin" strokeWidth={3} />
-              ) : (
-                <span className="flex flex-row items-center justify-center gap-x-2">
-                  <span className="sm:hidden">Refresh</span>
-                  <RefreshCcwDot strokeWidth={3} aria-hidden="true" />
-                </span>
-              )}
-            </Button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="flex-1 sm:h-13 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
+                  type="submit"
+                  disabled={isDisabled()}
+                  aria-label="Analyse GitHub repository"
+                >
+                  {loading ? (
+                    <LucideLoader2 className="animate-spin" strokeWidth={3} />
+                  ) : (
+                    <span className="flex flex-row items-center justify-center gap-x-2">
+                      <span className="sm:hidden">Analyse</span>
+                      <LucideArrowBigRight strokeWidth={3} aria-hidden="true" />
+                    </span>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Analyse</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  className="flex-1 sm:h-13 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
+                  type="button"
+                  onClick={onRefreshAnalysis}
+                  disabled={isDisabled()}
+                  aria-label="Refresh repository analysis"
+                >
+                  {loading ? (
+                    <LucideLoader2 className="animate-spin" strokeWidth={3} />
+                  ) : (
+                    <span className="flex flex-row items-center justify-center gap-x-2">
+                      <span className="sm:hidden">Re-analyse</span>
+                      <RefreshCcwDot strokeWidth={3} aria-hidden="true" />
+                    </span>
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Re-analyse</p>
+              </TooltipContent>
+            </Tooltip>
           </ButtonGroup>
         </Card>
       </div>

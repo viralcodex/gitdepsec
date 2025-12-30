@@ -33,7 +33,7 @@ const Header = () => {
         <Link
           href="/"
           className="flex items-center space-x-2"
-          aria-label="Home Page - GitVulSafe"
+          aria-label="Home Page - GitDepSec"
         >
           <span className="text-lg font-bold">
             <span className="text-gray-200">Git</span>

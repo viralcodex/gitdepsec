@@ -112,7 +112,7 @@ const FixPlanCard = (props: FixPlanCardProps) => {
 
 
   return (
-    <div className="fixed inset-0 z-101 flex items-center justify-center bg-black/20 backdrop-blur-xs py-4 px-2 sm:p-6">
+    <div className="fixed inset-0 z-106 flex items-center justify-center bg-black/20 backdrop-blur-xs py-4 px-2 sm:p-6">
       <Card className="bg-background border-none text-card w-full h-full sm:max-h-[90vh] flex flex-col gap-0">
         <CardHeader className="sm:px-5 sm:py-4 px-2 py-2 gap-0 bg-muted rounded-t-lg">
           <div className="flex flex-row items-center justify-between w-full">

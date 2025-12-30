@@ -769,13 +769,7 @@ const DepDiagram = ({
     <div className="flex flex-col items-center justify-center flex-1">
       <div className="w-full h-full flex flex-col items-center justify-center py-2">
         {isLoading ? (
-          <div
-            className="flex flex-col items-center justify-center h-full"
-            style={{ width: windowSize.width, height: windowSize.height / 2 }}
-            aria-label="loading-diagram"
-          >
-            <DiagramProgress />
-          </div>
+          <DiagramProgress width={width} height={height} />
         ) : (
           <div className="relative" style={{ width, height }}>
             {getNodePathBadge()}
