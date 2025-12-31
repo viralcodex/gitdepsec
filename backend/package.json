@@ -37,7 +37,6 @@
     "axios": "^1.10.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.2",
-    "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.44.3",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
@@ -70,6 +69,7 @@
     "nodemon": "^3.1.10",
     "ts-jest": "^29.4.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "drizzle-kit": "^0.24.0"
   }
 }

@@ -3,12 +3,10 @@ import { type Config } from 'drizzle-kit';
 
 dotenv.config();
 
-const drizzleConfig = {
+export default {
   schema: './dist/src/db/schema/*',
   dialect: 'postgresql',
   dbCredentials: {
-    url: process.env.DATABASE_URL,
+    url: process.env.DATABASE_URL as string,
   },
-};
-
-export default drizzleConfig as Config;
+} satisfies Config;
