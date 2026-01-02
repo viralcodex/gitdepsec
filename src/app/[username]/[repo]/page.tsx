@@ -10,14 +10,12 @@ import { downloadFixPlanPDF } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useIsMobile } from "@/hooks/useMobile";
 import {
-  useRepoState,
   useErrorState,
   useGraphState,
   useUIState,
   useDiagramState,
   useFileState,
 } from "@/store/app-store";
-import { TextSelectionProvider } from "@/providers/textSelectionProvider";
 import useFixPlanGeneration from "@/hooks/useFixPlanGeneration";
 import useFileUpload from "@/hooks/useFileUpload";
 import useWindowSize from "@/hooks/useWindowSize";
@@ -29,7 +27,6 @@ import DiagramProgress from "@/components/diagram-progress";
 
 //LAZY LOADING COMPONENTS
 const SavedHistory = dynamic(() => import("@/components/saved-history"));
-const FloatingAiForm = dynamic(() => import("@/components/floating-ai-form"));
 const DepDiagram = dynamic(() => import("@/components/dependency-diagram"), {
   ssr: false,
   loading: () => <DiagramProgress />,
@@ -57,10 +54,9 @@ const Page = () => {
   const isMobile = useIsMobile();
 
   // Store selectors
-  const { currentUrl } = useRepoState();
   const { setUploaded, setNewFileName, resetFileState } = useFileState();
   const { error } = useErrorState();
-  const { graphData } = useGraphState();
+  const { graphData, resetGraphState } = useGraphState();
   const {
     fileHeaderOpen,
     isFixPlanDialogOpen,
@@ -82,8 +78,7 @@ const Page = () => {
   });
   useBranchSync({ branchParam: branch });
   useGraph(username, repo, branch, file, forceRefresh);
-  useRepoData(currentUrl);
-
+  useRepoData(inputUrl);
   const [selectedEcosystem, setSelectedEcosystem] = useState<
     string | undefined
   >(graphData ? Object.keys(graphData)[0] : undefined);
@@ -124,7 +119,6 @@ const Page = () => {
     return () => window.removeEventListener("popstate", handleNavigation);
   }, [resetFileState, resetUIState]);
 
-  // Close sidebar and reset state when URL parameters change
   useEffect(() => {
     resetDiagramState();
   }, [username, repo, branch, file, resetDiagramState]);
@@ -146,19 +140,17 @@ const Page = () => {
   }, [error]);
 
   const handleRefresh = useCallback(() => {
-    // Set forceRefresh flag
-    setForceRefresh(true);
-    // Reset forceRefresh after a short delay to ensure it's used for this fetch only
-    setTimeout(() => setForceRefresh(false), 100);
-  }, []);
+    setSelectedEcosystem(undefined);
+    resetGraphState();
+    svgRef.current = null;
+    setForceRefresh(prev => !prev);
+  }, [resetGraphState]);
 
   const resetGraph = () => {
     resetDiagramState();
     svgRef.current = null;
   };
 
-  // console.log("File Header:", newFileName, file, inputFile, uploaded);
-  // console.log("LOADING:", inputUrl, currentUrl);
   return (
     <div className="flex flex-col h-full">
       {isFixPlanDialogOpen && (
@@ -222,10 +214,12 @@ const Page = () => {
 
 const PageContent = () => {
   return (
-    <TextSelectionProvider>
+    // <TextSelectionProvider>
+    <>
       <Page />
-      <FloatingAiForm />
-    </TextSelectionProvider>
+      {/* <FloatingAiForm /> */}
+    </>
+    // </TextSelectionProvider>
   );
 };
 

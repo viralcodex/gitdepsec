@@ -13,6 +13,7 @@ import HeaderToggle from "./header-toggle";
 import HeaderOptions from "./header-options";
 import { ButtonGroup } from "./ui/button-group";
 import { useRepoState, useGraphState, useDiagramState, useErrorState, useUIState } from "@/store/app-store";
+import { HistoryItem } from "@/constants/model";
 
 interface TopHeaderProps {
   inputUrl: string;
@@ -27,29 +28,38 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
   
   // Store hooks
   const { branches, selectedBranch, loadingBranches } = useRepoState();
-  const { loading, setLoading } = useGraphState();
+  const { loading, setLoading, graphData, dependencies } = useGraphState();
   const { isDiagramExpanded } = useDiagramState();
   const { setBranchError } = useErrorState();
   const { setFileHeaderOpen } = useUIState();
-  const [result, setResult] = useState<{ sanitizedUsername: string; sanitizedRepo: string, branch: string }>();
+  const [result, setResult] = useState<HistoryItem>();
   const router = useRouter();
 
   useEffect(() => {
-    if (inputUrl) {
+    if (inputUrl && selectedBranch) {
       const verified = verifyUrl(inputUrl, setBranchError);
       if (verified) {
-        setResult({ ...verified, branch: selectedBranch || "" });
+        setResult({
+          username: verified.sanitizedUsername,
+          repo: verified.sanitizedRepo,
+          branch: selectedBranch,
+          graphData: graphData || {},
+          dependencies: dependencies || {},
+          branches: branches || [],
+        });
       }
     }
-    return () => { setResult(undefined); };
-  }, [inputUrl, setBranchError, selectedBranch]);
+    return () => {
+      setResult(undefined);
+    };
+  }, [inputUrl, setBranchError, selectedBranch, graphData, dependencies, branches]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!result) {
       return;
     }
-    const { sanitizedUsername, sanitizedRepo } = result;
+    const { username, repo } = result;
     if (!branches || branches.length === 0) {
       return;
     }
@@ -59,7 +69,7 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
 
     // Check if we're on the same page with same parameters
     const currentUrl = window.location.href;
-    const newUrl = `/${encodeURIComponent(sanitizedUsername)}/${encodeURIComponent(sanitizedRepo)}?branch=${encodeURIComponent(
+    const newUrl = `/${encodeURIComponent(username)}/${encodeURIComponent(repo)}?branch=${encodeURIComponent(
       selectedBranch!
     )}`;
 
@@ -67,7 +77,6 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
       setLoading(false);
       return;
     } else {
-      // Different URL - navigate normally
       resetGraphSvg();
       router.push(newUrl);
     }

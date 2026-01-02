@@ -52,6 +52,7 @@ export const verifyUrl = (
  */
 export const getRepoKeyFromUrl = (url: string): string | null => {
   const result = verifyUrl(url);
+  console.log("getRepoKeyFromUrl result:", result);
   if (!result) return null;
   return `${decodeURIComponent(result.sanitizedUsername)}/${decodeURIComponent(result.sanitizedRepo)}`;
 };

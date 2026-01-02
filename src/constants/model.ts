@@ -246,3 +246,13 @@ export interface ProgressSSE {
     message?: string;
     type: string;
 }
+
+export interface HistoryItem {
+  username: string;
+  repo: string;
+  branch: string;
+  graphData: EcosystemGraphMap;
+  dependencies: GroupedDependencies;
+  branches: string[];
+  cachedAt?: number;
+}

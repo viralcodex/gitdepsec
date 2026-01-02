@@ -24,6 +24,7 @@ interface DropdownProps {
   ecosystems?: string[];
   selectedEcosystem?: string;
   onEcosystemChange?: (ecosystem: string) => void;
+  shouldShowBranches?: boolean;
 }
 
 export function Dropdown({
@@ -32,6 +33,7 @@ export function Dropdown({
   ecosystems = [],
   selectedEcosystem,
   onEcosystemChange,
+  shouldShowBranches = true,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [shouldOpen, setShouldOpen] = useState(false);
@@ -48,13 +50,18 @@ export function Dropdown({
   // Effect to determine if the dropdown should open
   useEffect(() => {
     const items = isBranchDropdown ? branches : ecosystems;
+    if (isBranchDropdown && !shouldShowBranches) {
+      setShouldOpen(false);
+      setOpen(false);
+      return;
+    }
     if (items.length) {
       setShouldOpen(true);
     } else {
       setShouldOpen(false);
       setOpen(false);
     }
-  }, [branches, ecosystems, isBranchDropdown, setError]);
+  }, [branches, ecosystems, isBranchDropdown, shouldShowBranches, setError]);
 
   const handleOpenChange = (nextOpen: boolean) => {
     // Only block for loading if it's a branch dropdown
@@ -93,7 +100,7 @@ export function Dropdown({
           }
           className={cn(
             "text-md w-full text-input justify-between overflow-y-hidden overflow-x-scroll scrollbar-background-hidden border-[3px] border-black p-6 transition-transform hover:text-secondary-foreground hover:bg-gray-300 max-sm:w-full group",
-            isBranchDropdown && (!branches || branches.length === 0)
+            isBranchDropdown && (!branches || branches.length === 0 || !shouldShowBranches)
               ? "opacity-60 cursor-not-allowed"
               : "",
             !isBranchDropdown && !ecosystems.length
@@ -105,6 +112,8 @@ export function Dropdown({
           {isBranchDropdown
             ? loadingBranches
               ? "Loading branches..."
+              : !shouldShowBranches
+              ? "Select Branch..."
               : selectedBranch || "Select Branch..."
             : selectedEcosystem || "Select ecosystem"}
           <ChevronsUpDown className="opacity-50" />

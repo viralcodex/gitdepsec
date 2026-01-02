@@ -12,7 +12,7 @@ import DependencyDetails from "@/components/dependency-sidebar/dependency-detail
 import DependencyAIDetails from "./dependency-ai-details";
 import { getAiVulnerabilitiesSummary } from "@/lib/api";
 import Image from "next/image";
-import { useTextSelection } from "@/providers/textSelectionProvider";
+// import { useTextSelection } from "@/providers/textSelectionProvider";
 import { useGraphState } from "@/store/app-store";
 
 interface DependencyDetailsProps {
@@ -26,7 +26,7 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
 
   const { dependencies } = useGraphState();
 
-  const { setSelectedDependency } = useTextSelection();
+  // const { setSelectedDependency } = useTextSelection();
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
@@ -68,15 +68,15 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
 
   // console.log("All Details:", allDetails);
 
-  // Set the selected dependency in context whenever allDetails changes
-  useEffect(() => {
-    if (allDetails) {
-      setSelectedDependency(allDetails);
-    }
-    return () => {
-      setSelectedDependency(undefined); // Clean up when component unmounts
-    };
-  }, [allDetails, setSelectedDependency]);
+  // // Set the selected dependency in context whenever allDetails changes
+  // useEffect(() => {
+  //   if (allDetails) {
+  //     setSelectedDependency(allDetails);
+  //   }
+  //   return () => {
+  //     setSelectedDependency(undefined); // Clean up when component unmounts
+  //   };
+  // }, [allDetails, setSelectedDependency]);
 
   //group references by type
   const processedVulns = allDetails?.vulnerabilities?.map((vuln) => {
@@ -190,6 +190,17 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
     }
     fetchSummary();
   }, [allDetails, fetchSummary]);
+
+  const refreshSummary = () => {
+    setSummary(null);
+    setError(null);
+    setIsLoading(true);
+    fetchSummary();
+    toast.dismiss();
+    toast.loading("Generating AI Summary...", {
+      duration: 1500,
+    });
+  };
 
   const downloadDetails = () => {
     const blob = new Blob([overallText], { type: "text/plain" });
@@ -306,13 +317,7 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
                       <RefreshCcw
                         size={24}
                         className="cursor-pointer bg-background rounded-sm"
-                        onClick={() => {
-                          fetchSummary();
-                          toast.dismiss();
-                          toast.loading("Generating AI Summary...", {
-                            duration: 1500,
-                          });
-                        }}
+                        onClick={refreshSummary}
                       />
                     </TooltipTrigger>
                     <TooltipContent>Refresh AI Response</TooltipContent>

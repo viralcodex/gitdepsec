@@ -5,13 +5,14 @@ import {
   EcosystemGraphMap,
   GraphData,
   GroupedDependencies,
+  HistoryItem,
   ManifestFileContentsApiResponse,
   Relation,
   TransitiveDependency,
   Vulnerability,
 } from "@/constants/model";
-import { manifestFiles } from "@/constants/constants";
-import { useErrorState, useGraphState } from "@/store/app-store";
+import { CACHE_TTL, manifestFiles } from "@/constants/constants";
+import { store, useErrorState, useGraphState, useRepoState } from "@/store/app-store";
 
 export const useGraph = (
   username?: string,
@@ -28,11 +29,7 @@ export const useGraph = (
     setGraphData,
     setLoading,
   } = useGraphState();
-  // const [dependencies, setDependencies] = useState<GroupedDependencies>({});
-  // const [manifestData, setManifestData] =
-  //   useState<ManifestFileContentsApiResponse | null>(null);
-  // const [graphData, setGraphData] = useState<EcosystemGraphMap>({});
-  // const [loading, setLoading] = useState(true);
+  const { setBranches } = useRepoState();
 
   const fetchDependencies = useCallback(
     async (
@@ -258,30 +255,81 @@ export const useGraph = (
     return maxCvss;
   };
 
+  const fetchFromCache = useCallback(() => {
+    const currentRepoKey = `${username}/${repo}/${branch}`;
+    const persistedData = store.getState().savedHistoryItems;
+    if (!persistedData) {
+      console.log("No persisted data found in localStorage.");
+      return false;
+    }
+
+    // Search for matching history item using for...of to allow early return
+    for (const items of Object.values(persistedData)) {
+      const matchingItem = (items as HistoryItem[]).find(
+        (item: HistoryItem) =>
+          `${item.username}/${item.repo}/${item.branch}` === currentRepoKey &&
+          item.graphData &&
+          Object.keys(item.graphData).length > 0
+      );
+
+      if (matchingItem && !forceRefresh) {
+        const isCacheStale = matchingItem.cachedAt && 
+          (Date.now() - matchingItem.cachedAt > CACHE_TTL);
+        if (isCacheStale) {
+          console.log("Cache found but stale (>3 days), fetching fresh data...");
+          return false;
+        }
+        console.log("Cache hit - using fresh cached data");
+        setGraphData(matchingItem.graphData, currentRepoKey);
+        setDependencies(matchingItem.dependencies);
+        setBranches(matchingItem.branches || []);
+        setLoading(false);
+        return true;
+      }
+    }
+    return false;
+  }, [
+    branch,
+    forceRefresh,
+    repo,
+    setBranches,
+    setDependencies,
+    setGraphData,
+    setLoading,
+    username,
+  ]);
+
+  // (MAIN EFFECT) Fetch dependencies when username, repo, or branch changes
   useEffect(() => {
+    if (forceRefresh) {
+      console.log("Force refresh active, skipping cache check...");
+      setLoading(true);
+      fetchDependencies(username, repo, branch, file, forceRefresh);
+      return;
+    }
     setLoading(true);
-    // console.log("Fetching dependencies for:", {
-    //   username,
-    //   repo,
-    //   branch,
-    //   file,
-    //   refreshTrigger,
-    // });
+    
+    if (fetchFromCache()) {
+      console.log("Cache hit, skipping backend fetch...");
+      return;
+    }
+    console.log("Cache miss, fetching from backend...");
     fetchDependencies(username, repo, branch, file, forceRefresh);
   }, [
     branch,
     file,
     repo,
     username,
-    fetchDependencies,
     forceRefresh,
+    fetchDependencies,
     setLoading,
+    fetchFromCache,
   ]);
 
   useEffect(() => {
-    if (Object.keys(dependencies).length > 0) {
-      const newGraphData = createGraphData(dependencies);
-      setGraphData(newGraphData);
-    }
-  }, [dependencies, createGraphData, setGraphData]);
+    if (Object.keys(dependencies).length === 0) return;
+    const currentRepoKey = `${username}/${repo}/${branch}`;
+    const newGraphData = createGraphData(dependencies);
+    setGraphData(newGraphData, currentRepoKey);
+  }, [dependencies, createGraphData, setGraphData, username, repo, branch]);
 };

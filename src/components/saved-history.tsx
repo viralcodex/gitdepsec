@@ -11,6 +11,7 @@ import {
   useSavedHistoryState,
   useUIState,
 } from "@/store/app-store";
+import { HistoryItem } from "@/constants/model";
 
 interface SavedHistoryProps {
   addButtonRef: React.RefObject<HTMLDivElement | null>;
@@ -19,10 +20,10 @@ interface SavedHistoryProps {
 const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
   const { savedHistoryItems, setSavedHistoryItems, resetSavedHistoryState } =
     useSavedHistoryState();
-  const { setLoadedRepoKey, setCurrentUrl } = useRepoState();
-  const router = useRouter();
+  const { setLoadedRepoKey, loadedRepoKey } = useRepoState();
   const { isSavedHistorySidebarOpen, setSavedHistorySidebarOpen } =
     useUIState();
+  const router = useRouter();
   const histCardRef = useRef<HTMLDivElement>(null);
   const toggleBarRef = useRef<HTMLDivElement>(null);
 
@@ -77,16 +78,21 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
     };
   }, [isSavedHistorySidebarOpen, closeHistoryCard, addButtonRef]);
 
-  const parseAndNavigate = (hist: { [key: string]: string }) => {
-    const githubUrl = `https://github.com/${hist.sanitizedUsername}/${hist.sanitizedRepo}`;
-    // Reset to null to force refetch when navigating to different repo
-    setLoadedRepoKey(null);
-    setCurrentUrl(githubUrl);
+  const parseAndNavigate = (hist: HistoryItem) => {
+    // const githubUrl = `https://github.com/${hist.username}/${hist.repo}`;
+    const newRepoKey = `${hist.username}/${hist.repo}`;
+    
+    // Only reset loadedRepoKey if navigating to a different repo
+    if (loadedRepoKey !== newRepoKey) {
+      setLoadedRepoKey(null);
+    }
+    // setCurrentUrl(githubUrl);
     router.push(
-      `/${hist.sanitizedUsername}/${hist.sanitizedRepo}?branch=${hist.branch}`
+      `/${hist.username}/${hist.repo}?branch=${hist.branch}`
     );
   };
 
+  //have to read from local storage again to get latest data
   const refreshHistory = () => {
     const persistedData = localStorage.getItem("gitdepsec_storage");
     if (persistedData) {
@@ -158,7 +164,9 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
         <hr className="" />
         <CardContent className="p-2 py-4">
           {savedHistoryItems && Object.keys(savedHistoryItems).length > 0 ? (
-            Object.entries(savedHistoryItems).map(([date, items]) => {
+            Object.entries(savedHistoryItems)
+              .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
+              .map(([date, items]) => {
               return (
                 <div key={date} className="px-3">
                   <h4
@@ -176,7 +184,7 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
                         onClick={() => parseAndNavigate(hist)}
                       >
                         <p className="font-semibold text-sm text-accent">
-                          {hist.sanitizedUsername}/{hist.sanitizedRepo} :{" "}
+                          {hist.username}/{hist.repo} :{" "}
                           {hist.branch}
                         </p>
                       </li>
