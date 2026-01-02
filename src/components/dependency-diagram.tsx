@@ -806,12 +806,4 @@ const DepDiagram = ({
   );
 };
 
-export default React.memo(DepDiagram, (prevProps, nextProps) => {
-  return (
-    prevProps.selectedEcosystem === nextProps.selectedEcosystem &&
-    prevProps.windowSize.width === nextProps.windowSize.width &&
-    prevProps.windowSize.height === nextProps.windowSize.height &&
-    prevProps.isMobile === nextProps.isMobile &&
-    prevProps.svgRef === nextProps.svgRef
-  );
-});
+export default React.memo(DepDiagram);

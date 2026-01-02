@@ -25,3 +25,8 @@ export const PROGRESS_MESSAGES = [
   "Preparing the final touches",
   "Good things take time",
 ];
+
+export const MAX_HISTORY_ITEMS = 10;
+export const CACHE_TTL = 3 * 24 * 60 * 60 * 1000; // 3 days
+
+export const defaultBranchNames = ["main", "master", "develop", "dev"];

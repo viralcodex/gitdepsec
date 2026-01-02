@@ -1,7 +1,7 @@
 "use client"
 import { useState, useEffect } from "react";
 import { verifyUrl } from "@/lib/utils";
-import { useRepoState, useErrorState } from "@/store/app-store";
+import { useErrorState } from "@/store/app-store";
 
 interface UseUrlInputProps {
   username: string;
@@ -11,7 +11,6 @@ interface UseUrlInputProps {
 
 export const useUrlInput = ({ username, repo, branch }: UseUrlInputProps) => {
   const [inputUrl, setInputUrl] = useState<string>("");
-  const { setCurrentUrl } = useRepoState();
   const { setBranchError } = useErrorState();
 
   // Initialize URL from route parameters when route changes
@@ -28,7 +27,6 @@ export const useUrlInput = ({ username, repo, branch }: UseUrlInputProps) => {
     if (url && !verifyUrl(url, setBranchError)) {
       return;
     }
-    setCurrentUrl(url);
     setBranchError("");
   };
 

@@ -4,7 +4,7 @@ import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@radix-ui/react-tooltip";
+} from "@/components/ui/tooltip";
 import { TooltipProvider } from "./ui/tooltip";
 
 interface HeaderToggleProps {

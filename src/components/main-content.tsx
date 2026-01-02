@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Input } from "./ui/input";
 import { Dropdown } from "./ui/dropdown";
 import { Button } from "./ui/button";
@@ -12,6 +12,7 @@ import { store } from "@/store/app-store";
 import { useRepoData } from "@/hooks/useRepoData";
 import useFileUpload from "@/hooks/useFileUpload";
 import { AlertTriangle } from "lucide-react";
+import { getRepoKeyFromUrl } from "@/lib/utils";
 
 const MainContent = () => {
   const {
@@ -20,6 +21,7 @@ const MainContent = () => {
     loadingBranches,
     loadedRepoKey
   } = useRepoState();
+
   const { branchError, setBranchError } = useErrorState();
   const { inputFile: file, setInputFile: setFile } = useFileUpload();
   const { newFileName, uploaded, setUploaded, resetFileState } = useFileState();
@@ -30,6 +32,15 @@ const MainContent = () => {
   
   //CUSTOM HOOK
   useRepoData(debouncedUrl);
+
+  const currentRepoKey = useMemo(() => {
+    if (!inputUrl) return null;
+    return getRepoKeyFromUrl(inputUrl);
+  }, [inputUrl]);
+
+  const shouldShowBranches = useMemo(() => {
+    return currentRepoKey === loadedRepoKey;
+  }, [currentRepoKey, loadedRepoKey]);
 
   // Debounce the URL input
   useEffect(() => {
@@ -49,11 +60,13 @@ const MainContent = () => {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    //empty form
     if (!debouncedUrl && !file) {
       setBranchError("Please enter a GitHub URL or upload a manifest file.");
       return;
     }
 
+    //file upload
     if (file) {
       if (!uploaded) {
         toast.error("Please wait for the file to be uploaded.");
@@ -64,6 +77,7 @@ const MainContent = () => {
       return;
     }
 
+    //url analysis
     if (debouncedUrl && !file && loadedRepoKey) {
       const branchParam = selectedBranch
         ? `?branch=${encodeURIComponent(selectedBranch)}`
@@ -109,7 +123,7 @@ const MainContent = () => {
           </div>
         </div>
         <div className="flex w-full flex-col items-center justify-center gap-y-2">
-          <Dropdown />
+          <Dropdown shouldShowBranches={shouldShowBranches} />
           <div className="flex items-center w-full gap-x-2 mt-2">
             <div className="flex-grow h-px bg-white" />
             <span className="font-bold text-muted-foreground text-sm sm:text-base">
@@ -138,7 +152,7 @@ const MainContent = () => {
           </div>
           <div className="flex w-full items-center justify-center gap-x-4" role="group" aria-label="Form actions">
             <Button
-              className="cursor-pointer bg-accent text-black border-[3px] border-black p-4 px-4 text-base transition-transform hover:text-accent-foreground hover:-translate-x-0.5 hover:-translate-y-0.5 hover:transform hover:bg-primary-foreground sm:p-6 sm:px-6 sm:text-lg disabled:cursor-not-allowed"
+              className="cursor-pointer bg-accent text-black border-[3px] border-black p-4 px-4 text-base transition-transform hover:text-accent-foreground hover:bg-primary-foreground sm:p-6 sm:px-6 sm:text-lg disabled:cursor-not-allowed"
               type="submit"
               disabled={isDisabled()}
               aria-label="Analyse repository dependencies"
@@ -146,7 +160,7 @@ const MainContent = () => {
               Analyse
             </Button>
             <Button
-              className="cursor-pointer bg-accent-foreground text-accent border-[3px] border-black p-4 px-4 text-base transition-transform hover:text-accent-foreground hover:-translate-x-0.5 hover:-translate-y-0.5 hover:transform hover:bg-primary-foreground sm:p-6 sm:px-6 sm:text-lg"
+              className="cursor-pointer bg-accent-foreground text-accent border-[3px] border-black p-4 px-4 text-base transition-transform hover:text-accent-foreground hover:bg-primary-foreground sm:p-6 sm:px-6 sm:text-lg"
               type="reset"
               onClick={() => {
                 store.getState().clearForm();
