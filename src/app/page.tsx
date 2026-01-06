@@ -2,6 +2,12 @@ import Banner from "@/components/banner";
 import MainContent from "@/components/main-content";
 import Image from "next/image";
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
+
+const HistoryPanel = dynamic(
+  () => import("@/components/history-items/history-panel"),
+  { ssr: true }
+);
 
 export const metadata: Metadata = {
   title: "GitVulSafe - Free Dependency Vulnerability Scanner for GitHub & Manifest Files",
@@ -18,18 +24,10 @@ export default function Home() {
     <div className="h-full flex flex-col items-center justify-evenly">
       <div className="flex flex-col px-6 pt-10 items-center justify-evenly">
         <Banner />
-        <div className="mx-auto max-w-4xl text-center">
-          <p className="mt-4 text-md">
-            Visualise, detect and fix dependency vulnerabilities of your
-            codebase — worry-free.
-          </p>
-          <p className="lg:text-sm">
-            Powered by <span className="font-bold">AI</span>
-          </p>
-        </div>
       </div>
-      <div className="flex-1 flex flex-col justify-around items-center max-w-4xl w-full px-4 md:px-0">
+      <div className="flex-1 flex flex-col justify-evenly items-center max-w-4xl w-full px-4 sm:space-y-5">
         <MainContent />
+        <HistoryPanel />
       </div>
       <div className="hidden sm:block absolute top-30 left-0 -z-10 w-[300px] h-[300px] opacity-40">
         <Image

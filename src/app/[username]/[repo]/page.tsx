@@ -3,9 +3,9 @@ import { useGraph } from "@/hooks/useGraph";
 import { useRepoData } from "@/hooks/useRepoData";
 import { useParams, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
-import TopHeaderGithub from "../../../components/top-header-github";
+import TopHeaderGithub from "../../../components/top-headers/top-header-github";
 import { GraphNode } from "@/constants/model";
-import TopHeaderFile from "@/components/top-header-file";
+import TopHeaderFile from "@/components/top-headers/top-header-file";
 import { downloadFixPlanPDF } from "@/lib/utils";
 import toast from "react-hot-toast";
 import { useIsMobile } from "@/hooks/useMobile";
@@ -15,6 +15,7 @@ import {
   useUIState,
   useDiagramState,
   useFileState,
+  useAppActions,
 } from "@/store/app-store";
 import useFixPlanGeneration from "@/hooks/useFixPlanGeneration";
 import useFileUpload from "@/hooks/useFileUpload";
@@ -26,7 +27,7 @@ import dynamic from "next/dynamic";
 import DiagramProgress from "@/components/diagram-progress";
 
 //LAZY LOADING COMPONENTS
-const SavedHistory = dynamic(() => import("@/components/saved-history"));
+const HistorySidebar = dynamic(() => import("@/components/history-items/history-sidebar"));
 const DepDiagram = dynamic(() => import("@/components/dependency-diagram"), {
   ssr: false,
   loading: () => <DiagramProgress />,
@@ -54,7 +55,8 @@ const Page = () => {
   const isMobile = useIsMobile();
 
   // Store selectors
-  const { setUploaded, setNewFileName, resetFileState } = useFileState();
+  const { setFileUploadState } = useFileState();
+  const { resetNavigationState } = useAppActions();
   const { error } = useErrorState();
   const { graphData, resetGraphState } = useGraphState();
   const {
@@ -62,7 +64,6 @@ const Page = () => {
     isFixPlanDialogOpen,
     setFileHeaderOpen,
     setFixPlanDialogOpen,
-    resetUIState,
   } = useUIState();
   const { selectedNode, setSelectedNode, resetDiagramState } =
     useDiagramState();
@@ -102,22 +103,20 @@ const Page = () => {
     if (file) {
       setFileHeaderOpen(true);
       setInputFile(null);
-      setUploaded(false);
-      setNewFileName(file);
+      setFileUploadState(file, false);
     } else {
       setFileHeaderOpen(false);
     }
-  }, [file, setFileHeaderOpen, setInputFile, setUploaded, setNewFileName]);
+  }, [file, setFileHeaderOpen, setInputFile, setFileUploadState]);
 
   //Handle navigation event to close everything
   useEffect(() => {
     const handleNavigation = () => {
-      resetFileState();
-      resetUIState();
+      resetNavigationState();
     };
     window.addEventListener("popstate", handleNavigation);
     return () => window.removeEventListener("popstate", handleNavigation);
-  }, [resetFileState, resetUIState]);
+  }, [resetNavigationState]);
 
   useEffect(() => {
     resetDiagramState();
@@ -140,7 +139,6 @@ const Page = () => {
   }, [error]);
 
   const handleRefresh = useCallback(() => {
-    setSelectedEcosystem(undefined);
     resetGraphState();
     svgRef.current = null;
     setForceRefresh(prev => !prev);
@@ -171,7 +169,7 @@ const Page = () => {
             : "flex-1"
         }
       >
-        <SavedHistory addButtonRef={addButtonRef} />
+        <HistorySidebar addButtonRef={addButtonRef} />
         {fileHeaderOpen ? (
           <TopHeaderFile
             inputFile={inputFile}

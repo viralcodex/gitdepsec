@@ -11,11 +11,11 @@ import { useSavedHistoryState, useGraphState } from "@/store/app-store";
 import { HistoryItem } from "@/constants/model";
 import { MAX_HISTORY_ITEMS } from "@/constants/constants";
 
-interface HeaderOptionsProps {
+interface SaveAnalysisHistoryProps {
   data?: HistoryItem;
   addButtonRef?: React.RefObject<HTMLDivElement | null>;
 }
-const HeaderOptions = ({ data, addButtonRef }: HeaderOptionsProps) => {
+const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) => {
   const { savedHistoryItems, setSavedHistoryItems } = useSavedHistoryState();
   const { graphRepoKey } = useGraphState();
 
@@ -36,12 +36,10 @@ const HeaderOptions = ({ data, addButtonRef }: HeaderOptionsProps) => {
       toast.error("No history to save!");
       return;
     }
-  
     if( !data.username || !data.repo || !data.branch || data.branch.trim() === "" ){
       toast.error("Incomplete data to save history!");
       return;
     }
-
     if(Object.values(savedHistoryItems).flat().length >= MAX_HISTORY_ITEMS)
     {
       toast.error("History limit reached! Please delete some entries before adding new ones.");
@@ -115,4 +113,4 @@ const HeaderOptions = ({ data, addButtonRef }: HeaderOptionsProps) => {
   );
 };
 
-export default HeaderOptions;
+export default SaveAnalysisHistory;

@@ -1,40 +1,37 @@
 import { useEffect, useRef, useCallback } from "react";
-import { Card, CardContent, CardHeader } from "./ui/card";
-import { useRouter } from "next/navigation";
-import { RefreshCcw, Trash2 } from "lucide-react";
+import { Card, CardContent, CardHeader } from "../ui/card";
+import { ArrowRight, RefreshCcw, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
-import { Tooltip, TooltipContent } from "./ui/tooltip";
-import { TooltipTrigger } from "./ui/tooltip";
-import {
-  useRepoState,
-  useSavedHistoryState,
-  useUIState,
-} from "@/store/app-store";
+import { Tooltip, TooltipContent } from "../ui/tooltip";
+import { TooltipTrigger } from "../ui/tooltip";
+import { useSavedHistoryState, useUIState } from "@/store/app-store";
 import { HistoryItem } from "@/constants/model";
+import { useHistoryNavigation } from "@/hooks/useHistoryNavigation";
 
 interface SavedHistoryProps {
   addButtonRef: React.RefObject<HTMLDivElement | null>;
 }
 
-const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
+const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
   const { savedHistoryItems, setSavedHistoryItems, resetSavedHistoryState } =
     useSavedHistoryState();
-  const { setLoadedRepoKey, loadedRepoKey } = useRepoState();
   const { isSavedHistorySidebarOpen, setSavedHistorySidebarOpen } =
     useUIState();
-  const router = useRouter();
+  const { navigateToHistory } = useHistoryNavigation();
   const histCardRef = useRef<HTMLDivElement>(null);
   const toggleBarRef = useRef<HTMLDivElement>(null);
 
+  
   const closeHistoryCard = useCallback(() => {
     if (histCardRef.current) {
       histCardRef.current.style.transform = "translateX(calc(-95%))";
       histCardRef.current.style.transition = "transform 0.25s ease-in-out";
+      histCardRef.current.style.opacity = "0.5";
       setSavedHistorySidebarOpen(false);
     }
   }, [setSavedHistorySidebarOpen]);
-
+  
   const openHistoryCard = useCallback(() => {
     if (histCardRef.current) {
       histCardRef.current.style.transform = "translateX(0)";
@@ -47,7 +44,7 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
       setSavedHistorySidebarOpen(true);
     }
   }, [setSavedHistorySidebarOpen]);
-
+  
   const toggleHistoryCard = useCallback(() => {
     if (isSavedHistorySidebarOpen) {
       closeHistoryCard();
@@ -55,7 +52,7 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
       openHistoryCard();
     }
   }, [isSavedHistorySidebarOpen, closeHistoryCard, openHistoryCard]);
-
+  
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
       if (
@@ -77,21 +74,7 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isSavedHistorySidebarOpen, closeHistoryCard, addButtonRef]);
-
-  const parseAndNavigate = (hist: HistoryItem) => {
-    // const githubUrl = `https://github.com/${hist.username}/${hist.repo}`;
-    const newRepoKey = `${hist.username}/${hist.repo}`;
-    
-    // Only reset loadedRepoKey if navigating to a different repo
-    if (loadedRepoKey !== newRepoKey) {
-      setLoadedRepoKey(null);
-    }
-    // setCurrentUrl(githubUrl);
-    router.push(
-      `/${hist.username}/${hist.repo}?branch=${hist.branch}`
-    );
-  };
-
+  
   //have to read from local storage again to get latest data
   const refreshHistory = () => {
     const persistedData = localStorage.getItem("gitdepsec_storage");
@@ -112,20 +95,25 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
       toast.error("No saved history found");
     }
   };
+  
+  const parseAndNavigate = (hist: HistoryItem) => {
+    navigateToHistory(hist);
+    closeHistoryCard();
+  };
 
   const deletehistory = () => {
     resetSavedHistoryState();
     toast.success("All history deleted!");
   };
-
+  
   return (
     <>
       <Card
         ref={histCardRef}
         id="history-card"
         style={{ transform: "translateX(calc(-95%))", opacity: "0.3" }}
-        className="bg-background gap-0 w-[80%] h-130 rounded-xl sm:h-155 sm:w-80 fixed top-91 sm:top-46 left-0 z-101 overflow-auto scrollbar-background-thumb scrollbar-background-bg hover:opacity-100"
-      >
+        className="bg-background gap-0 w-[80%] h-130 rounded-xl sm:h-155 sm:w-80 fixed top-95 sm:top-50 left-0 z-101 overflow-auto scrollbar-background-thumb scrollbar-background-bg hover:opacity-100"
+        >
         <div
           ref={toggleBarRef}
           id="togglebar"
@@ -165,34 +153,39 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
         <CardContent className="p-2 py-4">
           {savedHistoryItems && Object.keys(savedHistoryItems).length > 0 ? (
             Object.entries(savedHistoryItems)
-              .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
+              .sort(
+                ([dateA], [dateB]) =>
+                  new Date(dateB).getTime() - new Date(dateA).getTime()
+              )
               .map(([date, items]) => {
-              return (
-                <div key={date} className="px-3">
-                  <h4
-                    aria-label={`Saved history for ${date}`}
-                    className="text-md font-bold text-primary-foreground pb-2"
-                  >
-                    {date}
-                  </h4>
-                  <hr className="mr-3" />
-                  <ul className="my-1 list-disc ml-3 mr-0 text-accent">
-                    {items.map((hist, index) => (
-                      <li
-                        key={index}
-                        className="py-2 px-2 rounded-md cursor-pointer hover:bg-gray-400/40"
-                        onClick={() => parseAndNavigate(hist)}
-                      >
-                        <p className="font-semibold text-sm text-accent">
-                          {hist.username}/{hist.repo} :{" "}
-                          {hist.branch}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })
+                return (
+                  <div key={date} className="px-3">
+                    <h4
+                      aria-label={`Saved history for ${date}`}
+                      className="text-md font-bold text-primary-foreground pb-2"
+                    >
+                      {date}
+                    </h4>
+                    <hr />
+                    <ul className="my-2">
+                      {items.map((hist, index) => (
+                        <li
+                          key={index}
+                          className="py-2 px-2 rounded-md cursor-pointer hover:bg-gray-400/40"
+                          onClick={() => parseAndNavigate(hist)}
+                        >
+                          <p className="font-semibold text-sm text-secondary flex flex-row justify-between items-center">
+                            <span>
+                              {hist.username}/{hist.repo} · {hist.branch}
+                            </span>
+                            <ArrowRight className="ml-1 h-4 w-4 text-secondary" />
+                          </p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })
           ) : (
             <p className="text-accent text-sm w-full p-5">
               No saved history available...
@@ -204,4 +197,4 @@ const SavedHistory = ({ addButtonRef }: SavedHistoryProps) => {
   );
 };
 
-export default SavedHistory;
+export default HistorySidebar;

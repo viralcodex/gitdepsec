@@ -9,9 +9,9 @@ import { cn, verifyUrl } from "@/lib/utils";
 import { LucideArrowBigRight, LucideLoader2, RefreshCcwDot } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import HeaderToggle from "./header-toggle";
-import HeaderOptions from "./header-options";
-import { ButtonGroup } from "./ui/button-group";
+import HeaderToggle from "../header-toggle";
+import HeaderOptions from "../save-analysis-history";
+import { ButtonGroup } from "../ui/button-group";
 import { useRepoState, useGraphState, useDiagramState, useErrorState, useUIState } from "@/store/app-store";
 import { HistoryItem } from "@/constants/model";
 
@@ -105,28 +105,28 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
     >
       <div className="flex flex-col items-center justify-center px-4 pt-4 w-full">
         <Card className="relative max-h-[200px] bg-background sm:max-w-[700px] w-full border-2 border-accent mx-auto mt-4 flex justify-center p-4 gap-4 sm:flex-row flex-col">
+          <HeaderOptions data={result} addButtonRef={addButtonRef} />
           <HeaderToggle
             from="github"
             setIsFileHeaderOpen={setFileHeaderOpen}
           />
-          <HeaderOptions data={result} addButtonRef={addButtonRef} />
           <Input
-            className="sm:w-[60%] h-13 border-1"
+            className="sm:w-[65%] h-14 border-1"
             placeholder="https://github.com/username/repo"
             value={inputUrl}
             onChange={handleInputChange}
             aria-label="GitHub repository URL"
           />
-        <div className="sm:w-[35%] sm:max-w-[35%] h-13">
+        <div className="sm:w-[35%] h-14">
           <Dropdown
-            className="shadow-none border-input border-1 h-full text-sm px-3 overflow-x-auto"
+            className="shadow-none border-input border-1 text-sm px-3 overflow-x-auto"
           />
         </div>
           <ButtonGroup className="sm:flex-row" role="group" aria-label="Repository actions">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  className="flex-1 sm:h-13 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
+                  className="flex-1 sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
                   type="submit"
                   disabled={isDisabled()}
                   aria-label="Analyse GitHub repository"
@@ -148,7 +148,7 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  className="flex-1 sm:h-13 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
+                  className="flex-1 sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
                   type="button"
                   onClick={onRefreshAnalysis}
                   disabled={isDisabled()}

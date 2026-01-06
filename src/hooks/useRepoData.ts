@@ -12,12 +12,7 @@ export const useRepoData = (url: string | null) => {
   const {
     page,
     loadedRepoKey,
-    setBranches,
-    setSelectedBranch,
     setLoadingBranches,
-    setHasMore,
-    setTotalBranches,
-    setLoadedRepoKey,
     resetRepoState,
   } = useRepoState();
 
@@ -74,7 +69,7 @@ export const useRepoData = (url: string | null) => {
 
       /**
        * Always find the cached item so we can update it later
-       * Match by repo only (not branch) since branches list is same for all branches
+       * Match by repo only (not branch) since branches list is same for any username/repo key
        * Prioritize finding an item with a default branch name for better UX
        */
       const matchingItems = Object.values(historyItems)
@@ -97,14 +92,16 @@ export const useRepoData = (url: string | null) => {
         cachedItem.branches &&
         cachedItem.branches.length > 0
       ) {
-        setBranches(cachedItem.branches);
-        setSelectedBranch(cachedItem.branch || null);
-        setLoadedRepoKey(graphRepoKey);
-        setLoadingBranches(false);
-        setBranchError("");
         const hasFullPage = cachedItem.branches.length >= pageSize;
-        setHasMore(hasFullPage);
-        setTotalBranches(cachedItem.branches.length);
+        store.setState({
+          branches: cachedItem.branches,
+          selectedBranch: cachedItem.branch || null,
+          loadedRepoKey: graphRepoKey,
+          loadingBranches: false,
+          branchError: "",
+          hasMore: hasFullPage,
+          totalBranches: cachedItem.branches.length,
+        });
         return;
       }
 
@@ -138,8 +135,6 @@ export const useRepoData = (url: string | null) => {
         } else {
           branchList = branchesResponse.branches || [];
         }
-        setSelectedBranch(branchesResponse.defaultBranch ?? null);
-        setLoadedRepoKey(graphRepoKey);
       } else {
         const currentBranches = store.getState().branches;
         const newBranchesToAdd = branchesResponse.branches || [];
@@ -148,23 +143,25 @@ export const useRepoData = (url: string | null) => {
         );
         branchList = uniqueBranches;
       }
-      setBranches(branchList);
-      setHasMore(branchesResponse.hasMore!);
-      setTotalBranches(branchesResponse.total || 0);
-      setBranchError("");
+
+      store.setState({
+        branches: branchList,
+        ...(page === 1 && {
+          selectedBranch: branchesResponse.defaultBranch ?? null,
+          loadedRepoKey: graphRepoKey,
+        }),
+        hasMore: branchesResponse.hasMore || false,
+        totalBranches: branchesResponse.total || 0,
+        loadingBranches: false,
+        branchError: "",
+      });
       updateCacheBranches(cachedItem, branchList);
-      setLoadingBranches(false);
     },
     [
       url,
       setBranchError,
       setLoadingBranches,
       page,
-      setBranches,
-      setSelectedBranch,
-      setLoadedRepoKey,
-      setHasMore,
-      setTotalBranches,
       resetRepoState,
       updateCacheBranches,
     ]
@@ -181,11 +178,6 @@ export const useRepoData = (url: string | null) => {
       verifyUrl(url, setBranchError);
       return;
     }
-
-    // if (url !== currentUrl) {
-    //   // only set currentUrl if it has changed
-    //   setCurrentUrl(url);
-    // }
 
     let debounceTimeout: NodeJS.Timeout;
     // Case 1: Different repo - always fetch branches (from cache or API)
