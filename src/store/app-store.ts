@@ -35,6 +35,7 @@ interface FileState {
   uploaded: boolean;
   setNewFileName: (name: string) => void;
   setUploaded: (uploaded: boolean) => void;
+  setFileUploadState: (name: string, uploaded: boolean) => void;
   resetFileState: () => void;
 }
 
@@ -117,6 +118,7 @@ interface AppStore
     UIState,
     SavedHistoryState {
   clearForm: () => void;
+  resetNavigationState: () => void;
 }
 
 export const store = create<AppStore>()(
@@ -166,6 +168,8 @@ export const store = create<AppStore>()(
         uploaded: false,
         setNewFileName: (name: string) => set({ newFileName: name }),
         setUploaded: (uploaded: boolean) => set({ uploaded }),
+        setFileUploadState: (name: string, uploaded: boolean) =>
+          set({ newFileName: name, uploaded }),
         resetFileState: () =>
           set({
             newFileName: "",
@@ -296,11 +300,31 @@ export const store = create<AppStore>()(
           }),
 
         // Clear Form
-        clearForm: () => {
-          const s = store.getState();
-          s.resetRepoState();
-          s.resetErrorState();
-        },
+        clearForm: () =>
+          set({
+            branches: [],
+            selectedBranch: null,
+            loadingBranches: false,
+            hasMore: false,
+            totalBranches: 0,
+            page: 1,
+            currentUrl: null,
+            loadedRepoKey: null,
+            error: null,
+            manifestError: [],
+            branchError: null,
+            fixPlanError: {},
+          }),
+        
+        // Reset Navigation State (File + UI)
+        resetNavigationState: () =>
+          set({
+            newFileName: "",
+            uploaded: false,
+            fileHeaderOpen: false,
+            isFixPlanDialogOpen: false,
+            isSavedHistorySidebarOpen: false,
+          }),
       }),
       {
         name: "gitdepsec_storage",
@@ -350,6 +374,7 @@ export const useFileState = () =>
       uploaded: s.uploaded,
       setNewFileName: s.setNewFileName,
       setUploaded: s.setUploaded,
+      setFileUploadState: s.setFileUploadState,
       resetFileState: s.resetFileState,
     }))
   );
@@ -436,5 +461,13 @@ export const useSavedHistoryState = () =>
       savedHistoryItems: s.savedHistoryItems,
       setSavedHistoryItems: s.setSavedHistoryItems,
       resetSavedHistoryState: s.resetSavedHistoryState,
+    }))
+  );
+
+export const useAppActions = () =>
+  store(
+    useShallow((s: AppStore) => ({
+      clearForm: s.clearForm,
+      resetNavigationState: s.resetNavigationState,
     }))
   );

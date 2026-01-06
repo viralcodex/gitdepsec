@@ -1,4 +1,4 @@
-DB_CONTAINER_NAME="dephound-postgres"
+DB_CONTAINER_NAME="gitdepsec-postgres"
 
 if ! [ -x "$(command -v docker)" ]; then
   echo "Error: Docker is not installed." >&2
@@ -46,8 +46,8 @@ fi
 
 docker run -d \
   --name $DB_CONTAINER_NAME \
-  -e POSTGRES_USER=dephound \
+  -e POSTGRES_USER=gitdepsec \
   -e POSTGRES_PASSWORD=$DB_PASSWORD \
-  -e POSTGRES_DB=dephound \
+  -e POSTGRES_DB=gitdepsec \
   -p $DB_PORT:5432 \
   docker.io/postgres:15-alpine && echo "Database container '$DB_CONTAINER_NAME' successfully started."

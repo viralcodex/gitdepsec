@@ -12,24 +12,20 @@ import { store } from "@/store/app-store";
 import { useRepoData } from "@/hooks/useRepoData";
 import useFileUpload from "@/hooks/useFileUpload";
 import { AlertTriangle } from "lucide-react";
-import { getRepoKeyFromUrl } from "@/lib/utils";
+import { cn, getRepoKeyFromUrl } from "@/lib/utils";
 
 const MainContent = () => {
-  const {
-    branches,
-    selectedBranch,
-    loadingBranches,
-    loadedRepoKey
-  } = useRepoState();
+  const { branches, selectedBranch, loadingBranches, loadedRepoKey } =
+    useRepoState();
 
   const { branchError, setBranchError } = useErrorState();
   const { inputFile: file, setInputFile: setFile } = useFileUpload();
   const { newFileName, uploaded, setUploaded, resetFileState } = useFileState();
   const [inputUrl, setInputUrl] = useState<string>("");
   const [debouncedUrl, setDebouncedUrl] = useState<string>("");
-  
+
   const router = useRouter();
-  
+
   //CUSTOM HOOK
   useRepoData(debouncedUrl);
 
@@ -96,16 +92,18 @@ const MainContent = () => {
   };
 
   return (
-    <Card className="w-full max-w-3xl border-[3px] border-black bg-gray-300/60 p-4 sm:p-8 shadow-[0px_0px_10px_0px_#FFFFFF] backdrop-blur-[1px]">
-      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
-        <div className="flex flex-row gap-3 sm:flex-row sm:gap-4">
-          <div className="flex-1 flex flex-col">
+    <Card className="w-full max-w-3xl border-[3px] border-black bg-gray-300/55 p-6 sm:p-8 shadow-[0px_0px_10px_0px_#AAAAAA] backdrop-blur-[1px]">
+      <form onSubmit={handleSubmit} className="space-y-3">
+        <section className="flex flex-col space-y-3 sm:flex-row sm:gap-4 gap-3 w-full">
+          <div className="flex w-full flex-col flex-1">
             <Input
               onChange={(e) => setInputUrl(e.target.value)}
               value={inputUrl}
-              className={`flex-1 rounded-md border-[3px] px-3 py-2 text-base font-bold placeholder:text-base placeholder:font-normal sm:px-4 sm:py-4 sm:text-lg sm:placeholder:text-lg ${
-                branchError ? "border-red-600" : "border-black"
-              }`}
+              className={cn(
+                `flex-1 w-full rounded-md border-[3px] px-3 py-2.5 sm:px-4 sm:py-4 text-sm font-bold placeholder:text-base placeholder:font-normal sm:text-lg sm:placeholder:text-lg ${
+                  branchError ? "border-red-600" : "border-black"
+                }`
+              )}
               placeholder="https://github.com/username/repo"
               disabled={file !== null}
               aria-invalid={!!branchError}
@@ -121,23 +119,30 @@ const MainContent = () => {
               </p>
             )}
           </div>
-        </div>
-        <div className="flex w-full flex-col items-center justify-center gap-y-2">
-          <Dropdown shouldShowBranches={shouldShowBranches} />
-          <div className="flex items-center w-full gap-x-2 mt-2">
+          <div className="flex-1">
+            <Dropdown
+              shouldShowBranches={shouldShowBranches}
+              className=""
+            />
+          </div>
+        </section>
+        <section className="flex w-full flex-col items-center justify-center gap-y-2">
+          <div className="flex items-center w-full gap-x-2">
             <div className="flex-grow h-px bg-white" />
             <span className="font-bold text-muted-foreground text-sm sm:text-base">
               or
             </span>
-            <div className="flex-grow h-px bg-white" aria-hidden="true" />
+            <div className="flex-grow h-px bg-white" />
           </div>
           <div className="flex flex-grow w-full flex-col items-start justify-center my-2">
-            <label htmlFor="manifest-file-input" className="block text-md font-bold text-primary-foreground mb-2">
-              Upload a manifest file{" "}
-              <span className="italic font-semibold">
-                (.json, .yaml, .xml, .txt)
-              </span>{" "}
-              - Max 5MB
+            <label
+              htmlFor="manifest-file-input"
+              className="block text-md font-bold text-primary-foreground mb-2"
+            >
+              <p className="text-sm sm:text-md">
+                Upload a manifest file (max 5MB){" "}
+                <i>(.json, .yaml, .xml, .txt)</i>{" "}
+              </p>
             </label>
             <Input
               id="manifest-file-input"
@@ -150,28 +155,32 @@ const MainContent = () => {
               disabled={inputUrl !== ""}
             />
           </div>
-          <div className="flex w-full items-center justify-center gap-x-4" role="group" aria-label="Form actions">
-            <Button
-              className="cursor-pointer bg-accent text-black border-[3px] border-black p-4 px-4 text-base transition-transform hover:text-accent-foreground hover:bg-primary-foreground sm:p-6 sm:px-6 sm:text-lg disabled:cursor-not-allowed"
-              type="submit"
-              disabled={isDisabled()}
-              aria-label="Analyse repository dependencies"
-            >
-              Analyse
-            </Button>
-            <Button
-              className="cursor-pointer bg-accent-foreground text-accent border-[3px] border-black p-4 px-4 text-base transition-transform hover:text-accent-foreground hover:bg-primary-foreground sm:p-6 sm:px-6 sm:text-lg"
-              type="reset"
-              onClick={() => {
-                store.getState().clearForm();
-                resetFileState();
-                setInputUrl("");
-                setBranchError("");
-              }}
-            >
-              Clear
-            </Button>
-          </div>
+        </section>
+        <div
+          className="flex w-full items-center justify-center gap-x-4 p-0"
+          role="group"
+          aria-label="Form actions"
+        >
+          <Button
+            className="sm:p-6 px-4 py-2 cursor-pointer bg-accent text-black border-[3px] border-black text-base transition-transform hover:text-accent-foreground hover:bg-primary-foreground sm:text-lg disabled:cursor-not-allowed"
+            type="submit"
+            disabled={isDisabled()}
+            aria-label="Analyse repository dependencies"
+          >
+            Analyse
+          </Button>
+          <Button
+            className="sm:p-6 px-4 py-2 cursor-pointer bg-accent-foreground text-accent border-[3px] border-black text-base transition-transform hover:text-accent-foreground hover:bg-primary-foreground sm:text-lg"
+            type="reset"
+            onClick={() => {
+              store.getState().clearForm();
+              resetFileState();
+              setInputUrl("");
+              setBranchError("");
+            }}
+          >
+            Clear
+          </Button>
         </div>
       </form>
     </Card>

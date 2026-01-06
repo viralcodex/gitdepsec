@@ -37,16 +37,21 @@ const Header = () => {
         >
           <span className="text-lg font-bold">
             <span className="text-gray-200">Git</span>
-            <span className="text-blue-500">Vulsafe</span>
+            <span className="text-foreground">Dep</span>
+            <span className="text-blue-400">Sec</span>
           </span>
         </Link>
-        <nav role="navigation" aria-label="Main navigation">
+        <nav
+          role="navigation"
+          aria-label="Main navigation"
+          className="text-white"
+        >
           {isMobile ? (
             <div className="relative">
               {isMenuOpen ? (
                 <button
                   onClick={() => setIsMenuOpen(false)}
-                  className="cursor-pointer text-white border-none bg-transparent"
+                  className="cursor-pointer  border-none bg-transparent"
                   aria-label="Close menu"
                   aria-expanded="true"
                 >
@@ -55,7 +60,7 @@ const Header = () => {
               ) : (
                 <button
                   onClick={() => setIsMenuOpen(true)}
-                  className="cursor-pointer text-white border-none bg-transparent"
+                  className="cursor-pointer  border-none bg-transparent"
                   aria-label="Open menu"
                   aria-expanded="false"
                 >
@@ -71,28 +76,28 @@ const Header = () => {
                   className="flex flex-row items-center space-x-1"
                   aria-label="Visit my GitHub profile"
                 >
-                  <GithubIcon className="text-white h-6 w-6" />
-                  <span className="text-white">My Github</span>
+                  <GithubIcon className=" h-6 w-6" />
+                  <span>My Github</span>
                 </Link>
               </li>
               <li className="flex flex-row items-center space-x-1">
-                <KeyRound className="text-white" aria-hidden="true" />
+                <KeyRound className="" aria-hidden="true" />
                 <button
                   onClick={() => setGithubDialogOpen(true)}
-                  className="cursor-pointer border-none bg-transparent text-white"
+                  className="cursor-pointer border-none bg-transparent "
                   aria-label="Set GitHub Personal Access Token"
                 >
-                  Github PAT
+                  <span>Github PAT</span>
                 </button>
               </li>
               <li className="flex flex-row items-center space-x-1">
-                <Sparkle className="text-white" aria-hidden="true" />
+                <Sparkle className="" aria-hidden="true" />
                 <button
                   onClick={() => setAIDialogOpen(true)}
-                  className="cursor-pointer border-none bg-transparent text-white"
+                  className="cursor-pointer border-none bg-transparent "
                   aria-label="Set AI API Key"
                 >
-                  AI API Key
+                  <span>AI API Key</span>
                 </button>
               </li>
             </ul>
@@ -120,46 +125,41 @@ const Header = () => {
             role="menu"
             aria-label="Mobile navigation menu"
           >
-            <ul className="" role="list">
-              <li
-                className="flex flex-row items-center space-x-2 hover:bg-white/20 pt-2 pb-2 px-4"
-                role="menuitem"
-              >
+            <ul className="text-white" role="list">
+              <li className="" role="menuitem">
                 <Link
                   href="https://github.com/viralcodex/"
-                  className="cursor-pointer"
+                  className="cursor-pointer flex flex-row items-center space-x-2 hover:bg-white/20 pt-2 pb-2 px-4"
                   aria-label="Visit my GitHub profile"
                 >
-                  <button>
-                    <GithubIcon className="text-white h-6 w-6" />
-                    My Github
-                  </button>
+                  <GithubIcon className="h-6 w-6" />
+                  <span>My Github</span>
                 </Link>
               </li>
               <li
                 className="flex flex-row items-center space-x-2 hover:bg-white/20 py-2 px-4"
                 role="menuitem"
               >
-                <KeyRound className="text-white" aria-hidden="true" />
+                <KeyRound className="" aria-hidden="true" />
                 <button
                   onClick={() => setGithubDialogOpen(true)}
-                  className="cursor-pointer border-none bg-transparent text-white"
+                  className="cursor-pointer border-none bg-transparent "
                   aria-label="Set GitHub Personal Access Token"
                 >
-                  Github PAT
+                  <span>Github PAT</span>
                 </button>
               </li>
               <li
                 className="flex flex-row items-center space-x-2 hover:bg-white/20 pt-2 pb-2 px-4"
                 role="menuitem"
               >
-                <Sparkle className="text-white" aria-hidden="true" />
+                <Sparkle className="" aria-hidden="true" />
                 <button
                   onClick={() => setAIDialogOpen(true)}
-                  className="cursor-pointer border-none bg-transparent text-white"
+                  className="cursor-pointer border-none bg-transparent "
                   aria-label="Set AI API Key"
                 >
-                  AI API Key
+                  <span>AI API Key</span>
                 </button>
               </li>
             </ul>

@@ -91,7 +91,11 @@ export function Dropdown({
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
-          aria-label={isBranchDropdown ? "Select Branch Dropdown" : "Select Ecosystem Dropdown"}
+          aria-label={
+            isBranchDropdown
+              ? "Select Branch Dropdown"
+              : "Select Ecosystem Dropdown"
+          }
           variant="outline"
           role="combobox"
           aria-expanded={open}
@@ -99,8 +103,9 @@ export function Dropdown({
             isBranchDropdown ? loadingBranches || !shouldOpen : !shouldOpen
           }
           className={cn(
-            "text-md w-full text-input justify-between overflow-y-hidden overflow-x-scroll scrollbar-background-hidden border-[3px] border-black p-6 transition-transform hover:text-secondary-foreground hover:bg-gray-300 max-sm:w-full group",
-            isBranchDropdown && (!branches || branches.length === 0 || !shouldShowBranches)
+            "sm:h-[56px] text-md w-full text-input justify-between overflow-y-hidden overflow-x-scroll scrollbar-background-hidden border-[3px] border-black px-3 sm:px-4 transition-transform hover:text-secondary-foreground hover:bg-gray-300 max-sm:w-full group",
+            isBranchDropdown &&
+              (!branches || branches.length === 0 || !shouldShowBranches)
               ? "opacity-60 cursor-not-allowed"
               : "",
             !isBranchDropdown && !ecosystems.length
@@ -113,8 +118,8 @@ export function Dropdown({
             ? loadingBranches
               ? "Loading branches..."
               : !shouldShowBranches
-              ? "Select Branch..."
-              : selectedBranch || "Select Branch..."
+                ? "Select Branch..."
+                : selectedBranch || "Select Branch..."
             : selectedEcosystem || "Select ecosystem"}
           <ChevronsUpDown className="opacity-50" />
         </Button>
