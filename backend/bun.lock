@@ -26,7 +26,7 @@
         "morgan": "^1.10.1",
         "multer": "^2.0.2",
         "pg": "^8.16.3",
-        "xml2js": "^0.6.2",
+        "xml2js": "^0.6.2"
       },
       "devDependencies": {
         "@types/bun": "^1.3.6",
@@ -47,9 +47,9 @@
         "eslint-plugin-node": "^11.1.0",
         "eslint-plugin-prettier": "^5.5.4",
         "ts-node": "^10.9.2",
-        "typescript": "^5.8.3",
-      },
-    },
+        "typescript": "^5.8.3"
+      }
+    }
   },
   "packages": {
     "@ai-sdk/google": ["@ai-sdk/google@2.0.52", "", { "dependencies": { "@ai-sdk/provider": "2.0.1", "@ai-sdk/provider-utils": "3.0.20" }, "peerDependencies": { "zod": "^3.25.76 || ^4.1.8" } }, "sha512-2XUnGi3f7TV4ujoAhA+Fg3idUoG/+Y2xjCRg70a1/m0DH1KSQqYaCboJ1C19y6ZHGdf5KNT20eJdswP6TvrY2g=="],
@@ -1150,6 +1150,6 @@
 
     "wrap-ansi-cjs/strip-ansi/ansi-regex": ["ansi-regex@5.0.1", "", {}, "sha512-quJQXlTSUGL2LH9SUXo8VwsY4soanhgo6LNSm84E1LBcE8s3O0wpdiRzyR9z/ZZJMlMWv37qOOb9pdJlMUEKFQ=="],
 
-    "multer/type-is/mime-types/mime-db": ["mime-db@1.52.0", "", {}, "sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg=="],
+    "multer/type-is/mime-types/mime-db": ["mime-db@1.52.0", "", {}, "sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg=="]
   }
 }

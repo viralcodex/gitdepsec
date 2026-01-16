@@ -16,6 +16,7 @@ import {
   useDiagramState,
   useFileState,
   useAppActions,
+  useFixPlanData,
 } from "@/store/app-store";
 import useFixPlanGeneration from "@/hooks/useFixPlanGeneration";
 import useFileUpload from "@/hooks/useFileUpload";
@@ -52,7 +53,6 @@ const Page = () => {
 
   const [forceRefresh, setForceRefresh] = useState<boolean>(false);
   const svgRef = useRef<SVGSVGElement | null>(null);
-  const fixPlanRef = useRef<HTMLDivElement>(null);
   const addButtonRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
 
@@ -69,6 +69,7 @@ const Page = () => {
   } = useUIState();
   const { selectedNode, setSelectedNode, resetDiagramState } =
     useDiagramState();
+  const { globalFixPlan, ecosystemFixPlans } = useFixPlanData();
 
   // Custom hooks
   const { generateFixPlan } = useFixPlanGeneration({ username, repo, branch });
@@ -151,14 +152,35 @@ const Page = () => {
     svgRef.current = null;
   };
 
+  const downloadFixPlan = async () => {
+    try {
+      const repoName = `${username}-${repo}`;
+      const hasMultipleEcosystems = ecosystemOptions.length > 1;
+
+      // Get the appropriate fix plan data
+      const planData = hasMultipleEcosystems
+        ? ecosystemFixPlans[ecosystemOptions[0]]
+        : globalFixPlan || ecosystemFixPlans[ecosystemOptions[0]];
+
+      if (!planData) {
+        toast.error("No fix plan available to download");
+        return;
+      }
+
+      await downloadFixPlanPDF(planData, repoName);
+      toast.success("Fix plan PDF downloaded!");
+    } catch (error) {
+      toast.error("Failed to generate PDF");
+      console.error(error);
+    }
+  };
+
   return (
     <div className="flex flex-col h-full">
       {isFixPlanDialogOpen && (
         <FixPlanCard
           onClose={() => setFixPlanDialogOpen(false)}
-          onDownload={async () => {
-            await downloadFixPlanPDF(fixPlanRef);
-          }}
+          onDownload={downloadFixPlan}
           regenerateFixPlan={generateFixPlan}
           ecosystemOptions={ecosystemOptions}
         />

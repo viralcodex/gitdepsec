@@ -291,7 +291,7 @@ class AgentsService {
       'Dependency analysis complete',
       {
         phase: 'preprocessing',
-        progress: 5,
+        progress: 8,
         totalDependencies: this.flattenedAnalysisData.length,
         totalVulnerabilities: this.getTotalVulnerabilitiesCount(),
         directDependencies: this.flattenedAnalysisData.filter(
@@ -309,7 +309,7 @@ class AgentsService {
       'Running intelligence analyzers',
       {
         phase: 'parallel_analysis',
-        progress: 5,
+        progress: 8,
         analyzers: [
           'Priority Scorer',
           'Transitive Intelligence',
@@ -340,7 +340,7 @@ class AgentsService {
       'Intelligence analysis completed',
       {
         phase: 'parallel_analysis',
-        progress: 15, // Changed from 30 to make more linear
+        progress: 18,
         quickWins: parallelResults.quickWins.length,
         conflicts: parallelResults.conflicts.length,
         transitiveOpportunities: parallelResults.transitiveInsights.length,
@@ -360,7 +360,7 @@ class AgentsService {
       'Processing vulnerabilities in adaptive batches',
       {
         phase: 'batch_processing',
-        progress: 15, // Changed from 30
+        progress: 18,
       },
     );
 
@@ -373,7 +373,7 @@ class AgentsService {
       'Batch processing completed',
       {
         phase: 'batch_processing',
-        progress: 55, // Changed from 70 to make more linear (40% for batch processing)
+        progress: 62,
         totalBatches: batchResults.length,
         batch_summary: this.generateBatchSummary(batchResults),
       },
@@ -382,7 +382,7 @@ class AgentsService {
     // ===== PHASE 3: PROGRESSIVE SYNTHESIS =====
     this.progressCallback('synthesis_start', 'Generating executive summary', {
       phase: 'synthesis',
-      progress: 55, // Changed from 70
+      progress: 62,
       step: 'executive_summary',
     });
 
@@ -397,7 +397,7 @@ class AgentsService {
       'Executive summary ready',
       {
         phase: 'synthesis',
-        progress: 60, // Changed from 75
+        progress: 68,
         executive_summary: executiveSummary,
       },
     );
@@ -408,7 +408,7 @@ class AgentsService {
       'Generating intelligence insights',
       {
         phase: 'synthesis',
-        progress: 60, // Changed from 75
+        progress: 68,
         step: 'dependency_intelligence',
       },
     );
@@ -426,7 +426,7 @@ class AgentsService {
       'Intelligence insights ready',
       {
         phase: 'synthesis',
-        progress: 65, // Changed from 78
+        progress: 72,
         dependency_intelligence: dependencyIntelligence,
       },
     );
@@ -439,7 +439,7 @@ class AgentsService {
       'Generating smart action recommendations',
       {
         phase: 'synthesis',
-        progress: 65, // Changed from 78
+        progress: 72,
         step: 'smart_actions',
       },
     );
@@ -455,7 +455,7 @@ class AgentsService {
       'Organizing fixes into phases',
       {
         phase: 'synthesis',
-        progress: 65, // Changed from 78
+        progress: 72,
         step: 'priority_phases',
       },
     );
@@ -470,7 +470,7 @@ class AgentsService {
       'Analyzing risks and strategy',
       {
         phase: 'synthesis',
-        progress: 65, // Changed from 78
+        progress: 72,
         step: 'risk_management',
       },
     );
@@ -492,7 +492,7 @@ class AgentsService {
       'Smart actions ready',
       {
         phase: 'synthesis',
-        progress: 75, // Changed from 85
+        progress: 88,
         smart_actions: smartActions,
       },
     );
@@ -502,14 +502,14 @@ class AgentsService {
       'Execution phases ready',
       {
         phase: 'synthesis',
-        progress: 80, // Changed from 87
+        progress: 88,
         priority_phases: priorityPhases,
       },
     );
 
     this.progressCallback('synthesis_risk_complete', 'Risk management ready', {
       phase: 'synthesis',
-      progress: 85, // Changed from 89
+      progress: 88,
       risk_management: riskManagement,
     });
 
@@ -526,7 +526,7 @@ class AgentsService {
 
     this.progressCallback('synthesis_complete', 'Synthesis completed', {
       phase: 'synthesis',
-      progress: 90,
+      progress: 92,
     });
 
     // ===== PHASE 4: ENRICHMENT & VALIDATION =====
@@ -535,7 +535,7 @@ class AgentsService {
       'Generating CLI commands and scripts',
       {
         phase: 'enrichment',
-        progress: 90,
+        progress: 92,
       },
     );
 
@@ -1099,6 +1099,9 @@ class AgentsService {
             ? 'High Priority'
             : 'Medium/Low';
 
+      const batchProgress = processedCount / totalDeps;
+      const scaledProgress = Math.round(18 + batchProgress * 44);
+
       this.progressCallback(
         'batch_processing',
         `Processing batch ${i + 1} of ${allBatches.length} [${severityLabel}]...`,
@@ -1109,7 +1112,7 @@ class AgentsService {
           severity,
           processedCount,
           totalDeps,
-          progress: Math.round((processedCount / totalDeps) * 100),
+          progress: scaledProgress,
         },
       );
 

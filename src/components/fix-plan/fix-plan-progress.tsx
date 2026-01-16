@@ -20,7 +20,7 @@ const FixPlanProgress = ({
   return (
     <div
       className={cn(
-        "space-y-2 py-2 px-4 mx-6 bg-muted/60 rounded-b-lg border border-muted transition-all duration-500 ease-in-out overflow-hidden",
+        "space-y-2 py-2 px-4 mx-4 mb-2 bg-muted/60 rounded-b-lg border border-muted transition-all duration-500 ease-in-out overflow-hidden",
         !isLoading && "max-h-0 opacity-0 py-0 my-0 border-0",
       )}
     >

@@ -1,8 +1,8 @@
-import { Dependency } from "@/constants/model";
+import { Dependency, UnifiedFixPlan } from "@/constants/model";
 import { MANIFEST_FILES } from "@/constants/constants";
 import { clsx, type ClassValue } from "clsx";
-import { RefObject } from "react";
 import { twMerge } from "tailwind-merge";
+import { FixPlanPDFGenerator } from "./pdfGenerator";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -221,8 +221,43 @@ String.prototype.toTitleCase = function (): string {
   );
 };
 
+const cleanMarkdownJson = (data: string): string => {
+  return data.replace(/```json\s*/g, '').replace(/\s*```/g, '');
+};
+
+const parseFixPlanData = (data: string): UnifiedFixPlan => {
+  let cleaned = data.includes('```json') ? cleanMarkdownJson(data) : data;
+  let parsed = JSON.parse(cleaned);
+  
+  // Handle double-encoded JSON
+  if (typeof parsed === 'string') {
+    cleaned = parsed.includes('```json') ? cleanMarkdownJson(parsed) : parsed;
+    parsed = JSON.parse(cleaned);
+  }
+  
+  return parsed as UnifiedFixPlan;
+};
+
 export const downloadFixPlanPDF = async (
-  fixPlanRef: RefObject<HTMLDivElement | null>,
+  fixPlanData: string | null,
+  repoName: string = 'Repository'
 ) => {
-  if (!fixPlanRef.current) return;
+  if (!fixPlanData) {
+    throw new Error('No fix plan data available');
+  }
+
+  try {
+    const parsedFixPlan = typeof fixPlanData === 'string' 
+      ? parseFixPlanData(fixPlanData)
+      : fixPlanData as UnifiedFixPlan;
+
+    const generator = new FixPlanPDFGenerator();
+    const pdf = generator.generatePDF(parsedFixPlan, repoName);
+    
+    const fileName = `fix-plan-${repoName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+    pdf.save(fileName);
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    throw new Error('Failed to generate PDF report');
+  }
 };
