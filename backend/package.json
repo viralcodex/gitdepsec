@@ -4,9 +4,9 @@
   "description": "Backend service for the GitSec application",
   "main": "index.js",
   "scripts": {
-    "dev": "cross-env NODE_ENV=development nodemon server.ts",
+    "dev": "bun --watch server.ts",
     "build": "cross-env NODE_ENV=production tsc",
-    "start": "cross-env NODE_ENV=production node dist/server.js",
+    "start": "bun server.ts",
     "deploy": "npm run build && npm run db:deploy",
     "db:deploy": "drizzle-kit migrate",
     "db:generate": "drizzle-kit generate",
@@ -14,9 +14,9 @@
     "db:push": "drizzle-kit push",
     "db:pull": "drizzle-kit pull",
     "db:studio": "drizzle-kit studio",
-    "test": "jest",
-    "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
+    "test": "bun test",
+    "test:watch": "bun test --watch",
+    "test:coverage": "bun test --coverage",
     "lint": "eslint \"**/*.{js,ts,mjs}\"",
     "lint:fix": "eslint \"**/*.{js,ts,mjs}\" --fix",
     "typecheck": "tsc --noEmit"
@@ -53,7 +53,7 @@
     "@types/cors": "^2.8.19",
     "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.3",
-    "@types/jest": "^30.0.0",
+
     "@types/js-yaml": "^4.0.9",
     "@types/morgan": "^1.9.10",
     "@types/multer": "^2.0.0",
@@ -67,9 +67,7 @@
     "eslint-plugin-import": "^2.32.0",
     "eslint-plugin-node": "^11.1.0",
     "eslint-plugin-prettier": "^5.5.4",
-    "jest": "^30.0.5",
-    "nodemon": "^3.1.10",
-    "ts-jest": "^29.4.0",
+
     "ts-node": "^10.9.2",
     "typescript": "^5.8.3"
   }
