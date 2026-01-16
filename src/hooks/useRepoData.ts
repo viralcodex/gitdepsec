@@ -5,16 +5,12 @@ import { getRepoBranches } from "@/lib/api";
 import { verifyUrl, getRepoKeyFromUrl } from "@/lib/utils";
 import { useErrorState, useRepoState, store } from "@/store/app-store";
 import { HistoryItem } from "@/constants/model";
-import { defaultBranchNames } from "@/constants/constants";
+import { DEFAULT_BRANCH_NAMES } from "@/constants/constants";
 
 export const useRepoData = (url: string | null) => {
   const pageSize = 100;
-  const {
-    page,
-    loadedRepoKey,
-    setLoadingBranches,
-    resetRepoState,
-  } = useRepoState();
+  const { page, loadedRepoKey, setLoadingBranches, resetRepoState } =
+    useRepoState();
 
   const { setBranchError } = useErrorState();
 
@@ -28,15 +24,15 @@ export const useRepoData = (url: string | null) => {
         historyItems[dateKey].some(
           (item) =>
             item.username === cachedItem.username &&
-            item.repo === cachedItem.repo
-        )
+            item.repo === cachedItem.repo,
+        ),
       );
 
       if (dateKey) {
         const itemIndex = historyItems[dateKey].findIndex(
           (item) =>
             item.username === cachedItem.username &&
-            item.repo === cachedItem.repo
+            item.repo === cachedItem.repo,
         );
 
         if (itemIndex !== -1) {
@@ -44,14 +40,14 @@ export const useRepoData = (url: string | null) => {
             savedHistoryItems: {
               ...prev.savedHistoryItems,
               [dateKey]: prev.savedHistoryItems[dateKey].map((item, idx) =>
-                idx === itemIndex ? { ...item, branches: branchList } : item
+                idx === itemIndex ? { ...item, branches: branchList } : item,
               ),
             },
           }));
         }
       }
     },
-    []
+    [],
   );
 
   const fetchBranches = useCallback(
@@ -82,7 +78,7 @@ export const useRepoData = (url: string | null) => {
       // Try to find one with a common default branch name first
       const cachedItem =
         matchingItems.find((item) =>
-          defaultBranchNames.includes(item.branch.toLowerCase())
+          DEFAULT_BRANCH_NAMES.includes(item.branch.toLowerCase()),
         ) || matchingItems[0]; // Fall back to first match if no default found
 
       // Only use cache for page 1 - pagination should always fetch from API
@@ -112,7 +108,7 @@ export const useRepoData = (url: string | null) => {
         sanitizedUsername,
         sanitizedRepo,
         page,
-        pageSize
+        pageSize,
       );
 
       if (branchesResponse.error) {
@@ -139,7 +135,7 @@ export const useRepoData = (url: string | null) => {
         const currentBranches = store.getState().branches;
         const newBranchesToAdd = branchesResponse.branches || [];
         const uniqueBranches = Array.from(
-          new Set([...currentBranches, ...newBranchesToAdd])
+          new Set([...currentBranches, ...newBranchesToAdd]),
         );
         branchList = uniqueBranches;
       }
@@ -164,7 +160,7 @@ export const useRepoData = (url: string | null) => {
       page,
       resetRepoState,
       updateCacheBranches,
-    ]
+    ],
   );
 
   useEffect(() => {

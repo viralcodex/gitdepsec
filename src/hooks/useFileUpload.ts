@@ -6,8 +6,7 @@ import toast from "react-hot-toast";
 import { useErrorState, useFileState } from "@/store/app-store";
 
 export const useFileUpload = () => {
-  const { setNewFileName, setUploaded } =
-    useFileState();
+  const { setNewFileName, setUploaded } = useFileState();
 
   const [inputFile, setInputFile] = useState<File | null>(null);
   const { setError } = useErrorState();
@@ -19,7 +18,7 @@ export const useFileUpload = () => {
       const result = verifyFile(inputFile, setError, setInputFile);
       if (!result) {
         setError(
-          "Invalid file type. Please select a file of type .json, .yaml, .xml, .txt"
+          "Invalid file type. Please select a file of type .json, .yaml, .xml, .txt",
         );
       } else {
         setError("");

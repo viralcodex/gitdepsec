@@ -1,9 +1,10 @@
 import { PROGRESS_MESSAGES } from "@/constants/constants";
+import { VulnerabilitySummaryResponse } from "@/constants/model";
 import { useState, useEffect, useRef } from "react";
 
 interface UseAISummaryProgressProps {
   isLoading: boolean;
-  summary: string | null;
+  summary: VulnerabilitySummaryResponse | null;
 }
 
 export const useAISummaryProgress = (props: UseAISummaryProgressProps) => {
@@ -12,7 +13,7 @@ export const useAISummaryProgress = (props: UseAISummaryProgressProps) => {
   const [message, setMessage] = useState<string>("Finalizing summary");
   const [dots, setDots] = useState<string>("");
   const [timeElapsed, setTimeElapsed] = useState<number>(0);
-  
+
   const count = useRef<number>(0);
   const cyclingStarted = useRef<boolean>(false);
   const intervalRef = useRef<NodeJS.Timeout | undefined>(undefined);
@@ -49,7 +50,7 @@ export const useAISummaryProgress = (props: UseAISummaryProgressProps) => {
 
       const interval = setInterval(
         updateProgress,
-        getRandomValueInRange(1000, 2000)
+        getRandomValueInRange(1000, 2000),
       );
 
       return () => {
@@ -97,7 +98,7 @@ export const useAISummaryProgress = (props: UseAISummaryProgressProps) => {
     };
   }, [finalised, progress]);
 
-  //cycle messages after reaching 90% progress (when generation taking longer than 3 second)
+  //cycle messages after reaching 90% progress (when generation taking longer than 2 second)
   useEffect(() => {
     if (
       progress >= 90 &&

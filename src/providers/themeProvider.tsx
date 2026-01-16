@@ -36,7 +36,8 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, [theme, mounted]);
 
   const setTheme = (newTheme: Theme) => setThemeState(newTheme);
-  const toggleTheme = () => setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
+  const toggleTheme = () =>
+    setThemeState((prev) => (prev === "dark" ? "light" : "dark"));
 
   if (!mounted) return null; // Prevent hydration mismatch
 

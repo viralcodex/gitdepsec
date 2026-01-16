@@ -19,7 +19,7 @@ const HistoryPanel = () => {
     return sortedItems.slice(0, 3);
   }, [savedHistoryItems]);
 
-  if(!topThreeRecentItems.length) {
+  if (!topThreeRecentItems.length) {
     return null;
   }
 
@@ -37,22 +37,24 @@ const HistoryPanel = () => {
         </header>
         <hr className="mb-2 mt-1" />
         <ul className="mt-1">
-          {topThreeRecentItems ? topThreeRecentItems.map((item, index) => {
-            return (
-              <li
-                key={index}
-                className="font-semibold text-sm sm:text-md"
-                onClick={() => navigateToHistory(item)}
-              >
-                <button className="flex flex-row w-full px-2 py-1 rounded-sm items-center justify-between hover:bg-accent-foreground cursor-pointer">
-                  <p>
-                    {item.username}/{item.repo} · {item.branch}
-                  </p>
-                  <ArrowRight className="h-4 w-4 text-secondary" />
-                </button>
-              </li>
-            );
-          }) : (
+          {topThreeRecentItems ? (
+            topThreeRecentItems.map((item, index) => {
+              return (
+                <li
+                  key={index}
+                  className="font-semibold text-sm sm:text-md"
+                  onClick={() => navigateToHistory(item)}
+                >
+                  <button className="flex flex-row w-full px-2 py-1 rounded-sm items-center justify-between hover:bg-accent-foreground cursor-pointer">
+                    <p>
+                      {item.username}/{item.repo} · {item.branch}
+                    </p>
+                    <ArrowRight className="h-4 w-4 text-secondary" />
+                  </button>
+                </li>
+              );
+            })
+          ) : (
             <p className="text-accent text-sm w-full p-5">
               No recent analyses...
             </p>

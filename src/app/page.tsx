@@ -6,15 +6,18 @@ import dynamic from "next/dynamic";
 
 const HistoryPanel = dynamic(
   () => import("@/components/history-items/history-panel"),
-  { ssr: true }
+  { ssr: true },
 );
 
 export const metadata: Metadata = {
-  title: "GitVulSafe - Free Dependency Vulnerability Scanner for GitHub & Manifest Files",
-  description: "Scan your GitHub repositories and manifest files for security vulnerabilities. Visualize dependency graphs, get AI-powered fix recommendations, and secure your code. Supports npm, pip, Maven, Gradle, and more. 100% free and open-source.",
+  title:
+    "GitVulSafe - Free Dependency Vulnerability Scanner for GitHub & Manifest Files",
+  description:
+    "Scan your GitHub repositories and manifest files for security vulnerabilities. Visualize dependency graphs, get AI-powered fix recommendations, and secure your code. Supports npm, pip, Maven, Gradle, and more. 100% free and open-source.",
   openGraph: {
     title: "GitVulSafe - Free Dependency Vulnerability Scanner",
-    description: "Scan GitHub repositories and manifest files for security vulnerabilities with AI-powered insights. Free and open-source.",
+    description:
+      "Scan GitHub repositories and manifest files for security vulnerabilities with AI-powered insights. Free and open-source.",
     type: "website",
   },
 };

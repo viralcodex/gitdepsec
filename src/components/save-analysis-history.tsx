@@ -15,17 +15,20 @@ interface SaveAnalysisHistoryProps {
   data?: HistoryItem;
   addButtonRef?: React.RefObject<HTMLDivElement | null>;
 }
-const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) => {
+const SaveAnalysisHistory = ({
+  data,
+  addButtonRef,
+}: SaveAnalysisHistoryProps) => {
   const { savedHistoryItems, setSavedHistoryItems } = useSavedHistoryState();
   const { graphRepoKey } = useGraphState();
 
   // disable the button if entered url doesn't match the current analysed repo
   const shouldDisableButton = () => {
     if (!data || !data.username || !data.repo || !data.branch) return true;
-    
+
     const inputRepoKey = `${data.username}/${data.repo}/${data.branch}`;
     return inputRepoKey !== graphRepoKey;
-  }
+  };
 
   const addGithubPreference = () => {
     if (shouldDisableButton()) {
@@ -36,13 +39,19 @@ const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) =
       toast.error("No history to save!");
       return;
     }
-    if( !data.username || !data.repo || !data.branch || data.branch.trim() === "" ){
+    if (
+      !data.username ||
+      !data.repo ||
+      !data.branch ||
+      data.branch.trim() === ""
+    ) {
       toast.error("Incomplete data to save history!");
       return;
     }
-    if(Object.values(savedHistoryItems).flat().length >= MAX_HISTORY_ITEMS)
-    {
-      toast.error("History limit reached! Please delete some entries before adding new ones.");
+    if (Object.values(savedHistoryItems).flat().length >= MAX_HISTORY_ITEMS) {
+      toast.error(
+        "History limit reached! Please delete some entries before adding new ones.",
+      );
       return;
     }
 
@@ -52,7 +61,7 @@ const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) =
       year: "numeric",
     });
 
-    const newHistoryItem : HistoryItem = {
+    const newHistoryItem: HistoryItem = {
       username: data.username || "",
       repo: data.repo || "",
       branch: data.branch || "",
@@ -70,12 +79,11 @@ const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) =
         (item) =>
           item.username === newHistoryItem.username &&
           item.repo === newHistoryItem.repo &&
-          item.branch === newHistoryItem.branch
+          item.branch === newHistoryItem.branch,
       );
       if (!isDuplicate) {
         updatedHistory[dateKey].unshift(newHistoryItem);
-      }
-      else{
+      } else {
         toast.error("This history entry already exists!");
         return;
       }
@@ -105,7 +113,10 @@ const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) =
             </div>
           </button>
         </TooltipTrigger>
-        <TooltipContent side="top" className="bg-background/80 text-accent text-xs px-2 py-1 rounded-md transition-all ease-in duration-300">
+        <TooltipContent
+          side="top"
+          className="bg-background/80 text-accent text-xs px-2 py-1 rounded-md transition-all ease-in duration-300"
+        >
           {isDisabled ? "Analyze repository first" : "Save to History"}
         </TooltipContent>
       </Tooltip>

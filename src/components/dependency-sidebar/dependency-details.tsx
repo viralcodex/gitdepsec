@@ -46,7 +46,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
               <p
                 className={cn(
                   isMobile ? "text-sm" : "text-md",
-                  "text-accent font-bold"
+                  "text-accent font-bold",
                 )}
               >
                 {vuln.summary
@@ -69,7 +69,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                   <Badge
                     className={cn(
                       isMobile ? "text-xs" : "text-sm",
-                      "bg-green-600 text-white rounded-sm -m-0.5 mb-2"
+                      "bg-green-600 text-white rounded-sm -m-0.5 mb-2",
                     )}
                   >
                     Fix Available from v{vuln.fixAvailable}
@@ -78,7 +78,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                   <Badge
                     className={cn(
                       isMobile ? "text-xs" : "text-sm",
-                      "bg-red-500 text-white rounded-sm -m-0.5 mb-2"
+                      "bg-red-500 text-white rounded-sm -m-0.5 mb-2",
                     )}
                   >
                     No Fix Available
@@ -89,7 +89,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                 <p
                   className={cn(
                     isMobile ? "text-xs" : "text-sm",
-                    "text-input pb-2"
+                    "text-input pb-2",
                   )}
                 >
                   {vuln.details ? (
@@ -152,7 +152,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                     <p
                       className={cn(
                         isMobile ? "text-sm" : "text-md",
-                        "font-bold text-input pb-2"
+                        "font-bold text-input pb-2",
                       )}
                     >
                       Vulnerability ID:
@@ -168,7 +168,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                           onClick={() => {
                             navigator.clipboard.writeText(vuln.id);
                             toast.success(
-                              "Vulnerability ID copied to clipboard"
+                              "Vulnerability ID copied to clipboard",
                             );
                           }}
                         />
@@ -181,7 +181,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                     <p
                       className={cn(
                         isMobile ? "text-sm" : "text-md",
-                        "font-semibold text-accent"
+                        "font-semibold text-accent",
                       )}
                     >
                       Severity
@@ -189,23 +189,23 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                     <p
                       className={cn(
                         isMobile ? "text-xs" : "text-sm",
-                        "font-medium mb-1"
+                        "font-medium mb-1",
                       )}
                     >
                       CVSS V3 Score: {"   "}
                       {getSeverityBadge(
-                        vuln.severityScore.cvss_v3 ?? "unknown"
+                        vuln.severityScore.cvss_v3 ?? "unknown",
                       )}
                     </p>
                     <p
                       className={cn(
                         isMobile ? "text-xs" : "text-sm",
-                        "font-medium"
+                        "font-medium",
                       )}
                     >
                       CVSS V4 Score: {"   "}
                       {getSeverityBadge(
-                        vuln.severityScore.cvss_v4 ?? "unknown"
+                        vuln.severityScore.cvss_v4 ?? "unknown",
                       )}
                     </p>
                   </div>
@@ -215,7 +215,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                     <p
                       className={cn(
                         isMobile ? "text-sm" : "text-md",
-                        "font-semibold text-accent"
+                        "font-semibold text-accent",
                       )}
                     >
                       References:
@@ -238,13 +238,13 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                                   rel="noopener noreferrer"
                                   className={cn(
                                     isMobile ? "text-xs" : "text-sm",
-                                    "text-muted-foreground hover:underline"
+                                    "text-muted-foreground hover:underline",
                                   )}
                                 >
                                   {url}
                                 </Link>
                               </div>
-                            )
+                            ),
                           )}
                         </div>
                         {urls.length > 3 && (

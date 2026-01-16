@@ -1,0 +1,541 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Unified Comprehensive Fix Plan Schema",
+  "description": "A unified schema that combines vulnerability analysis, fix planning, optimization, conflict resolution, and implementation strategy into one actionable response.",
+  "required": [
+    "executive_summary",
+    "dependency_intelligence",
+    "priority_phases",
+    "automated_execution",
+    "risk_management"
+  ],
+  "properties": {
+    "executive_summary": {
+      "type": "object",
+      "description": "High-level overview providing immediate actionable insights",
+      "required": [
+        "critical_insights",
+        "total_vulnerabilities",
+        "fixable_count",
+        "estimated_fix_time",
+        "risk_score",
+        "quick_wins"
+      ],
+      "properties": {
+        "critical_insights": {
+          "type": "array",
+          "description": "Top 3-5 most critical issues that need immediate attention",
+          "items": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "minItems": 3,
+          "maxItems": 5
+        },
+        "total_vulnerabilities": {
+          "type": "integer",
+          "description": "Total number of vulnerabilities identified",
+          "minimum": 0
+        },
+        "fixable_count": {
+          "type": "integer",
+          "description": "Number of vulnerabilities that have available fixes",
+          "minimum": 0
+        },
+        "estimated_fix_time": {
+          "type": "string",
+          "description": "Realistic time estimate to implement all fixes",
+          "pattern": "^\\d+-\\d+\\s+(minutes?|hours?|days?)$",
+          "examples": ["30-45 minutes", "2-4 hours", "1-2 days"]
+        },
+        "risk_score": {
+          "type": "number",
+          "minimum": 1,
+          "maximum": 10,
+          "multipleOf": 0.1,
+          "description": "Overall project risk score from 1-10"
+        },
+        "quick_wins": {
+          "type": "array",
+          "description": "High-impact, low-effort fixes that should be done first",
+          "items": {
+            "type": "string",
+            "description": "Brief description of quick win. Use **bold** for package names and commands in <code></code> tags"
+          },
+          "minItems": 1,
+          "maxItems": 5
+        }
+      }
+    },
+    "dependency_intelligence": {
+      "type": "object",
+      "description": "Deep insights into dependency relationships, conflicts, and optimization opportunities",
+      "required": [
+        "shared_transitive_vulnerabilities",
+        "optimization_opportunities"
+      ],
+      "properties": {
+        "critical_paths": {
+          "type": "array",
+          "description": "Critical dependency chains that must be addressed carefully",
+          "items": {
+            "type": "object",
+            "required": ["path", "risk", "resolution"],
+            "properties": {
+              "path": {
+                "type": "string",
+                "description": "Dependency chain using arrow notation (A → B → C)"
+              },
+              "risk": {
+                "type": "string",
+                "description": "Why this path is critical"
+              },
+              "resolution": {
+                "type": "string",
+                "description": "How to handle this path safely"
+              },
+              "estimated_impact": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"]
+              }
+            }
+          }
+        },
+        "shared_transitive_vulnerabilities": {
+          "type": "array",
+          "description": "Transitive dependencies with vulnerabilities used by multiple packages",
+          "items": {
+            "type": "object",
+            "required": ["package", "used_by", "fix"],
+            "properties": {
+              "package": {
+                "type": "string",
+                "description": "Transitive dependency package name with version"
+              },
+              "used_by": {
+                "type": "array",
+                "description": "Parent packages that depend on this",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "vulnerability_count": {
+                "type": "integer",
+                "description": "Number of vulnerabilities in this package"
+              },
+              "fix": {
+                "type": "string",
+                "description": "How updating this package benefits multiple parents. Wrap commands in <code></code> tags"
+              },
+              "impact_multiplier": {
+                "type": "string",
+                "description": "Description of cascading fix benefits (e.g., 'Fixes 15 vulnerabilities across 3 packages')"
+              }
+            }
+          }
+        },
+        "version_conflicts": {
+          "type": "array",
+          "description": "Identified version conflicts and their resolutions",
+          "items": {
+            "type": "object",
+            "required": ["conflict", "resolution", "risk_level"],
+            "properties": {
+              "conflict": {
+                "type": "string",
+                "description": "Description of the version conflict"
+              },
+              "affected_packages": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "resolution": {
+                "type": "string",
+                "description": "How to resolve this conflict. Include commands in <code></code> tags"
+              },
+              "risk_level": {
+                "type": "string",
+                "enum": ["low", "medium", "high", "critical"]
+              }
+            }
+          }
+        },
+        "optimization_opportunities": {
+          "type": "array",
+          "description": "Ways to optimize the fix implementation for efficiency",
+          "items": {
+            "type": "string",
+            "description": "Specific optimization recommendation with quantified benefit"
+          }
+        }
+      }
+    },
+    "priority_phases": {
+      "type": "array",
+      "description": "Phased execution plan with clear priorities and sequencing",
+      "items": {
+        "type": "object",
+        "required": [
+          "phase",
+          "name",
+          "urgency",
+          "dependencies",
+          "fixes",
+          "batch_commands",
+          "validation_steps",
+          "estimated_time"
+        ],
+        "properties": {
+          "phase": {
+            "type": "integer",
+            "description": "Phase number (1, 2, 3, etc.)",
+            "minimum": 1
+          },
+          "name": {
+            "type": "string",
+            "description": "Descriptive name for this phase",
+            "maxLength": 100
+          },
+          "urgency": {
+            "type": "string",
+            "pattern": "^(Within|In)\\s+(\\d+\\s+(Hours?|Days?|Weeks?)|Immediately|ASAP|24 Hours)$",
+            "description": "Timeline for this phase. Examples: 'Within 24 Hours', 'Within 2 Days', 'Within 1 Week'"
+          },
+          "dependencies": {
+            "type": "array",
+            "description": "List of packages to be fixed in this phase",
+            "items": {
+              "type": "string",
+              "pattern": "^[a-zA-Z0-9@/_-]+(@[0-9]+\\.[0-9]+\\.[0-9]+.*)?$"
+            }
+          },
+          "fixes": {
+            "type": "array",
+            "description": "Individual fixes in this phase with detailed information",
+            "items": {
+              "type": "object",
+              "required": [
+                "package",
+                "vulnerability_ids",
+                "action",
+                "command",
+                "risk_score",
+                "impact",
+                "breaking_changes"
+              ],
+              "properties": {
+                "package": {
+                  "type": "string",
+                  "description": "Package name with current version",
+                  "pattern": "^[a-zA-Z0-9@/_-]+@[0-9]+\\.[0-9]+\\.[0-9]+.*$"
+                },
+                "vulnerability_ids": {
+                  "type": "array",
+                  "description": "CVE/GHSA IDs addressed by this fix",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "action": {
+                  "type": "string",
+                  "enum": ["upgrade", "patch", "replace", "remove", "pin_version", "configuration"],
+                  "description": "Type of remediation action"
+                },
+                "command": {
+                  "type": "string",
+                  "description": "Exact command to execute. Wrap in <code></code> tags"
+                },
+                "target_version": {
+                  "type": "string",
+                  "description": "Target version after fix",
+                  "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+.*$"
+                },
+                "risk_score": {
+                  "type": "number",
+                  "minimum": 1,
+                  "maximum": 10,
+                  "multipleOf": 0.1,
+                  "description": "Risk score for this specific vulnerability"
+                },
+                "impact": {
+                  "type": "string",
+                  "description": "Business and technical impact. Use **bold** for critical terms. Max 200 chars.",
+                  "maxLength": 200
+                },
+                "breaking_changes": {
+                  "type": "boolean",
+                  "description": "Whether this fix introduces breaking changes"
+                },
+                "breaking_change_details": {
+                  "type": "string",
+                  "description": "Details about breaking changes if applicable"
+                },
+                "affects": {
+                  "type": "array",
+                  "description": "Files or modules affected by this fix",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "transitive_impact": {
+                  "type": "array",
+                  "description": "Downstream effects and transitive vulnerabilities fixed",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "alternative_solutions": {
+                  "type": "array",
+                  "description": "Alternative approaches if primary fix is not feasible",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "batch_commands": {
+            "type": "array",
+            "description": "Optimized batch commands to execute multiple fixes at once. Wrap in <code></code> tags",
+            "items": {
+              "type": "string"
+            }
+          },
+          "validation_steps": {
+            "type": "array",
+            "description": "Steps to validate fixes in this phase",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "estimated_time": {
+            "type": "string",
+            "description": "Time to complete this phase",
+            "pattern": "^\\d+-?\\d*\\s+(minutes?|hours?|days?)$"
+          },
+          "rollback_plan": {
+            "type": "string",
+            "description": "Commands to rollback if issues occur. IMPORTANT: Wrap commands in <code></code> tags."
+          }
+        }
+      },
+      "minItems": 1
+    },
+    "automated_execution": {
+      "type": "object",
+      "description": "Ready-to-use scripts and automation for fix implementation",
+      "required": ["one_click_script", "phase_scripts"],
+      "properties": {
+        "one_click_script": {
+          "type": "string",
+          "description": "Complete bash/shell script to execute all fixes in proper sequence. Include shebang and comments."
+        },
+        "phase_scripts": {
+          "type": "array",
+          "description": "Individual scripts for each phase",
+          "items": {
+            "type": "object",
+            "required": ["phase", "script"],
+            "properties": {
+              "phase": {
+                "type": "integer",
+                "description": "Phase number this script corresponds to"
+              },
+              "name": {
+                "type": "string",
+                "description": "Descriptive name for this script"
+              },
+              "script": {
+                "type": "string",
+                "description": "Executable script with comments and error handling"
+              }
+            }
+          }
+        },
+        "safe_mode_script": {
+          "type": "string",
+          "description": "Script with backups, validation checks, and rollback capabilities"
+        },
+        "ci_cd_integration": {
+          "type": "object",
+          "description": "CI/CD pipeline configurations for automated fix deployment",
+          "properties": {
+            "github_actions": {
+              "type": "string",
+              "description": "GitHub Actions workflow YAML"
+            },
+            "gitlab_ci": {
+              "type": "string",
+              "description": "GitLab CI configuration YAML"
+            },
+            "jenkins": {
+              "type": "string",
+              "description": "Jenkinsfile configuration"
+            }
+          }
+        }
+      }
+    },
+    "risk_management": {
+      "type": "object",
+      "description": "Comprehensive risk assessment and mitigation strategies",
+      "required": [
+        "overall_assessment",
+        "breaking_changes_summary",
+        "testing_strategy",
+        "rollback_procedures"
+      ],
+      "properties": {
+        "overall_assessment": {
+          "type": "string",
+          "description": "High-level risk assessment for the entire fix plan",
+          "maxLength": 500
+        },
+        "breaking_changes_summary": {
+          "type": "object",
+          "required": ["has_breaking_changes", "affected_areas"],
+          "properties": {
+            "has_breaking_changes": {
+              "type": "boolean"
+            },
+            "count": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "affected_areas": {
+              "type": "array",
+              "description": "Areas of codebase affected by breaking changes",
+              "items": {
+                "type": "string"
+              }
+            },
+            "mitigation_steps": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "testing_strategy": {
+          "type": "object",
+          "description": "Comprehensive testing approach for validation",
+          "required": ["unit_tests", "integration_tests"],
+          "properties": {
+            "unit_tests": {
+              "type": "string",
+              "description": "Unit testing recommendations"
+            },
+            "integration_tests": {
+              "type": "string",
+              "description": "Integration testing approach"
+            },
+            "regression_tests": {
+              "type": "string",
+              "description": "Regression testing strategy"
+            },
+            "manual_verification": {
+              "type": "string",
+              "description": "Manual testing checklist"
+            },
+            "security_validation": {
+              "type": "string",
+              "description": "How to validate security fixes are effective"
+            }
+          }
+        },
+        "rollback_procedures": {
+          "type": "array",
+          "description": "Detailed rollback procedures for each phase",
+          "items": {
+            "type": "object",
+            "required": ["phase", "procedure"],
+            "properties": {
+              "phase": {
+                "type": "integer"
+              },
+              "procedure": {
+                "type": "string",
+                "description": "IMPORTANT: Step-by-step rollback instructions with commands in <code></code> tags",
+                "format": "string with code snippets wrapped in <code></code> tags"
+              },
+              "validation": {
+                "type": "string",
+                "description": "How to verify successful rollback"
+              }
+            }
+          }
+        },
+        "monitoring_recommendations": {
+          "type": "array",
+          "description": "Post-implementation monitoring and alerting setup",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "long_term_strategy": {
+      "type": "object",
+      "description": "Strategic recommendations for ongoing security and dependency management",
+      "properties": {
+        "preventive_measures": {
+          "type": "array",
+          "description": "Tools and practices to prevent future vulnerabilities",
+          "items": {
+            "type": "string",
+            "description": "Specific preventive measure with implementation details"
+          }
+        },
+        "dependency_policies": {
+          "type": "array",
+          "description": "Recommended policies for dependency management",
+          "items": {
+            "type": "string"
+          }
+        },
+        "automation_opportunities": {
+          "type": "array",
+          "description": "Ways to automate vulnerability detection and remediation",
+          "items": {
+            "type": "string"
+          }
+        },
+        "monitoring_setup": {
+          "type": "string",
+          "description": "How to set up continuous monitoring for vulnerabilities"
+        },
+        "update_cadence": {
+          "type": "string",
+          "description": "Recommended frequency for dependency updates",
+          "enum": ["daily", "weekly", "bi-weekly", "monthly", "quarterly"]
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Metadata about the fix plan generation",
+      "properties": {
+        "generated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "analysis_duration": {
+          "type": "string",
+          "description": "Time taken to generate this plan"
+        },
+        "total_packages_analyzed": {
+          "type": "integer"
+        },
+        "ecosystem": {
+          "type": "string",
+          "description": "Primary ecosystem (npm, pip, maven, etc.)"
+        }
+      }
+    }
+  }
+}

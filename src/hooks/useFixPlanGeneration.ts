@@ -1,10 +1,5 @@
-import {
-  FixPlanSSEMessage,
-  GlobalFixPlanSSEMessage,
-  FixOptimisationPlanSSEMessage,
-  ConflictResolutionPlanSSEMessage,
-  StrategyRecommendationSSEMessage,
-} from "@/constants/model";
+import { FIX_PLAN_PROPERTY_ORDER, PHASE_STEP_MAP } from "@/constants/constants";
+import { GlobalFixPlanSSEMessage } from "@/constants/model";
 import { getFixPlanSSE } from "@/lib/api";
 import {
   store,
@@ -12,7 +7,7 @@ import {
   useFixPlanState,
   useUIState,
 } from "@/store/app-store";
-import { useCallback } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 
 export const useFixPlanGeneration = ({
@@ -25,43 +20,52 @@ export const useFixPlanGeneration = ({
   branch: string;
 }) => {
   const {
-    setFixPlan,
     setGlobalFixPlan,
-    setFixOptimizationPlan,
-    setConflictResolutionPlan,
-    setStrategyPlan,
+    setEcosystemFixPlan,
+    setCurrentFixPlanRepoKey,
+    updatePartialFixPlan,
+    clearPartialFixPlan,
     setIsFixPlanLoading,
-    setIsFixPlanGenerated,
+    setCurrentFixPlanPhase,
+    setCurrentFixPlanStep,
+    setFixPlanProgress,
     resetFixPlanState,
   } = useFixPlanState();
   const { setError, setFixPlanError } = useErrorState();
   const { setFixPlanDialogOpen } = useUIState();
-  const onMessage = useCallback(
-    (message: FixPlanSSEMessage) => {
-      if (
-        message &&
-        message.dependencyName &&
-        message.dependencyVersion &&
-        message.fixPlan
-      ) {
-        const key = `${message.dependencyName}@${message.dependencyVersion}`;
 
-        setFixPlan((prev) => {
-          const fixPlanString =
-            typeof message.fixPlan === "object"
-              ? JSON.stringify(message.fixPlan, null, 2)
-              : String(message.fixPlan);
+  // Ref to store EventSource for cleanup
+  const eventSourceRef = useRef<EventSource | null>(null);
 
-          return {
-            ...prev,
-            [key]: fixPlanString,
-          };
-        });
-      } else {
-        console.warn("Invalid message structure received:", message);
+  // Set the current repo key when component mounts or repo changes
+  useEffect(() => {
+    const repoKey = `${username}/${repo}/${branch}`;
+    setCurrentFixPlanRepoKey(repoKey);
+  }, [username, repo, branch, setCurrentFixPlanRepoKey]);
+
+  // Cleanup EventSource on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (eventSourceRef.current) {
+        console.log('Cleaning up SSE connection');
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    };
+  }, []);
+
+  // Helper to order and update partial fix plan
+  const updateOrderedPartialPlan = useCallback(
+    (plan: Record<string, unknown>, ecosystem?: string) => {
+      const orderedUpdate: Record<string, unknown> = {};
+      FIX_PLAN_PROPERTY_ORDER.forEach((key) => {
+        if (plan[key]) orderedUpdate[key] = plan[key];
+      });
+      if (Object.keys(orderedUpdate).length > 0) {
+        updatePartialFixPlan(orderedUpdate, ecosystem);
       }
     },
-    [setFixPlan]
+    [updatePartialFixPlan]
   );
 
   const onError = useCallback(
@@ -79,172 +83,202 @@ export const useFixPlanGeneration = ({
       }
 
       if (dependencyKey) {
-        // console.log("Error for dependency:", dependencyKey, error);
         const currentErrors = store.getState().fixPlanError || {};
         setFixPlanError({
           ...currentErrors,
           [dependencyKey]: error,
         });
-      } else {
-        // console.log("General error (no specific dependency):", error);
       }
     },
-    [setFixPlanError]
+    [setFixPlanError],
   );
 
   const onComplete = useCallback(() => {
     toast.dismiss();
     toast.success("Fix plan generation completed!");
-    setIsFixPlanGenerated(true);
     setIsFixPlanLoading(false);
-  }, [setIsFixPlanGenerated, setIsFixPlanLoading]);
+  }, [setIsFixPlanLoading]);
 
   const onGlobalFixPlanMessage = useCallback(
     (message: GlobalFixPlanSSEMessage) => {
-      if (message && message.globalFixPlan) {
-        const globalPlan =
-          typeof message.globalFixPlan === "object"
-            ? JSON.stringify(message.globalFixPlan, null, 2)
-            : String(message.globalFixPlan);
+      if (!message?.globalFixPlan) return;
+
+      const fixPlanData = message.globalFixPlan;
+
+      // Check if response is ecosystem-keyed (new format)
+      const isEcosystemBased =
+        typeof fixPlanData === "object" &&
+        fixPlanData !== null &&
+        Object.keys(fixPlanData).some((key) => {
+          const value = fixPlanData[key];
+          return (
+            value &&
+            typeof value === "object" &&
+            ("executive_summary" in value ||
+              "dependency_intelligence" in value)
+          );
+        });
+
+      if (isEcosystemBased) {
+        // New format: { npm: {...}, PyPI: {...} }
+        const ecosystemPlans = fixPlanData as Record<string, Record<string, unknown>>;
+        const ecosystemEntries = Object.entries(ecosystemPlans);
+
+        ecosystemEntries.forEach(([ecosystem, plan]) => {
+          setEcosystemFixPlan(ecosystem, JSON.stringify(plan, null, 2));
+          updateOrderedPartialPlan(plan, ecosystem);
+        });
+
+        // If single ecosystem, also set as global for backward compatibility
+        if (ecosystemEntries.length === 1) {
+          const [, singlePlan] = ecosystemEntries[0];
+          setGlobalFixPlan(JSON.stringify(singlePlan, null, 2));
+          updateOrderedPartialPlan(singlePlan);
+        }
+      } else {
+        // Legacy format: single global fix plan
+        const globalPlan = typeof fixPlanData === "object"
+          ? JSON.stringify(fixPlanData, null, 2)
+          : String(fixPlanData);
 
         setGlobalFixPlan(globalPlan);
-      } else {
-        console.warn(
-          "Invalid global fix plan message structure received:",
-          message
-        );
+        if (typeof fixPlanData === "object") {
+          updateOrderedPartialPlan(fixPlanData as Record<string, unknown>);
+        }
       }
     },
-    [setGlobalFixPlan]
+    [setGlobalFixPlan, setEcosystemFixPlan, updateOrderedPartialPlan],
   );
 
-  const onFixOptimizationMessage = useCallback(
-    (message: FixOptimisationPlanSSEMessage) => {
-      if (message && message.optimisedPlan) {
-        const fixOptPlan =
-          typeof message.optimisedPlan === "object"
-            ? JSON.stringify(message.optimisedPlan, null, 2)
-            : String(message.optimisedPlan);
+  const onProgress = useCallback(
+    (data: {
+      step?: string;
+      progress?: string | number;
+      data?: Record<string, unknown>;
+    }) => {
+      const ecosystem = data.data?.ecosystem as string | undefined;
 
-        setFixOptimizationPlan(fixOptPlan);
-      } else {
-        console.warn(
-          "Invalid fix optimization plan message structure received:",
-          message
-        );
+      if (data.step && PHASE_STEP_MAP[data.step]) {
+        setCurrentFixPlanPhase(PHASE_STEP_MAP[data.step], ecosystem);
+      }
+
+      if (typeof data.progress === "string") {
+        setCurrentFixPlanStep(data.progress);
+      }
+
+      if (data.data?.progress && typeof data.data.progress === "number") {
+        setFixPlanProgress(data.data.progress, ecosystem);
+      }
+
+      // Extract and update tab-specific data as it arrives
+      if (data.data) {
+        const partialUpdate: Record<string, unknown> = {};
+
+        FIX_PLAN_PROPERTY_ORDER.forEach((key) => {
+          if (data.data![key]) partialUpdate[key] = data.data![key];
+        });
+
+        // Handle smart_actions specially - merge into dependency_intelligence
+        if (data.data.smart_actions) {
+          const depIntel = partialUpdate.dependency_intelligence as Record<string, unknown> || {};
+          depIntel.smart_actions = data.data.smart_actions;
+          partialUpdate.dependency_intelligence = depIntel;
+        }
+
+        if (Object.keys(partialUpdate).length > 0) {
+          updatePartialFixPlan(partialUpdate, ecosystem);
+        }
       }
     },
-    [setFixOptimizationPlan]
-  );
-
-  const onConflictResolutionMessage = useCallback(
-    (message: ConflictResolutionPlanSSEMessage) => {
-      if (message && message.conflictResolutionPlan) {
-        const conflictPlan =
-          typeof message.conflictResolutionPlan === "object"
-            ? JSON.stringify(message.conflictResolutionPlan, null, 2)
-            : String(message.conflictResolutionPlan);
-
-        setConflictResolutionPlan(conflictPlan);
-      } else {
-        console.warn(
-          "Invalid conflict resolution plan message structure received:",
-          message
-        );
-      }
-    },
-    [setConflictResolutionPlan]
-  );
-
-  const onStrategyRecommendationMessage = useCallback(
-    (message: StrategyRecommendationSSEMessage) => {
-      if (message && message.finalStrategy) {
-        const strategyRec =
-          typeof message.finalStrategy === "object"
-            ? JSON.stringify(message.finalStrategy, null, 2)
-            : String(message.finalStrategy);
-
-        setStrategyPlan(strategyRec);
-      } else {
-        console.warn(
-          "Invalid strategy recommendation message structure received:",
-          message
-        );
-      }
-    },
-    [setStrategyPlan]
+    [
+      setCurrentFixPlanPhase,
+      setCurrentFixPlanStep,
+      setFixPlanProgress,
+      updatePartialFixPlan,
+    ],
   );
 
   const generateFixPlan = useCallback(
     async (regenerateFixPlan: boolean = false) => {
       const state = store.getState();
-      const graphData = state.graphData;
-      const isFixPlanLoading = state.isFixPlanLoading;
-      const fixPlan = state.fixPlan;
-      const selectedBranch = state.selectedBranch;
-      
+      const { graphData, isFixPlanLoading, selectedBranch, currentFixPlanRepoKey } = state;
+      const repoData = currentFixPlanRepoKey ? state.fixPlansByRepo[currentFixPlanRepoKey] : null;
+      const hasExistingFixPlan = Boolean(
+        repoData?.globalFixPlan?.trim() || Object.keys(repoData?.ecosystemFixPlans || {}).length
+      );
+
+      // Prevent multiple simultaneous calls
+      if (isFixPlanLoading) return;
+
       if (!graphData || Object.keys(graphData).length === 0) {
         setError("No graph data available to generate fix plan.");
         return;
       }
-      
-      setFixPlanDialogOpen(true);
-      
-      if (isFixPlanLoading) return; // Prevent multiple simultaneous calls
-      
-      setFixPlanError({});
-      
-      // Check if fix plan already exists
-      if (Object.keys(fixPlan).length > 0 && !regenerateFixPlan) {
+
+      // Open existing fix plan without regenerating
+      if (!regenerateFixPlan && hasExistingFixPlan) {
         setFixPlanDialogOpen(true);
         return;
       }
-      
+
+      setFixPlanError({});
+      // Clear old data and reset state BEFORE setting loading
+      // This ensures skeleton shows immediately
+      setGlobalFixPlan("");
+      clearPartialFixPlan();
       resetFixPlanState();
-      setIsFixPlanLoading(true);
       setError("");
-      
+      setIsFixPlanLoading(true);
+      setFixPlanDialogOpen(true);
+
       try {
-        await getFixPlanSSE(
+        // Close existing EventSource if any
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close();
+          eventSourceRef.current = null;
+        }
+        // Store new EventSource for cleanup
+        eventSourceRef.current = await getFixPlanSSE(
           username,
           repo,
           selectedBranch ?? branch,
-          onMessage,
           onError,
           onComplete,
           onGlobalFixPlanMessage,
-          onFixOptimizationMessage,
-          onConflictResolutionMessage,
-          onStrategyRecommendationMessage
+          onProgress
         );
       } catch (error) {
         console.error("Error generating fix plan:", error);
-        const errorMessage =
-          error instanceof Error
-            ? error.message
-            : "An error occurred while generating the fix plan.";
+        const errorMessage = error instanceof Error
+          ? error.message
+          : "An error occurred while generating the fix plan.";
         toast.error(errorMessage);
         setError(errorMessage);
         resetFixPlanState();
+        
+        // Close EventSource only on error
+        if (eventSourceRef.current) {
+          eventSourceRef.current.close();
+          eventSourceRef.current = null;
+        }
       }
     },
     [
+      setFixPlanDialogOpen,
+      setFixPlanError,
+      setGlobalFixPlan,
+      clearPartialFixPlan,
+      resetFixPlanState,
+      setIsFixPlanLoading,
+      setError,
       username,
       repo,
       branch,
-      setError,
-      setFixPlanDialogOpen,
-      setFixPlanError,
-      resetFixPlanState,
-      setIsFixPlanLoading,
-      onMessage,
       onError,
       onComplete,
       onGlobalFixPlanMessage,
-      onFixOptimizationMessage,
-      onConflictResolutionMessage,
-      onStrategyRecommendationMessage,
-    ]
+      onProgress,
+    ],
   );
 
   return { generateFixPlan };

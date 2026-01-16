@@ -18,10 +18,13 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
-  description: "Visualize, detect and fix dependency vulnerabilities in your codebase with AI-powered insights. Analyze GitHub repositories and manifest files for security risks across npm, pip, Maven, and more. Free open-source dependency scanner.",
+  title:
+    "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
+  description:
+    "Visualize, detect and fix dependency vulnerabilities in your codebase with AI-powered insights. Analyze GitHub repositories and manifest files for security risks across npm, pip, Maven, and more. Free open-source dependency scanner.",
   openGraph: {
-    title: "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
+    title:
+      "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
     description:
       "Visualize, detect and fix dependency vulnerabilities in your codebase with AI-powered insights. Analyze GitHub repositories and manifest files for security risks across npm, pip, Maven, and more.",
     url: "https://GitVulSafe.com",
@@ -31,7 +34,8 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "GitVulSafe - Dependency Vulnerability Scanner",
-    description: "Visualize, detect and fix dependency vulnerabilities in your codebase with AI-powered insights.",
+    description:
+      "Visualize, detect and fix dependency vulnerabilities in your codebase with AI-powered insights.",
   },
   robots: {
     index: true,
@@ -71,11 +75,15 @@ export default function RootLayout({
     <html lang="en" className={`${geistSans.variable} `}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          rel="preconnect"
+          href="https://fonts.gstatic.com"
+          crossOrigin="anonymous"
+        />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
       <body className="flex h-screen flex-col bg-background bg-repeat bg-[size:300px_300px] bg-[url('/bg.svg')] bg-blend-multiply relative">
-        <SpeedInsights/>
+        <SpeedInsights />
         <ThemeProvider>
           <NetworkStatusProvider>
             <Header />

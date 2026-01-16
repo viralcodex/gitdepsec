@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "required": [
+    "critical_insights",
+    "total_vulnerabilities",
+    "fixable_count",
+    "estimated_fix_time",
+    "risk_score",
+    "quick_wins"
+  ],
+  "properties": {
+    "critical_insights": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 3,
+      "maxItems": 5
+    },
+    "total_vulnerabilities": { "type": "integer" },
+    "fixable_count": { "type": "integer" },
+    "estimated_fix_time": { "type": "string" },
+    "risk_score": { "type": "number", "minimum": 1, "maximum": 10 },
+    "quick_wins": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "maxItems": 5
+    }
+  }
+}

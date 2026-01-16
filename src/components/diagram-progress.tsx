@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Progress } from "./ui/progress";
 import { progressSSE } from "@/lib/api";
 import toast from "react-hot-toast";
-import { progressSteps } from "@/constants/constants";
+import { PROGRESS_STEPS } from "@/constants/constants";
 
 interface DiagramProgressProps {
   width?: number;
@@ -20,12 +20,11 @@ const DiagramProgress = ({ width, height }: DiagramProgressProps) => {
         setProgress(Number(prg.toFixed(1)));
         setCurrentStep(step);
       },
-      () => {
-      },
+      () => {},
       (error: string) => {
         console.error("SSE Error:", error);
         toast.error("Disconnected from server");
-      }
+      },
     );
 
     return () => {
@@ -34,7 +33,7 @@ const DiagramProgress = ({ width, height }: DiagramProgressProps) => {
     };
   }, []);
 
-   useEffect(() => {
+  useEffect(() => {
     const interval = setTimeout(() => {
       setDots((prev) => {
         const newDots = prev.length >= 3 ? "" : prev + ".";
@@ -46,13 +45,13 @@ const DiagramProgress = ({ width, height }: DiagramProgressProps) => {
 
   //if step is almost done, show the step for a second before completing...
   useEffect(() => {
-    if (currentStep === progressSteps["FINALISING_RESULTS"]) {
+    if (currentStep === PROGRESS_STEPS["FINALISING_RESULTS"]) {
       const timeout = setTimeout(() => {
-        setCurrentStep(progressSteps["FINALISING_RESULTS"]);
+        setCurrentStep(PROGRESS_STEPS["FINALISING_RESULTS"]);
       }, 1000);
       return () => clearTimeout(timeout);
     }
-  },[currentStep]); 
+  }, [currentStep]);
 
   return (
     <div

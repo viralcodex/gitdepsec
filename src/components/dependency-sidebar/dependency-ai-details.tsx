@@ -1,4 +1,4 @@
-import { Dependency } from "@/constants/model";
+import { Dependency, VulnerabilitySummaryResponse } from "@/constants/model";
 import { cn, getRemediationPriorityConfig } from "@/lib/utils";
 import { Badge } from "../ui/badge";
 import {
@@ -16,7 +16,7 @@ interface DependencyAIDetailsProps {
   isMobile?: boolean;
   error: string | null;
   isLoading: boolean;
-  summary: string | null;
+  summary: VulnerabilitySummaryResponse | null;
   isCopied: boolean;
   setIsCopied: (copied: boolean) => void;
   handleCopy: () => void;
@@ -49,7 +49,8 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
     return <div className="pt-12 px-4">No dependency details available</div>;
   }
 
-  const parsedSummary = summary ? JSON.parse(summary) : null;
+  // Summary is already parsed as VulnerabilitySummaryResponse object by the API layer
+  const parsedSummary = summary;
 
   const iconMap: Record<string, LucideIcon> = {
     Siren,
@@ -83,7 +84,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
         <Badge
           className={cn(
             isMobile ? "text-sm" : "text-xs",
-            "bg-gray-500 text-white rounded-sm m-0"
+            "bg-gray-500 text-white rounded-sm m-0",
           )}
         >
           N/A
@@ -94,7 +95,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
       <Badge
         className={cn(
           isMobile ? "text-sm" : "text-xs",
-          "bg-blue-600 text-white rounded-sm m-0"
+          "bg-blue-600 text-white rounded-sm m-0",
         )}
       >
         {timeline.toTitleCase()}
@@ -109,7 +110,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
         {actions.map((action, idx) => {
           const processedAction = action.replace(
             /\*\*(.*?)\*\*/g,
-            "<strong>$1</strong>"
+            "<strong>$1</strong>",
           );
           const parts = processedAction.split(/(<code>.*?<\/code>)/g);
           return (
@@ -165,7 +166,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
         <Badge
           className={cn(
             isMobile ? "text-sm" : "text-xs",
-            "bg-gray-500 text-white rounded-sm m-0"
+            "bg-gray-500 text-white rounded-sm m-0",
           )}
         >
           N/A
@@ -176,7 +177,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
       <Badge
         className={cn(
           isMobile ? "text-sm" : "text-xs",
-          "bg-amber-700 text-white rounded-sm m-0"
+          "bg-amber-700 text-white rounded-sm m-0",
         )}
       >
         {"Vector: " + vector.toTitleCase()}
@@ -194,7 +195,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
           </div>
         </div>
       ) : error ? (
-        <div className="text-red-500 text-center h-full flex flex-col items-center justify-center gap-4">
+        <div className="text-red-600 text-center h-full flex flex-col items-center justify-center gap-4">
           <AlertTriangle size={96} />
           {error}
         </div>
@@ -202,18 +203,18 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
         <div>
           <div className="mb-4">
             <div className="flex flex-row gap-x-2 mb-2 flex-wrap gap-y-2">
-              {getSeverityBadge(parsedSummary?.risk_score)}
+              {getSeverityBadge(parsedSummary?.risk_score?.toString() ?? "0")}
               {getRemediationPriorityBadge(
-                parsedSummary?.remediation_priority || "N/A"
+                parsedSummary?.remediation_priority || "N/A",
               )}
-              {getTimelineBadge(parsedSummary?.timeline_estimate || "N/A")}
+              {getTimelineBadge(parsedSummary?.timeline || "N/A")}
               {getExploitVectorBadge(parsedSummary?.exploit_vector || "N/A")}
             </div>
             <div className="mb-4">
               <p
                 className={cn(
                   isMobile ? "text-sm" : "text-md",
-                  "font-bold text-input mb-1"
+                  "font-bold text-input mb-1",
                 )}
               >
                 Remediation Actions
@@ -226,39 +227,39 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
               <p
                 className={cn(
                   isMobile ? "text-sm" : "text-md",
-                  "font-bold text-input mb-1"
+                  "font-bold text-input mb-1",
                 )}
               >
                 Summary
               </p>
               <p className={cn(isMobile ? "text-xs" : "text-sm")}>
-                {parseText(parsedSummary?.summary)}
+                {parseText(parsedSummary?.summary ?? "")}
               </p>
             </div>
             <div className="mb-4">
               <p
                 className={cn(
                   isMobile ? "text-sm" : "text-md",
-                  "font-bold text-input mb-1"
+                  "font-bold text-input mb-1",
                 )}
               >
                 Impact
               </p>
               <p className={cn(isMobile ? "text-xs" : "text-sm")}>
-                {parseText(parsedSummary?.impact)}
+                {parseText(parsedSummary?.impact ?? "")}
               </p>
             </div>
             <div className="mb-4">
               <p
                 className={cn(
                   isMobile ? "text-sm" : "text-md",
-                  "font-bold text-input mb-1"
+                  "font-bold text-input mb-1",
                 )}
               >
                 Affected Components
               </p>
               <div className={cn(isMobile ? "text-sm" : "text-xs")}>
-                {parseListItems(parsedSummary?.affected_components) || []}
+                {parseListItems(parsedSummary?.affected_components ?? [])}
               </div>
             </div>
           </div>
@@ -266,13 +267,13 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
             <p
               className={cn(
                 isMobile ? "text-sm" : "text-md",
-                "font-bold text-input mb-1"
+                "font-bold text-input mb-1",
               )}
             >
               Risk Score Justification
             </p>
             <div className={cn(isMobile ? "text-xs" : "text-sm")}>
-              {parseListItems(parsedSummary?.risk_score_justification)}
+              {parseListItems(parsedSummary?.risk_score_justification ?? [])}
             </div>
           </div>
         </div>

@@ -27,13 +27,13 @@ const HeaderControls = ({
       className={`flex flex-row items-center justify-center w-full gap-2 mt-4 mb-2`}
     >
       {ecosystemOptions.length > 1 && (
-        <div className="sm:w-[200px] w-[40%]">
+        <div className="sm:w-[200px] w-[40%] h-full">
           <Dropdown
             isBranchDropdown={false}
             ecosystems={ecosystemOptions}
             selectedEcosystem={selectedEcosystem}
             onEcosystemChange={onEcosystemChange}
-            className="shadow-none border-input border-1 text-sm"
+            className="shadow-none border-input border-1 text-sm sm:h-[48px]"
           />
         </div>
       )}
@@ -65,9 +65,7 @@ const HeaderControls = ({
               </div>
             </button>
           </TooltipTrigger>
-          <TooltipContent
-            className="bg-background/90 text-accent text-xs px-2 py-1 rounded-md transition-all ease-in duration-300"
-          > 
+          <TooltipContent className="bg-background/90 text-accent text-xs px-2 py-1 rounded-md transition-all ease-in duration-300">
             <p className="font-semibold">
               Fix plan may take several seconds depending on the size of
               project.

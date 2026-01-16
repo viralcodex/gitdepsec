@@ -4,15 +4,29 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn, verifyUrl } from "@/lib/utils";
-import { LucideArrowBigRight, LucideLoader2, RefreshCcwDot } from "lucide-react";
+import {
+  LucideArrowBigRight,
+  LucideLoader2,
+  RefreshCcwDot,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import HeaderToggle from "../header-toggle";
 import HeaderOptions from "../save-analysis-history";
 import { ButtonGroup } from "../ui/button-group";
-import { useRepoState, useGraphState, useDiagramState, useErrorState, useUIState } from "@/store/app-store";
+import {
+  useRepoState,
+  useGraphState,
+  useDiagramState,
+  useErrorState,
+  useUIState,
+} from "@/store/app-store";
 import { HistoryItem } from "@/constants/model";
 
 interface TopHeaderProps {
@@ -24,8 +38,14 @@ interface TopHeaderProps {
 }
 
 const TopHeaderGithub = (props: TopHeaderProps) => {
-  const { inputUrl, handleInputChange, onRefresh, resetGraphSvg, addButtonRef } = props;
-  
+  const {
+    inputUrl,
+    handleInputChange,
+    onRefresh,
+    resetGraphSvg,
+    addButtonRef,
+  } = props;
+
   // Store hooks
   const { branches, selectedBranch, loadingBranches } = useRepoState();
   const { loading, setLoading, graphData, dependencies } = useGraphState();
@@ -52,7 +72,14 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
     return () => {
       setResult(undefined);
     };
-  }, [inputUrl, setBranchError, selectedBranch, graphData, dependencies, branches]);
+  }, [
+    inputUrl,
+    setBranchError,
+    selectedBranch,
+    graphData,
+    dependencies,
+    branches,
+  ]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -70,7 +97,7 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
     // Check if we're on the same page with same parameters
     const currentUrl = window.location.href;
     const newUrl = `/${encodeURIComponent(username)}/${encodeURIComponent(repo)}?branch=${encodeURIComponent(
-      selectedBranch!
+      selectedBranch!,
     )}`;
 
     if (currentUrl.includes(newUrl.slice(1))) {
@@ -91,7 +118,9 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
     onRefresh();
   };
 
-  const isDisabled = () => {return loading || loadingBranches || !result};
+  const isDisabled = () => {
+    return loading || loadingBranches || !result;
+  };
 
   return (
     <form
@@ -99,17 +128,14 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
       className={cn(
         isDiagramExpanded
           ? "hidden"
-          : "w-full flex flex-col items-center justify-center"
+          : "w-full flex flex-col items-center justify-center",
       )}
       aria-label="GitHub repository analysis form"
     >
       <div className="flex flex-col items-center justify-center px-4 pt-4 w-full">
         <Card className="relative max-h-[200px] bg-background sm:max-w-[700px] w-full border-2 border-accent mx-auto mt-4 flex justify-center p-4 gap-4 sm:flex-row flex-col">
           <HeaderOptions data={result} addButtonRef={addButtonRef} />
-          <HeaderToggle
-            from="github"
-            setIsFileHeaderOpen={setFileHeaderOpen}
-          />
+          <HeaderToggle from="github" setIsFileHeaderOpen={setFileHeaderOpen} />
           <Input
             className="sm:w-[65%] h-14 border-1"
             placeholder="https://github.com/username/repo"
@@ -117,12 +143,14 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
             onChange={handleInputChange}
             aria-label="GitHub repository URL"
           />
-        <div className="sm:w-[35%] h-14">
-          <Dropdown
-            className="shadow-none border-input border-1 text-sm px-3 overflow-x-auto"
-          />
-        </div>
-          <ButtonGroup className="sm:flex-row" role="group" aria-label="Repository actions">
+          <div className="sm:w-[35%] h-14">
+            <Dropdown className="shadow-none border-input border-1 text-sm px-3 overflow-x-auto" />
+          </div>
+          <ButtonGroup
+            className="sm:flex-row"
+            role="group"
+            aria-label="Repository actions"
+          >
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

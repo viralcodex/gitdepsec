@@ -23,11 +23,7 @@ interface TopHeaderFileProps {
 }
 
 const TopHeaderFile = (props: TopHeaderFileProps) => {
-  const {
-    inputFile,
-    setInputFile,
-    resetGraphSvg,
-  } = props;
+  const { inputFile, setInputFile, resetGraphSvg } = props;
   // Store hooks
   const { resetRepoState } = useRepoState();
   const { uploaded, newFileName } = useFileState();
@@ -65,7 +61,7 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
       className={cn(
         isDiagramExpanded
           ? "hidden"
-          : "w-full flex flex-col items-center justify-center"
+          : "w-full flex flex-col items-center justify-center",
       )}
       aria-label="File analysis form"
     >

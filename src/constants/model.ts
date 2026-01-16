@@ -126,7 +126,7 @@ export interface FixPlanSSEMessage {
 }
 
 export interface GlobalFixPlanSSEMessage {
-  globalFixPlan?: string;
+  globalFixPlan?: string | Record<string, unknown>; // Support both legacy string and unified object structures
   progress?: string;
 }
 
@@ -143,6 +143,117 @@ export interface ConflictResolutionPlanSSEMessage {
 export interface StrategyRecommendationSSEMessage {
   finalStrategy?: string;
   progress?: string;
+}
+
+// New Unified Fix Plan Structure (from agents_service_new.ts)
+export interface UnifiedFixPlan {
+  executive_summary?: {
+    critical_insights?: string[];
+    total_vulnerabilities?: number;
+    fixable_count?: number;
+    estimated_fix_time?: string;
+    risk_score?: number;
+    quick_wins?: string[]; // Array of strings with markdown formatting
+  };
+  dependency_intelligence?: {
+    critical_paths?: Array<{
+      path?: string;
+      risk?: string;
+      resolution?: string;
+      estimated_impact?: string;
+    }>;
+    shared_transitive_vulnerabilities?: Array<{
+      package?: string;
+      used_by?: string[];
+      vulnerability_count?: number;
+      fix?: string;
+      impact_multiplier?: string;
+    }>;
+    version_conflicts?: Array<{
+      conflict?: string;
+      affected_packages?: string[];
+      resolution?: string;
+      risk_level?: string;
+    }>;
+    optimization_opportunities?: string[]; // Required in backend schema
+    smart_actions?: Array<{
+      title?: string;
+      description?: string;
+      impact?: string;
+      estimated_time?: string;
+    }>;
+  };
+  priority_phases?: Array<{
+    phase?: number;
+    name?: string;
+    urgency?: string;
+    dependencies?: string[];
+    fixes?: Array<{
+      package?: string;
+      vulnerability_ids?: string[];
+      action?: string;
+      command?: string;
+      risk_score?: number;
+      impact?: string;
+      breaking_changes?: boolean;
+      target_version?: string;
+      breaking_change_details?: string;
+      transitive_impact?: string;
+    }>;
+    batch_commands?: string[];
+    validation_steps?: string[];
+    estimated_time?: string;
+    rollback_plan?: string; // Kept as is - matches backend
+  }>;
+  automated_execution?: {
+    one_click_script?: string;
+    phase_scripts?: Array<{
+      phase?: number;
+      name?: string;
+      script?: string;
+    }>;
+    safe_mode_script?: string;
+    ci_cd_integration?: {
+      github_actions?: string;
+      gitlab_ci?: string;
+      jenkins?: string;
+    };
+  };
+  risk_management?: {
+    overall_assessment?: string;
+    breaking_changes_summary?: {
+      has_breaking_changes?: boolean;
+      count?: number;
+      affected_areas?: string[];
+      mitigation_steps?: string[];
+    };
+    testing_strategy?: {
+      unit_tests?: string;
+      integration_tests?: string;
+      regression_tests?: string;
+      manual_verification?: string;
+      security_validation?: string;
+    };
+    rollback_procedures?: Array<{
+      phase?: number;
+      procedure?: string;
+      validation?: string;
+    }>; // Match backend schema structure
+    monitoring_recommendations?: string[];
+  };
+  long_term_strategy?: {
+    preventive_measures?: string[];
+    dependency_policies?: string[];
+    automation_opportunities?: string[];
+    monitoring_setup?: string;
+    update_cadence?: string;
+  };
+  metadata?: {
+    generated_at?: string;
+    analysis_duration?: string;
+    total_packages_analyzed?: number;
+    ecosystem?: string;
+  };
 }
 
 // Global Fix Plan Data Structures
@@ -239,12 +350,24 @@ export interface VulnerabilityFix {
   }>;
 }
 
+export interface VulnerabilitySummaryResponse {
+  risk_score: number;
+  risk_score_justification: string[];
+  summary: string;
+  impact: string;
+  affected_components: string[];
+  remediation_priority: "immediate" | "urgent" | "medium" | "low";
+  recommended_actions: string[];
+  timeline: string;
+  exploit_vector: "network" | "adjacent" | "local" | "physical";
+}
+
 export interface ProgressSSE {
-    step: string;
-    progress: number;
-    progressNumber?: number;
-    message?: string;
-    type: string;
+  step: string;
+  progress: number;
+  progressNumber?: number;
+  message?: string;
+  type: string;
 }
 
 export interface HistoryItem {

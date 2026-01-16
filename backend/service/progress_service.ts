@@ -41,11 +41,7 @@ class ProgressService {
    * @param step - The current step name
    * @param progress - Progress percentage (0-100)
    */
-  progressUpdater(
-    step: string,
-    progress: number,
-    progressNumber: number = 0,
-  ): void {
+  progressUpdater(step: string, progress: number): void {
     // Notify all registered callbacks
     this.callbacks.forEach((callback) => {
       try {

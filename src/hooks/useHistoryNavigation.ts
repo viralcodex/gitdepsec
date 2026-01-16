@@ -19,7 +19,7 @@ export const useHistoryNavigation = () => {
       // setCurrentUrl(githubUrl);
       router.push(`/${hist.username}/${hist.repo}?branch=${hist.branch}`);
     },
-    [router, loadedRepoKey, setLoadedRepoKey]
+    [router, loadedRepoKey, setLoadedRepoKey],
   );
 
   return { navigateToHistory };

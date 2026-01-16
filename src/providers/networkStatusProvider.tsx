@@ -35,14 +35,14 @@ export const NetworkStatusProvider = ({ children }: NetworkProviderProps) => {
     if (!isOnline) {
       setConnectionQuality("offline");
       toast.error("No Network Connection Found...", {
-        icon: <WifiOff className="h-5 w-5" strokeWidth={3}/>,
+        icon: <WifiOff className="h-5 w-5" strokeWidth={3} />,
         duration: Infinity,
         id: "network-status",
-        style:{
-            backgroundColor: "red",
-            color:"white",
-            paddingLeft: 15
-        }
+        style: {
+          backgroundColor: "red",
+          color: "white",
+          paddingLeft: 15,
+        },
       });
     } else {
       if (navigator.connection) {
@@ -60,7 +60,7 @@ export const NetworkStatusProvider = ({ children }: NetworkProviderProps) => {
               id: "network-status",
               style: {
                 color: "white",
-                backgroundColor: "yellow"
+                backgroundColor: "yellow",
               },
             });
           }

@@ -164,29 +164,6 @@ export const manifestFiles: { [ecosystem: string]: string } = {
   elixir: 'mix.exs',
 };
 
-// Define types for AI response parts
-interface FunctionCall {
-  name?: string;
-  arguments?: Record<string, unknown>;
-}
-
-interface ExecutableCode {
-  language?: string;
-  code?: string;
-}
-
-interface FunctionResponse {
-  name?: string;
-  content?: unknown;
-}
-
-export interface AiResponsePart {
-  text?: string;
-  functionCall?: FunctionCall;
-  executableCode?: ExecutableCode;
-  functionResponse?: FunctionResponse;
-}
-
 // Extend Request interface to include multer file
 export interface MulterRequest extends Request {
   file?: Express.Multer.File;
@@ -226,4 +203,89 @@ export interface GlobalAgentState {
   conflictResolutionPlan: Record<string, unknown>;
   finalStrategy: Record<string, unknown>;
   errors?: string[];
+}
+
+export interface FlattenedDependency extends Dependency {
+  filePath: string;
+  dependencyLevel: 'direct' | 'transitive';
+  parentDependency: string | null;
+  dependencyChain: string;
+  dependencyDepth: number;
+  usageFrequency: number;
+}
+
+export interface PrioritizedVulnerability extends Vulnerability {
+  packageName: string;
+  packageVersion: string;
+  filePath: string;
+  dependencyLevel: 'direct' | 'transitive';
+  priorityScore: number;
+  riskLevel: 'critical' | 'high' | 'medium' | 'low';
+}
+
+export interface TransitiveInsight {
+  package: string;
+  vulnerabilityCount: number;
+  usedBy: string[];
+  impactMultiplier: number;
+  fixAvailable: boolean;
+  impactDescription: string;
+  quickWinPotential: boolean;
+}
+
+export interface ConflictDetection {
+  package: string;
+  conflictType: string;
+  requiredVersions: string[];
+  affectedParents: string[];
+  riskLevel: 'critical' | 'high' | 'medium' | 'low';
+  suggestedResolution: string;
+}
+
+export interface QuickWin {
+  type: 'direct_upgrade' | 'transitive_multiplier';
+  package: string;
+  targetVersion?: string;
+  impact: string;
+  effort: string;
+  command?: string;
+  benefitMultiplier?: number;
+  estimatedTime?: string;
+}
+
+export interface ParallelAnalysisResults {
+  priorities: PrioritizedVulnerability[];
+  transitiveInsights: TransitiveInsight[];
+  conflicts: ConflictDetection[];
+  quickWins: QuickWin[];
+}
+
+/**
+ * Multi-Ecosystem Support Models
+ */
+export interface EcosystemMetadata {
+  ecosystem: string;
+  manifestFiles: string[];
+  totalDependencies: number;
+  vulnerableDependencies: number;
+  totalVulnerabilities: number;
+  fixableVulnerabilities: number;
+}
+
+export interface EcosystemFixPlan {
+  ecosystem: string;
+  metadata: EcosystemMetadata;
+  fixPlan: Record<string, unknown>; // UnifiedFixPlan structure
+}
+
+export interface MultiEcosystemResponse {
+  ecosystems: string[]; // List of detected ecosystems
+  ecosystemMetadata: Record<string, EcosystemMetadata>;
+  fixPlans: Record<string, Record<string, unknown>>; // ecosystem -> UnifiedFixPlan
+  overallSummary: {
+    totalEcosystems: number;
+    totalVulnerabilities: number;
+    totalFixable: number;
+    estimatedTotalTime: string;
+  };
 }

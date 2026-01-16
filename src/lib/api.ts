@@ -4,20 +4,21 @@ import {
   ProgressSSE,
   Vulnerability,
   GlobalFixPlanSSEMessage,
-  FixOptimisationPlanSSEMessage,
-  ConflictResolutionPlanSSEMessage,
-  StrategyRecommendationSSEMessage,
+  VulnerabilitySummaryResponse,
 } from "@/constants/model";
 import { getNewFileName } from "./utils";
-import { progressSteps } from "@/constants/constants";
+import { PROGRESS_STEPS } from "@/constants/constants";
 
 const baseUrl =
   process.env.NODE_ENV === "production"
     ? process.env.NEXT_PUBLIC_API_PROD_URL
     : process.env.NEXT_PUBLIC_API_DEV_URL;
 
+// Get GitHub PAT from localStorage (client-side only)
 const github_pat =
-  process.env.GITHUB_PAT ?? localStorage.getItem("github_pat") ?? undefined;
+  typeof window !== "undefined"
+    ? (localStorage.getItem("github_pat") ?? undefined)
+    : undefined;
 
 // Default timeout for API calls (20 seconds)
 const DEFAULT_TIMEOUT = 20000;
@@ -26,7 +27,7 @@ export async function getRepoBranches(
   username: string,
   repo: string,
   page?: number,
-  pageSize?: number
+  pageSize?: number,
 ): Promise<BranchesApiResponse> {
   try {
     if (!page) page = 1;
@@ -59,7 +60,7 @@ export async function getRepoBranches(
 export async function getManifestFileContents(
   username: string,
   repo: string,
-  branch: string
+  branch: string,
 ): Promise<ManifestFileContentsApiResponse> {
   try {
     const url = new URL(`${baseUrl}/manifestData`);
@@ -81,11 +82,11 @@ export async function getManifestFileContents(
     return data;
   } catch (error) {
     console.error("Error fetching manifest file contents:", error);
-    if (error instanceof Error && error.name === 'TimeoutError') {
+    if (error instanceof Error && error.name === "TimeoutError") {
       throw new Error("Request timed out. Please try again.");
     }
     throw new Error(
-      "Failed to fetch manifest file contents. Please try again later."
+      "Failed to fetch manifest file contents. Please try again later.",
     );
   }
 }
@@ -95,7 +96,7 @@ export async function analyseDependencies(
   repo: string,
   branch: string,
   file: string,
-  forceRefresh: boolean = false
+  forceRefresh: boolean = false,
 ): Promise<ManifestFileContentsApiResponse> {
   try {
     const url = file
@@ -121,7 +122,7 @@ export async function analyseDependencies(
     return data;
   } catch (error) {
     console.error("Error analysing dependencies:", error);
-    if (error instanceof Error && error.name === 'TimeoutError') {
+    if (error instanceof Error && error.name === "TimeoutError") {
       throw new Error("Request timed out. Please try again.");
     }
     throw new Error("Failed to analyse dependencies. Please try again later.");
@@ -129,7 +130,7 @@ export async function analyseDependencies(
 }
 
 export async function uploadFile(
-  file: File
+  file: File,
 ): Promise<{ response: JSON; newFileName: string }> {
   try {
     const url = new URL(`${baseUrl}/uploadFile`);
@@ -156,11 +157,10 @@ export async function uploadFile(
       return { response: await response.json(), newFileName };
     }
 
-    // console.log("File uploaded successfully"); // This line is for debugging, can be removed
     return { response: await response.json(), newFileName };
   } catch (error) {
     console.error("Error uploading file:", error);
-    if (error instanceof Error && error.name === 'TimeoutError') {
+    if (error instanceof Error && error.name === "TimeoutError") {
       throw new Error("File upload timed out. Please try again.");
     }
     throw new Error("Failed to upload file. Please try again later.");
@@ -171,7 +171,7 @@ export async function getAiVulnerabilitiesSummary(vulnerabilities: {
   name: string;
   version: string;
   vulnerabilities: Vulnerability[];
-}): Promise<string> {
+}): Promise<VulnerabilitySummaryResponse> {
   try {
     const url = new URL(`${baseUrl}/aiVulnSummary`);
 
@@ -192,15 +192,19 @@ export async function getAiVulnerabilitiesSummary(vulnerabilities: {
       return await response.json();
     }
 
-    const data = await response.json();
-    return data.summary;
+    // Backend now returns stringified JSON, so parse it
+    const stringData = await response.json();
+    const data =
+      typeof stringData === "string" ? JSON.parse(stringData) : stringData;
+    console.log("AI Vulnerabilities Summary:", data);
+    return data;
   } catch (error) {
     console.error("Error generating AI vulnerabilities summary:", error);
-    if (error instanceof Error && error.name === 'TimeoutError') {
+    if (error instanceof Error && error.name === "TimeoutError") {
       throw new Error("AI summary generation timed out. Please try again.");
     }
     throw new Error(
-      "Failed to generate AI vulnerabilities summary. Please try again later."
+      "Failed to generate AI vulnerabilities summary. Please try again later.",
     );
   }
 }
@@ -212,10 +216,9 @@ export async function getInlineAiResponse(
     name?: string;
     version?: string;
     vulnerabilities?: Vulnerability[];
-  }
+  },
 ): Promise<string> {
   try {
-    // console.log(prompt, selectedText, context);
     const url = new URL(`${baseUrl}/inlineai`);
     const response = await fetch(url, {
       method: "POST",
@@ -235,14 +238,18 @@ export async function getInlineAiResponse(
     }
 
     const data = await response.json();
-    return data.response;
+    const parsedResponse =
+      typeof data.response === "string"
+        ? JSON.parse(data.response)
+        : data.response;
+    return parsedResponse;
   } catch (error) {
     console.error("Error getting inline AI response:", error);
-    if (error instanceof Error && error.name === 'TimeoutError') {
+    if (error instanceof Error && error.name === "TimeoutError") {
       throw new Error("AI response timed out. Please try again.");
     }
     throw new Error(
-      "Failed to get inline AI response. Please try again later."
+      "Failed to get inline AI response. Please try again later.",
     );
   }
 }
@@ -250,7 +257,7 @@ export async function getInlineAiResponse(
 export function progressSSE(
   onProgress: (step: string, progress: number) => void,
   onConnection: () => void,
-  onError: (error: string) => void
+  onError: (error: string) => void,
 ): EventSource {
   try {
     const url = new URL(`${baseUrl}/progress`);
@@ -266,17 +273,17 @@ export function progressSSE(
           return;
         }
         if (data.step && typeof data.progress === "number") {
-          const currentStepIndex = Object.keys(progressSteps).indexOf(
-            data.step
+          const currentStepIndex = Object.keys(PROGRESS_STEPS).indexOf(
+            data.step,
           );
 
           // Only process if step is in correct order or is a valid step
           if (currentStepIndex >= lastStepIndex) {
             lastStepIndex = Math.max(lastStepIndex, currentStepIndex);
-            onProgress(progressSteps[data.step], data.progress);
+            onProgress(PROGRESS_STEPS[data.step], data.progress);
           } else {
             console.warn(
-              `Out of order step received: ${data.step} (index: ${currentStepIndex}, last: ${lastStepIndex})`
+              `Out of order step received: ${data.step} (index: ${currentStepIndex}, last: ${lastStepIndex})`,
             );
           }
         }
@@ -305,13 +312,14 @@ export async function getFixPlanSSE(
   username: string,
   repo: string,
   branch: string,
-  onMessage: (data: Record<string, unknown>) => void,
   onError: (error: string) => void,
   onComplete: () => void,
   onGlobalFixPlanMessage: (data: GlobalFixPlanSSEMessage) => void,
-  onFixOptimizationMessage: (data: FixOptimisationPlanSSEMessage) => void,
-  onConflictResolutionMessage: (data: ConflictResolutionPlanSSEMessage) => void,
-  onStrategyRecommendationMessage: (data: StrategyRecommendationSSEMessage) => void
+  onProgress?: (data: {
+    step?: string;
+    progress?: string | number;
+    data?: Record<string, unknown>;
+  }) => void,
 ): Promise<EventSource> {
   const url = new URL(`${baseUrl}/fixPlan`);
   url.searchParams.append("username", username);
@@ -324,59 +332,48 @@ export async function getFixPlanSSE(
     try {
       const data = JSON.parse(event.data);
       if (data.type === "connection") {
-        // // console.log("SSE Connection established:", data.message);
         return;
       }
       switch (data.step) {
-        //phase 1
-        case "vulnerability_analysis_start":
-          break;
-        case "vulnerability_analysis_complete":
-          onMessage(data.data ?? {});
-          break;
-        case "fix_plan_generation_start":
-          break;
-        case "fix_plan_generation_complete":
-          break;
-        case "vulnerability_analysis_error":
-          onError(data.progress as string);
-          break;
-        //phase 2
+        //phase 2: unified fix plan
         case "global_planning_start":
-          // onMessage(data.data ?? {});
           break;
-        case 'global_planning_complete':
-          onGlobalFixPlanMessage(data.data as GlobalFixPlanSSEMessage ?? {});
+        case "global_planning_complete":
+          onGlobalFixPlanMessage((data.data as GlobalFixPlanSSEMessage) ?? {});
           break;
-        case 'global_planning_error':
+        case "global_planning_error":
           onError(data.progress as string);
           break;
-        case 'fix_optimization_start':
-          // onMessage(data.data ?? {});
-          break;
-        case 'fix_optimization_complete':
-          onFixOptimizationMessage(data.data as FixOptimisationPlanSSEMessage ?? {});
-          break;
-        case 'fix_optimization_error':
-          onError(data.progress as string);
-          break;
-        case 'conflict_resolution_start':
-          // onMessage(data.data ?? {});
-          break;
-        case 'conflict_resolution_complete':
-          onConflictResolutionMessage(data.data as ConflictResolutionPlanSSEMessage ?? {});
-          break;
-        case 'conflict_resolution_error':
-          onError(data.progress as string);
-          break;
-        case 'strategy_recommendation_start':
-          // onMessage(data.data ?? {});
-          break;
-        case 'strategy_recommendation_complete':
-          onStrategyRecommendationMessage(data.data as StrategyRecommendationSSEMessage ?? {});
-          break;
-        case 'strategy_recommendation_error':
-          onError(data.progress as string);
+        // New 5-phase architecture steps
+        case "preprocessing_start":
+        case "preprocessing_complete":
+        case "parallel_analysis_start":
+        case "parallel_analysis_complete":
+        case "intelligence_start":
+        case "intelligence_complete":
+        case "batch_start":
+        case "batch_processing":
+        case "batch_processing_complete":
+        case "batch_complete":
+        case "synthesis_start":
+        case "synthesis_executive_complete":
+        case "synthesis_intelligence_start":
+        case "synthesis_intelligence_complete":
+        case "synthesis_phases_start":
+        case "synthesis_phases_complete":
+        case "synthesis_risk_start":
+        case "synthesis_risk_complete":
+        case "synthesis_complete":
+        case "enrichment_start":
+        case "enrichment_complete":
+          // Progress updates - pass all data to onProgress callback
+          if (onProgress) {
+            onProgress({
+              step: data.step,
+              progress: data.progress,
+              data: data.data,
+            });
+          }
           break;
         case "analysis_complete":
           onComplete();
@@ -390,14 +387,17 @@ export async function getFixPlanSSE(
   };
 
   eventSource.addEventListener("end", () => {
-    // console.log("SSE stream ended");
     onComplete?.();
     eventSource.close();
   });
 
   eventSource.onerror = (error) => {
     console.error("SSE connection error:", error);
-    onError?.("Connection error occurred");
+    const errorMsg =
+      typeof navigator !== "undefined" && !navigator.onLine
+        ? "You appear to be offline. Please check your internet connection."
+        : "Server connection error. Please try again.";
+    onError?.(errorMsg);
     eventSource.close();
   };
 

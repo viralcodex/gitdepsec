@@ -41,7 +41,11 @@ export function AiDialog({ isOpen, onClose, onSubmit }: AiDialogProps) {
             Enter Gemini API Key
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4" aria-label="Gemini API key configuration">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          aria-label="Gemini API key configuration"
+        >
           <div className="text-sm" role="note">
             You can provide an Gemini API key to generate AI insights and Fix
             Plans. The key will be stored locally in your browser.
@@ -59,8 +63,14 @@ export function AiDialog({ isOpen, onClose, onSubmit }: AiDialogProps) {
             </Link>
             .
           </div>
-          <details className="group text-sm [&>summary:focus-visible]:outline-none" aria-label="Data storage information">
-            <summary className="cursor-pointer font-medium text-primary-foreground hover:text-muted-foreground" tabIndex={0}>
+          <details
+            className="group text-sm [&>summary:focus-visible]:outline-none"
+            aria-label="Data storage information"
+          >
+            <summary
+              className="cursor-pointer font-medium text-primary-foreground hover:text-muted-foreground"
+              tabIndex={0}
+            >
               Data storage disclaimer
             </summary>
             <div className="animate-accordion-down mt-2 space-y-2 overflow-hidden pl-2">
