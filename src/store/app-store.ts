@@ -178,6 +178,7 @@ export const useFixPlanData = createSelector((s) => {
 
   return {
     globalFixPlan: repoData?.globalFixPlan || "",
+    ecosystemFixPlans: repoData?.ecosystemFixPlans || {},
     partialFixPlan: s.partialFixPlan || EMPTY_OBJECT,
     isGenerated: repoData?.isFixPlanGenerated || false,
   };

@@ -7,7 +7,7 @@ import {
   VulnerabilitySummaryResponse,
 } from "@/constants/model";
 import removeMarkdown from "remove-markdown";
-import { Check, Copy, Download, RefreshCcw, X } from "lucide-react";
+import { Check, Copy, RefreshCcw, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Badge } from "../ui/badge";
 import { cn, getSeverityConfig } from "@/lib/utils";
@@ -213,16 +213,6 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
     });
   };
 
-  const downloadDetails = () => {
-    const blob = new Blob([overallText], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${node.label}-dependency-details.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
-
   const getSeverityColor = (severity: number) => {
     if (!severity) return "bg-gray-500";
     const numericSeverity = severity;
@@ -282,11 +272,6 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
                   color="white"
                 />
               )}
-              <Download
-                className="cursor-pointer"
-                onClick={downloadDetails}
-                color="white"
-              />
               <X className="cursor-pointer" onClick={onClose} color="white" />
             </div>
           </div>
