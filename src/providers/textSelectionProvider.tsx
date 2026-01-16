@@ -72,7 +72,7 @@ export const useTextSelection = () => {
   const context = useContext(TextSelectionContext);
   if (!context) {
     throw new Error(
-      "useTextSelection must be used within a TextSelectionProvider"
+      "useTextSelection must be used within a TextSelectionProvider",
     );
   }
   return context;

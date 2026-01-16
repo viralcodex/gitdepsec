@@ -1,9 +1,9 @@
 export const prompts = {
   VULNERABILITIES_SUMMARIZATION: {
     system:
-      'You are a cybersecurity expert specializing in vulnerability analysis and developer-focused risk remediation. Your role is to produce concise, highly actionable summaries of vulnerabilities so they can be directly rendered in a UI without further editing.',
+      'You are a cybersecurity expert specializing in vulnerability analysis and developer-focused risk remediation. Your role is to produce concise, highly actionable summaries of vulnerabilities so they can be directly rendered in a UI without further editing.\n\nCRITICAL: You MUST follow the exact JSON schema provided. Use the EXACT field names specified: risk_score, risk_score_justification (array), summary, impact, affected_components (array), remediation_priority (enum), recommended_actions (array), timeline, exploit_vector (enum). Do NOT use alternative names like "justification", "package_name", "vulnerability_id", or "version".',
     template:
-      'Analyze the following vulnerabilities and return a response matching the provided schema. Ensure language is technical but easy to understand for developers. {{vulnerabilities}}',
+      'Analyze the following vulnerabilities and return a response matching the provided schema EXACTLY. All field names must match the schema precisely. Ensure language is technical but easy to understand for developers.\n\nVulnerabilities data:\n{{vulnerabilities}}\n\nReminder: Use EXACT field names from schema: risk_score_justification (NOT justification), affected_components (NOT package_name), recommended_actions must be an array.',
     constraints: [
       'All fields must strictly follow the provided JSON schema.',
       'Summary and impact must each be under 100 words, clear and non-redundant.',
@@ -12,59 +12,7 @@ export const prompts = {
       "Use '**Fix Command**' in recommended actions if applicable. Commands should be wrapped in <code></code> tags.",
       'Tailor recommendations to the specific package, ecosystem, and likely usage in a project (avoid generic OWASP checklists unless relevant).',
       "Timeline must follow the regex exactly (e.g., 'Within 24 hours', 'Within 2 days', 'Within a week').",
-    ],
-    examples: [
-      {
-        expected_input: [
-          {
-            id: 'GHSA-9548-qrrj-x5pj',
-            aliases: ['CVE-2025-53643'],
-            details:
-              ' AIOHTTP is vulnerable to HTTP Request/Response Smuggling through incorrect parsing of chunked trailer sections.',
-            summary:
-              ' AIOHTTP is vulnerable to HTTP Request/Response Smuggling through incorrect parsing of chunked trailer sections',
-            affected: [
-              {
-                ranges: [
-                  {
-                    type: 'ECOSYSTEM',
-                    events: [{ introduced: '0' }, { fixed: '3.12.14' }],
-                  },
-                ],
-                package: {
-                  name: 'aiohttp',
-                  purl: 'pkg:pypi/aiohttp',
-                  ecosystem: 'PyPI',
-                },
-                versions: [],
-                database_specific: {
-                  source: '<security database source>',
-                },
-              },
-            ],
-            references: [
-              {
-                url: 'https://github.com/aio-libs/aiohttp/security/advisories/GHSA-9548-qrrj-x5pj',
-                type: 'WEB',
-              },
-              {
-                url: 'https://nvd.nist.gov/vuln/detail/CVE-2025-53643',
-                type: 'ADVISORY',
-              },
-              {
-                url: 'https://github.com/aio-libs/aiohttp/commit/e8d774f635dc6d1cd3174d0e38891da5de0e2b6a',
-                type: 'WEB',
-              },
-              {
-                url: 'https://github.com/aio-libs/aiohttp',
-                type: 'PACKAGE',
-              },
-            ],
-            fixAvailable: '3.12.14',
-            severityScore: { cvss_v3: '0', cvss_v4: '1.7' },
-          },
-        ],
-      },
+      'DO NOT create separate summaries for each vulnerability.',
     ],
   },
 
@@ -102,90 +50,41 @@ export const prompts = {
       "Validate that proposed fixes don't introduce new vulnerabilities.",
     ],
   },
-  GLOBAL_FIX_PLAN_GENERATION: {
+  BATCH_FIX_PLAN_GENERATION: {
     system:
-      'You are a cybersecurity expert specializing in holistic vulnerability remediation across dependency graphs. Your expertise lies in analyzing multiple individual fix plans and synthesizing them into a unified, comprehensive strategy that considers cross-dependency impacts, version conflicts, and cascading effects. You must produce a cohesive global fix plan in strict JSON format that optimizes remediation across the entire project ecosystem.',
-    allFixPlans:
-      'Individual fix plans for analysis and synthesis: {{allFixPlans}}',
-    context:
-      'CRITICAL CONTEXT: The following dependency graph structure and metadata must inform your global strategy. Pay special attention to shared transitive dependencies, version constraints, and dependency chains that could create conflicts: {{context}}',
-    constraints: [
-      'Use `` to wrap all package names and versions in your response.',
-      'All fields must strictly follow the provided JSON schema.',
-      'Identify and resolve conflicts between individual fix plans before synthesizing.',
-      'Prioritize fixes that address vulnerabilities in shared transitive dependencies first.',
-      'Consider version compatibility matrices when recommending upgrades.',
-      'Account for breaking changes and their ripple effects across the dependency tree.',
-      'Group related fixes into logical phases to minimize disruption.',
-      'Provide **Critical Path Analysis** to highlight dependencies that must be addressed in sequence."',
-      'For **Batch Operations** and **Global Commands**, give commands wrapped in <code></code> tags.',
-      'Provide clear reasoning for why the global approach differs from individual plans.',
-      'Include rollback strategies for high-risk changes.',
-    ],
-  },
-  FIX_OPTIMIZATION_ANALYSIS: {
-    system:
-      'You are a cybersecurity expert specializing in fix plan optimization and efficiency analysis. Your role is to analyze both individual and global fix plans to identify redundancies, conflicts, and optimization opportunities. You excel at streamlining remediation workflows, consolidating similar actions, and proposing more efficient execution strategies while maintaining security effectiveness.',
+      'You are a cybersecurity expert generating fix plans for a batch of vulnerable dependencies. Provide concise, actionable fix recommendations.',
     template:
-      'Perform comprehensive optimization analysis on the provided fix plans. Identify redundant steps, merge compatible actions, resolve conflicts, and propose the most efficient execution strategy for the entire project:\n\nFIX PLANS TO OPTIMIZE:\n{{vulnerabilityFixPlans}}',
-    context:
-      'OPTIMIZATION CONTEXT: Use this dependency graph structure to understand impact relationships and identify optimization opportunities. Focus on shared dependencies and version alignment possibilities: {{context}}',
-    constraints: [
-      'Use `` to wrap all package names and versions in your response.',
-      'All fields must strictly follow the provided JSON schema.',
-      'Eliminate redundant dependency updates and consolidate version upgrades.',
-      'Merge compatible fixes that can be executed simultaneously.',
-      'Identify and resolve version conflicts before they occur.',
-      'Optimize execution order to minimize build failures and rollbacks.',
-      'Reduce the total number of package manager operations required.',
-      'Preserve all security benefits while improving efficiency.',
-      'Give **Consolidated Commands** wrapped in <code></code> tags.',
-      'Quantify optimization benefits (e.g., "Reduced from 12 to 4 update operations").',
-      'Highlight any trade-offs made during optimization.',
-    ],
+      'Generate fix plans for these {{batchLength}} dependencies:\n\nDEPENDENCIES:\n{{batchData}}\n\nCONTEXT FROM PARALLEL ANALYSIS:\n- Known conflicts: {{knownConflicts}}\n- Transitive opportunities: {{transitiveOpportunities}}\n\nFor each dependency provide:\n1. List of vulnerabilities being addressed\n2. Recommended action (upgrade/patch/replace)\n3. Target version if upgrading\n4. Exact command to execute\n5. Risk level assessment\n6. Estimated fix time',
+    severityContext: {
+      critical:
+        'These are CRITICAL vulnerabilities (CVSS >= 9.0). Provide detailed analysis and migration paths.',
+      high: 'These are HIGH priority vulnerabilities (CVSS 7.0-8.9). Focus on quick, safe fixes.',
+      medium:
+        'These are MEDIUM/LOW priority vulnerabilities (CVSS < 7.0). Provide efficient batch solutions.',
+    },
   },
-  CONFLICT_RESOLUTION_STRATEGY: {
+  EXECUTIVE_SUMMARY_GENERATION: {
     system:
-      'You are a cybersecurity expert specializing in dependency conflict resolution and risk mitigation strategy. Your expertise lies in analyzing complex dependency relationships, identifying potential conflicts in fix implementations, and developing comprehensive resolution strategies that balance security improvements with system stability.',
+      'You are generating an executive summary for a vulnerability fix plan. Be concise and actionable. IMPORTANT: Use the EXACT package manager commands provided in the quick wins data - do not change or substitute commands.',
     template:
-      'Analyze the optimized fix plan for potential conflicts and develop a comprehensive conflict resolution strategy. Consider version incompatibilities, breaking changes, circular dependencies, and implementation risks:\n\nOPTIMIZED FIX PLAN:\n{{optimizedFixPlan}}',
-    context:
-      'CONFLICT ANALYSIS CONTEXT: Use this dependency graph structure to identify potential conflict points, version constraint violations, and cascading impact zones: {{context}}',
-    constraints: [
-      'Use `` to wrap all package names and versions in your response.',
-      'All fields must strictly follow the provided JSON schema.',
-      'Identify all potential version conflicts and compatibility issues.',
-      'Detect breaking changes that could cascade through the dependency tree.',
-      'Propose specific resolution strategies for each identified conflict.',
-      'Prioritize conflicts by potential impact and likelihood of occurrence.',
-      'Suggest testing strategies to validate conflict resolutions.',
-      'Provide rollback procedures for high-risk changes.',
-      "Include precise '**Resolution Commands**' with version pinning in <code></code> tags.",
-      'Consider alternative dependency choices when conflicts cannot be resolved.',
-      'Account for development vs. production environment differences.',
-    ],
+      'Create an executive summary with:\n1. Top 3 critical insights\n2. Total vulnerabilities: {{totalVulns}}\n3. Fixable count: {{fixableVulns}}\n4. Estimated fix time (realistic)\n5. Overall risk score (1-10)\n6. Top 3-5 quick wins with commands\n\nQuick Wins Available:\n{{quickWins}}\n\nCRITICAL: In the quick_wins array, use the EXACT command from each quick win object. DO NOT modify or substitute package manager commands. Each command is specifically generated for the correct ecosystem.\n\nUse <code></code> tags for commands and **bold** for package names.',
   },
-  STRATEGY_RECOMMENDATION: {
+  PRIORITY_PHASES_GENERATION: {
     system:
-      'You are a master cybersecurity strategist and dependency management expert specializing in comprehensive vulnerability mitigation strategies. Your expertise encompasses risk assessment, implementation planning, team coordination, and long-term security maintenance. You excel at creating actionable, phased strategies that balance immediate security needs with long-term maintainability and business continuity.',
+      'You are organizing vulnerability fixes into 4 execution phases. Be specific with commands and time estimates.',
     template:
-      'Develop a comprehensive vulnerability mitigation strategy based on the optimized fix plan. Create a detailed implementation roadmap that considers team capabilities, business priorities, risk tolerance, and operational constraints:\n\nOPTIMIZED FIX PLAN FOR STRATEGIC ANALYSIS:\n{{optimizedFixPlan}}',
-    context:
-      'STRATEGIC CONTEXT: Use this dependency graph structure and metadata to inform your strategic recommendations. Consider the project scope, complexity, and interconnections when developing the implementation strategy: {{context}}',
-    constraints: [
-      'Use `` to wrap all package names and versions in your response.',
-      'All fields must strictly follow the provided JSON schema.',
-      'Create a phased implementation strategy with clear milestones and timelines.',
-      'Assess and communicate risk levels for each implementation phase.',
-      'Provide specific resource requirements (time, expertise, testing).',
-      'Include comprehensive testing and validation strategies for each phase.',
-      'Address team training needs for new dependency management practices.',
-      'Establish monitoring and maintenance procedures for ongoing security.',
-      "Provide detailed '**Implementation Commands**' for each phase in <code></code> tags.",
-      'Include success metrics and validation criteria for each phase.',
-      'Address business continuity and rollback strategies throughout implementation.',
-      'Consider automation opportunities for ongoing vulnerability management.',
-      'Provide recommendations for establishing security-first dependency policies.',
-    ],
+      'Organize these batch results into 4 priority phases:\n\n{{batchResults}}\n\nCreate:\n- Phase 1: IMMEDIATE (critical, quick wins, no breaking changes)\n- Phase 2: URGENT (high severity, minor breaking changes)\n- Phase 3: MEDIUM (medium severity, major updates)\n- Phase 4: LOW (low severity, nice-to-have)\n\nEach phase needs:\n- Phase number and name\n- Urgency timeline\n- List of dependencies\n- Individual fixes with commands\n- Batch commands for efficiency\n- Validation steps\n- Estimated time\n- Rollback plan\n\nUse <code></code> tags for commands.',
+  },
+  RISK_MANAGEMENT_GENERATION: {
+    system:
+      'You are creating a risk management and long-term strategy plan. Focus on safety and best practices.',
+    template:
+      'Based on these fixes, create:\n\n1. Overall risk assessment\n2. Breaking changes summary (count, affected areas, mitigation steps)\n3. Testing strategy (unit, integration, regression, manual verification, security validation)\n4. Rollback procedures as array of objects with phase number, procedure, and validation\n5. Monitoring recommendations\n6. Long-term security recommendations\n\nBatch Results:\n{{batchResults}}\n\nFor rollback procedures, provide detailed step-by-step instructions for each phase with validation steps.\nBe specific and actionable.',
+  },
+  SMART_ACTIONS_GENERATION: {
+    system:
+      'You are a cybersecurity UX expert creating actionable guidance for developers. Generate exactly 3 smart actions that help developers understand what to do first to achieve maximum impact with minimal effort. IMPORTANT: Use the EXACT package manager commands provided in the data - do not change or substitute commands.',
+    template:
+      'Based on this vulnerability analysis, generate exactly 3 prioritized smart actions:\n\nTOTAL VULNERABILITIES: {{totalVulns}}\nFIXABLE: {{fixableVulns}}\nCRITICAL/HIGH COUNT: {{criticalHighCount}}\n\nQUICK WINS:\n{{quickWins}}\n\nTRANSITIVE OPPORTUNITIES:\n{{transitiveOpportunities}}\n\nCONFLICTS:\n{{conflicts}}\n\nGenerate 3 actions that:\n1. Are ordered by severity and impact (highest impact first)\n2. Show quantified impact (e.g., "Fixes 25 vulnerabilities")\n3. Have realistic time estimates\n4. Guide users to take immediate action\n\nCRITICAL: When including commands from quick wins, use the EXACT command from the quick win object. DO NOT modify or substitute package manager commands.\n\nMake titles action-oriented and exciting (e.g., "Start with Quick Wins", "Eliminate Critical Threats", "Fix High-Impact Transitive Dependencies").',
   },
 };

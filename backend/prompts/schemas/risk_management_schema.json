@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "required": [
+    "overall_assessment",
+    "breaking_changes_summary",
+    "testing_strategy"
+  ],
+  "properties": {
+    "overall_assessment": { "type": "string" },
+    "breaking_changes_summary": {
+      "type": "object",
+      "properties": {
+        "has_breaking_changes": { "type": "boolean" },
+        "count": { "type": "integer" },
+        "affected_areas": { "type": "array", "items": { "type": "string" } },
+        "mitigation_steps": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "testing_strategy": {
+      "type": "object",
+      "properties": {
+        "unit_tests": { "type": "string" },
+        "integration_tests": { "type": "string" },
+        "regression_tests": { "type": "string" },
+        "manual_verification": { "type": "string" },
+        "security_validation": { "type": "string" }
+      }
+    },
+    "rollback_procedures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "phase": { "type": "integer" },
+          "procedure": { "type": "string" },
+          "validation": { "type": "string" }
+        }
+      }
+    },
+    "monitoring_recommendations": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}

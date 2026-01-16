@@ -26,13 +26,13 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
     <button
       className={cn(
         "absolute bottom-4 flex flex-col justify-end px-4 cursor-pointer z-100 border-none bg-transparent",
-        isMobile ? "w-[70%]" : "w-fit max-w-[75%]"
+        isMobile ? "w-[70%]" : "w-fit max-w-[75%]",
       )}
       onMouseEnter={() => setErrorClicked(true)}
       onMouseLeave={() => setErrorClicked(false)}
       onClick={() => setErrorClicked(!errorClicked)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           setErrorClicked(!errorClicked);
         }
@@ -40,7 +40,7 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
       style={{
         height: errorClicked && hasMultipleErrors ? badgeHeight : "2rem",
       }}
-      aria-label={`${errorMsgs.length} error${errorMsgs.length > 1 ? 's' : ''} found. Click to ${errorClicked ? 'collapse' : 'expand'}`}
+      aria-label={`${errorMsgs.length} error${errorMsgs.length > 1 ? "s" : ""} found. Click to ${errorClicked ? "collapse" : "expand"}`}
       aria-expanded={errorClicked}
       role=""
     >
@@ -50,7 +50,7 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
           hasMultipleErrors && errorClicked
             ? "flex-col items-start"
             : "flex-row items-center",
-          "flex bg-red-700 text-white justify-center border-white transition-all duration-500 ease-in-out py-2 shadow-[256px_256px_256px_rgba(0,0,0,0.5)]"
+          "flex bg-red-700 text-white justify-center border-white transition-all duration-500 ease-in-out py-2 shadow-[256px_256px_256px_rgba(0,0,0,0.5)]",
         )}
         style={{
           height: errorClicked && hasMultipleErrors ? "" : "2rem",
@@ -60,7 +60,7 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
         <div
           className={cn(
             "flex flex-row justify-start items-center gap-x-2",
-            hasMultipleErrors && errorClicked && "w-full justify-start pb-2"
+            hasMultipleErrors && errorClicked && "w-full justify-start pb-2",
           )}
         >
           <CircleAlert className={cn(isMobile ? "w-4 h-4" : "w-6 h-6")} />
@@ -75,7 +75,7 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
           className={cn(
             "transition-all duration-100 ease-in-out overflow-x-scroll scrollbar-hide",
             errorClicked ? "opacity-100" : "opacity-0 w-0 max-w-0",
-            hasMultipleErrors && errorClicked && "w-full"
+            hasMultipleErrors && errorClicked && "w-full",
           )}
           style={{
             scrollbarWidth: "none",
@@ -88,8 +88,9 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
                 key={idx}
                 className={cn(
                   "text-xs xl:text-sm block py-1 px-2",
-                  hasMultipleErrors && errorClicked &&
-                     "border-l-2 border-red-400 mb-1 last:mb-0"
+                  hasMultipleErrors &&
+                    errorClicked &&
+                    "border-l-2 border-red-400 mb-1 last:mb-0",
                 )}
               >
                 {hasMultipleErrors && errorClicked && (

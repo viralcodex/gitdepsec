@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
+import React, {
+  useEffect,
+  useRef,
+  useState,
+  useMemo,
+  useCallback,
+} from "react";
 import { select, Selection } from "d3-selection";
 import { scaleLinear } from "d3-scale";
 import { drag, D3DragEvent } from "d3-drag";
@@ -12,18 +18,18 @@ import {
   SimulationNodeDatum,
   SimulationLinkDatum,
 } from "d3-force";
-import {
-  GraphEdge,
-  GraphNode,
-  Relation,
-} from "@/constants/model";
+import { GraphEdge, GraphNode, Relation } from "@/constants/model";
 import { cn } from "@/lib/utils";
 import { Badge } from "./ui/badge";
 import EmptyCard from "./empty-card";
 import DiagramControls from "./diagram-controls";
 import DiagramProgress from "./diagram-progress";
 import ErrorBadge from "./error-badge";
-import { useGraphState, useDiagramState, useErrorState } from "@/store/app-store";
+import {
+  useGraphState,
+  useDiagramState,
+  useErrorState,
+} from "@/store/app-store";
 
 interface DepDiagramProps {
   svgRef: React.RefObject<SVGSVGElement | null>;
@@ -43,15 +49,20 @@ const DepDiagram = ({
 }: DepDiagramProps) => {
   // Store hooks
   const { graphData, loading: isLoading } = useGraphState();
-  const { isDiagramExpanded, selectedNode, setIsDiagramExpanded, setSelectedNode } = useDiagramState();
+  const {
+    isDiagramExpanded,
+    selectedNode,
+    setIsDiagramExpanded,
+    setSelectedNode,
+  } = useDiagramState();
   const { manifestError } = useErrorState();
   const [centerNode, setCenterNode] = useState<GraphNode>();
   const [isDragging, setIsDragging] = useState(false);
   const [highlightedPath, setHighlightedPath] = useState<Set<GraphNode>>(
-    new Set<GraphNode>()
+    new Set<GraphNode>(),
   );
   const [highlightedEdges, setHighlightedEdges] = useState<Set<string>>(
-    new Set<string>()
+    new Set<string>(),
   );
   const [scale, setScale] = useState<number>(0.8);
   const resetRef = useRef<() => void>(() => {});
@@ -75,7 +86,7 @@ const DepDiagram = ({
     scaleHeight,
     centerPositionX,
     centerPositionY,
-    nodes
+    nodes,
   } = useMemo(() => {
     // Calculate dimensions first, regardless of data availability
     const calculatedWidth = isMobile
@@ -110,7 +121,7 @@ const DepDiagram = ({
         scaleHeight: calculatedScaleHeight,
         centerPositionX: calculatedCenterPositionX,
         centerPositionY: calculatedCenterPositionY,
-        nodes: null
+        nodes: null,
       };
     }
 
@@ -123,118 +134,146 @@ const DepDiagram = ({
       scaleHeight: calculatedScaleHeight,
       centerPositionX: calculatedCenterPositionX,
       centerPositionY: calculatedCenterPositionY,
-      nodes: nodes
+      nodes: nodes,
     };
-  }, [graphData, selectedEcosystem, isMobile, windowSize.width, windowSize.height, selectedNode, isDiagramExpanded]);
+  }, [
+    graphData,
+    selectedEcosystem,
+    isMobile,
+    windowSize.width,
+    windowSize.height,
+    selectedNode,
+    isDiagramExpanded,
+  ]);
 
-   const getHighlightedPathAndEdges = useCallback(
-     (selectedId: string) => {
-      if (!graphData || !selectedEcosystem || !graphData[selectedEcosystem] ||
-          !graphData[selectedEcosystem].nodes || !graphData[selectedEcosystem].edges) {
+  const getHighlightedPathAndEdges = useCallback(
+    (selectedId: string) => {
+      if (
+        !graphData ||
+        !selectedEcosystem ||
+        !graphData[selectedEcosystem] ||
+        !graphData[selectedEcosystem].nodes ||
+        !graphData[selectedEcosystem].edges
+      ) {
         return {
           pathNodes: new Set<GraphNode>(),
           pathEdges: new Set<string>(),
         };
       }
-      const { nodes: currentPathNodes, edges: currentPathEdges } = graphData[selectedEcosystem];
+      const { nodes: currentPathNodes, edges: currentPathEdges } =
+        graphData[selectedEcosystem];
       if (BFSPathData && BFSPathData.has(selectedId)) {
-         const cachedEdges = BFSPathData.get(selectedId)?.pathEdges;
-         const cachedNodes = BFSPathData.get(selectedId)?.pathNodes;
-         return {
-           pathNodes: cachedNodes || new Set<GraphNode>(),
-           pathEdges: cachedEdges || new Set<string>(),
-         };
-       }
-       const pathMap: Record<string, GraphNode> = {};
-       const resultPathNodes = new Set<GraphNode>();
-       const resultPathEdges = new Set<string>();
-       const queue: GraphNode[] = [];
-       const visited = new Set<string>();
+        const cachedEdges = BFSPathData.get(selectedId)?.pathEdges;
+        const cachedNodes = BFSPathData.get(selectedId)?.pathNodes;
+        return {
+          pathNodes: cachedNodes || new Set<GraphNode>(),
+          pathEdges: cachedEdges || new Set<string>(),
+        };
+      }
+      const pathMap: Record<string, GraphNode> = {};
+      const resultPathNodes = new Set<GraphNode>();
+      const resultPathEdges = new Set<string>();
+      const queue: GraphNode[] = [];
+      const visited = new Set<string>();
 
-       const startNode = currentPathNodes.find((n: GraphNode) => n.type === Relation.CENTER);
-       if (!startNode) return { pathNodes: resultPathNodes, pathEdges: resultPathEdges };
+      const startNode = currentPathNodes.find(
+        (n: GraphNode) => n.type === Relation.CENTER,
+      );
+      if (!startNode)
+        return { pathNodes: resultPathNodes, pathEdges: resultPathEdges };
 
-       queue.push(startNode);
-       visited.add(startNode.id);
+      queue.push(startNode);
+      visited.add(startNode.id);
 
-       while (queue.length > 0) {
-         const currentNode = queue.shift();
-         if (!currentNode) continue;
+      while (queue.length > 0) {
+        const currentNode = queue.shift();
+        if (!currentNode) continue;
 
-         if (currentNode.id === selectedId) {
-           // Reconstruct path (backtracking)
-           let current = currentNode;
-           while (current) {
-             resultPathNodes.add(current);
-             const parent = pathMap[current.id];
-             if (parent) {
-               // Find the edge between parent and current
-               const edge = currentPathEdges.find(
-                 (e: GraphEdge) =>
-                   ((e.source as GraphNode).id === parent.id &&
-                     (e.target as GraphNode).id === current.id) ||
-                   ((e.source as GraphNode).id === current.id &&
-                     (e.target as GraphNode).id === parent.id)
-               );
-               if (edge) {
-                 resultPathEdges.add(
-                   `${(edge.source as GraphNode).id}-${(edge.target as GraphNode).id}`
-                 );
-               }
-             }
-             current = parent;
-           }
-           break;
-         }
+        if (currentNode.id === selectedId) {
+          // Reconstruct path (backtracking)
+          let current = currentNode;
+          while (current) {
+            resultPathNodes.add(current);
+            const parent = pathMap[current.id];
+            if (parent) {
+              // Find the edge between parent and current
+              const edge = currentPathEdges.find(
+                (e: GraphEdge) =>
+                  ((e.source as GraphNode).id === parent.id &&
+                    (e.target as GraphNode).id === current.id) ||
+                  ((e.source as GraphNode).id === current.id &&
+                    (e.target as GraphNode).id === parent.id),
+              );
+              if (edge) {
+                resultPathEdges.add(
+                  `${(edge.source as GraphNode).id}-${(edge.target as GraphNode).id}`,
+                );
+              }
+            }
+            current = parent;
+          }
+          break;
+        }
 
-         // Add neighbors to queue
-         for (const edge of currentPathEdges) {
-           const sourceId =
-             (edge.source as GraphNode).id || (edge.source as string);
-           const targetId =
-             (edge.target as GraphNode).id || (edge.target as string);
+        // Add neighbors to queue
+        for (const edge of currentPathEdges) {
+          const sourceId =
+            (edge.source as GraphNode).id || (edge.source as string);
+          const targetId =
+            (edge.target as GraphNode).id || (edge.target as string);
 
-           if (sourceId === currentNode.id && !visited.has(targetId)) {
-             const targetNode = currentPathNodes.find((n: GraphNode) => n.id === targetId);
-             if (targetNode) {
-               queue.push(targetNode);
-               visited.add(targetId);
-               pathMap[targetId] = currentNode;
-             }
-           } else if (targetId === currentNode.id && !visited.has(sourceId)) {
-             const sourceNode = currentPathNodes.find((n: GraphNode) => n.id === sourceId);
-             if (sourceNode) {
-               queue.push(sourceNode);
-               visited.add(sourceId);
-               pathMap[sourceId] = currentNode;
-             }
-           }
-         }
-       }
-       setBFSPathData((prev) => {
-         const newMap = new Map(prev);
-         newMap.set(selectedId, { pathNodes: resultPathNodes, pathEdges: resultPathEdges });
-         return newMap;
-       });
-       return { pathNodes: resultPathNodes, pathEdges: resultPathEdges };
-     },
-     [BFSPathData, graphData, selectedEcosystem]
-   );
-  
+          if (sourceId === currentNode.id && !visited.has(targetId)) {
+            const targetNode = currentPathNodes.find(
+              (n: GraphNode) => n.id === targetId,
+            );
+            if (targetNode) {
+              queue.push(targetNode);
+              visited.add(targetId);
+              pathMap[targetId] = currentNode;
+            }
+          } else if (targetId === currentNode.id && !visited.has(sourceId)) {
+            const sourceNode = currentPathNodes.find(
+              (n: GraphNode) => n.id === sourceId,
+            );
+            if (sourceNode) {
+              queue.push(sourceNode);
+              visited.add(sourceId);
+              pathMap[sourceId] = currentNode;
+            }
+          }
+        }
+      }
+      setBFSPathData((prev) => {
+        const newMap = new Map(prev);
+        newMap.set(selectedId, {
+          pathNodes: resultPathNodes,
+          pathEdges: resultPathEdges,
+        });
+        return newMap;
+      });
+      return { pathNodes: resultPathNodes, pathEdges: resultPathEdges };
+    },
+    [BFSPathData, graphData, selectedEcosystem],
+  );
 
   useEffect(() => {
     // More robust checks to prevent diagram disappearing
-    if (!svgRef.current || !graphData || !selectedEcosystem || !graphData[selectedEcosystem]) {
+    if (
+      !svgRef.current ||
+      !graphData ||
+      !selectedEcosystem ||
+      !graphData[selectedEcosystem]
+    ) {
       return;
     }
-    
+
     const currentData = graphData[selectedEcosystem];
-    // if (!currentData || !currentData.nodes || !currentData.edges || 
+    // if (!currentData || !currentData.nodes || !currentData.edges ||
     //     !Array.isArray(currentData.nodes) || !Array.isArray(currentData.edges) ||
     //     currentData.nodes.length === 0) {
     //   return;
     // }
-    
+
     const { nodes: currentNodes, edges: currentEdges } = currentData;
 
     // Capture the current scale value to use throughout this effect
@@ -266,7 +305,7 @@ const DepDiagram = ({
       .attr("height", height)
       .attr(
         "viewBox",
-        `${centerPositionX} ${centerPositionY} ${scaleWidth} ${scaleHeight}`
+        `${centerPositionX} ${centerPositionY} ${scaleWidth} ${scaleHeight}`,
       );
 
     // Store svg selection for zoom buttons
@@ -313,7 +352,7 @@ const DepDiagram = ({
       .append("line")
       .attr("stroke-width", 1.5)
       .attr("stroke-dasharray", (d: GraphEdge) =>
-        d.type === Relation.TRANSITIVE ? "3 3" : null
+        d.type === Relation.TRANSITIVE ? "3 3" : null,
       )
       .attr("stroke", (d) => {
         const sourceId = (d.source as GraphNode).id || d.source;
@@ -363,20 +402,20 @@ const DepDiagram = ({
         return colorScale(d.severity || 0);
       })
       .attr("opacity", (d) =>
-        d.type === Relation.CENTER ? 1 : d.vulnCount! > 0 ? 1 : 0.2
+        d.type === Relation.CENTER ? 1 : d.vulnCount! > 0 ? 1 : 0.2,
       )
       .style("cursor", (d) =>
         d.type === Relation.CENTER
           ? "default"
           : d.vulnCount! > 0
             ? "pointer"
-            : "not-allowed"
+            : "not-allowed",
       )
       .call(
         drag<SVGCircleElement, GraphNode>()
           .on("start", dragstarted)
           .on("drag", dragged)
-          .on("end", dragended)
+          .on("end", dragended),
       )
       .on("click", function (event, d) {
         if (
@@ -415,20 +454,20 @@ const DepDiagram = ({
           "x",
           centerNode.x
             ? centerNode.x - imageSize / 2
-            : width / 2 - imageSize / 2
+            : width / 2 - imageSize / 2,
         )
         .attr(
           "y",
           centerNode.y
             ? centerNode.y - imageSize / 2
-            : height / 2 - imageSize / 2
+            : height / 2 - imageSize / 2,
         )
         .datum(centerNode as GraphNode)
         .call(
           drag<SVGImageElement, GraphNode>()
             .on("start", dragstarted)
             .on("drag", dragged)
-            .on("end", dragended)
+            .on("end", dragended),
         );
     }
 
@@ -477,7 +516,7 @@ const DepDiagram = ({
       .text((d) =>
         d.type === Relation.PRIMARY || d.type === Relation.TRANSITIVE
           ? (d.version ?? "unknown")
-          : ""
+          : "",
       )
       .attr("font-size", 12)
       .attr("text-anchor", "middle")
@@ -515,7 +554,7 @@ const DepDiagram = ({
                 return 175;
             }
             return isMobile ? 150 : 200;
-          })
+          }),
       )
       .force(
         "charge",
@@ -534,7 +573,7 @@ const DepDiagram = ({
               break;
           }
           return baseCharge;
-        })
+        }),
       )
       .on("tick", ticked);
 
@@ -603,7 +642,7 @@ const DepDiagram = ({
 
     function dragstarted(
       event: D3DragEvent<SVGCircleElement, GraphNode, SVGGElement>,
-      d: GraphNode
+      d: GraphNode,
     ) {
       setIsDragging(true);
       if (!event.active) simulation.alphaTarget(0.3).restart();
@@ -613,7 +652,7 @@ const DepDiagram = ({
 
     function dragged(
       event: D3DragEvent<SVGCircleElement, GraphNode, SVGGElement>,
-      d: GraphNode
+      d: GraphNode,
     ) {
       d.fx = event.x;
       d.fy = event.y;
@@ -621,7 +660,7 @@ const DepDiagram = ({
 
     function dragended(
       event: D3DragEvent<SVGCircleElement, GraphNode, SVGGElement>,
-      d: GraphNode
+      d: GraphNode,
     ) {
       setIsDragging(false);
       if (!event.active) simulation.alphaTarget(0);
@@ -684,7 +723,10 @@ const DepDiagram = ({
       svgSelectionRef.current = null;
       resetRef.current = () => {};
       setBFSPathData(
-        new Map<string, { pathNodes: Set<GraphNode>; pathEdges: Set<string> }>()
+        new Map<
+          string,
+          { pathNodes: Set<GraphNode>; pathEdges: Set<string> }
+        >(),
       );
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -780,7 +822,7 @@ const DepDiagram = ({
                 scale={scale}
                 className={cn(
                   "border-1 border-accent rounded-xl bg-black/50 flex h-full w-full",
-                  isDragging ? "cursor-grabbing" : "cursor-grab"
+                  isDragging ? "cursor-grabbing" : "cursor-grab",
                 )}
               ></svg>
             ) : (

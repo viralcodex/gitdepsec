@@ -11,6 +11,9 @@ export default {
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },
+  transformIgnorePatterns: [
+    'node_modules/(?!(@openrouter)/)',
+  ],
   moduleFileExtensions: ['ts', 'js', 'json'],
   collectCoverageFrom: [
     'service/**/*.ts',

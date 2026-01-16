@@ -16,7 +16,9 @@ export function ThemeToggleButton() {
       <Tooltip>
         <TooltipTrigger asChild>
           <button
-            aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+            aria-label={
+              theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
+            }
             onClick={toggleTheme}
             title={
               theme === "dark" ? "Switch to light mode" : "Switch to dark mode"
@@ -31,7 +33,9 @@ export function ThemeToggleButton() {
               <MoonIcon className="h-5 w-5 text-gray-700" />
             )}
             <span className="sr-only">
-              {theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              {theme === "dark"
+                ? "Switch to light mode"
+                : "Switch to dark mode"}
             </span>
           </button>
         </TooltipTrigger>

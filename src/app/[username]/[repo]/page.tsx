@@ -27,18 +27,20 @@ import dynamic from "next/dynamic";
 import DiagramProgress from "@/components/diagram-progress";
 
 //LAZY LOADING COMPONENTS
-const HistorySidebar = dynamic(() => import("@/components/history-items/history-sidebar"));
+const HistorySidebar = dynamic(
+  () => import("@/components/history-items/history-sidebar"),
+);
 const DepDiagram = dynamic(() => import("@/components/dependency-diagram"), {
   ssr: false,
   loading: () => <DiagramProgress />,
 });
 const DependencyDetailsCard = dynamic(
   () => import("@/components/dependency-sidebar/dependency-sidebar"),
-  { ssr: true }
+  { ssr: true },
 );
 const FixPlanCard = dynamic(
   () => import("@/components/fix-plan/fix-plan-card"),
-  { ssr: true }
+  { ssr: true },
 );
 
 const Page = () => {
@@ -87,7 +89,7 @@ const Page = () => {
   useEffect(() => {
     if (graphData && Object.keys(graphData).length > 0) {
       setSelectedEcosystem((prev) =>
-        prev && graphData[prev] ? prev : Object.keys(graphData)[0]
+        prev && graphData[prev] ? prev : Object.keys(graphData)[0],
       );
     }
   }, [graphData]);
@@ -126,7 +128,7 @@ const Page = () => {
     (node: GraphNode | null) => {
       setSelectedNode(node);
     },
-    [setSelectedNode]
+    [setSelectedNode],
   );
 
   const handleDetailsCardClose = () => {
@@ -141,7 +143,7 @@ const Page = () => {
   const handleRefresh = useCallback(() => {
     resetGraphState();
     svgRef.current = null;
-    setForceRefresh(prev => !prev);
+    setForceRefresh((prev) => !prev);
   }, [resetGraphState]);
 
   const resetGraph = () => {
@@ -157,7 +159,6 @@ const Page = () => {
           onDownload={async () => {
             await downloadFixPlanPDF(fixPlanRef);
           }}
-          fixPlanRef={fixPlanRef}
           regenerateFixPlan={generateFixPlan}
           ecosystemOptions={ecosystemOptions}
         />

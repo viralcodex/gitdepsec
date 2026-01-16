@@ -148,13 +148,32 @@
   border-radius: inherit;
   width: calc(100% + 4px);
   height: calc(100% + 4px);
-  animation: 5s gradient-spin linear infinite; /* don't use spin as it is reserved in tailwind */
+  animation: 5s general-spin linear infinite; /* don't use spin as it is reserved in tailwind */
 }
 
-@keyframes gradient-spin {
+@keyframes general-spin {
   to {
     --angle: 360deg;
   }
+}
+
+.tab-loading {
+  position: relative;
+  isolation: isolate;
+}
+
+.tab-loading::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  border: 2px solid transparent;
+  background: 
+    linear-gradient(var(--background), var(--background)) padding-box,
+    conic-gradient(from var(--angle), transparent 70%, white 80%, white 90%, transparent 100%) border-box;
+  animation: 2s general-spin linear infinite;
+  pointer-events: none;
+  z-index: -1;
 }
 
 @layer base {

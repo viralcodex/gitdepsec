@@ -1,0 +1,44 @@
+{
+  "type": "array",
+  "minItems": 1,
+  "maxItems": 4,
+  "items": {
+    "type": "object",
+    "required": [
+      "phase",
+      "name",
+      "urgency",
+      "dependencies",
+      "fixes",
+      "batch_commands",
+      "validation_steps",
+      "estimated_time"
+    ],
+    "properties": {
+      "phase": { "type": "integer" },
+      "name": { "type": "string" },
+      "urgency": { "type": "string" },
+      "dependencies": { "type": "array", "items": { "type": "string" } },
+      "fixes": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "package": { "type": "string" },
+            "vulnerability_ids": { "type": "array", "items": { "type": "string" } },
+            "action": { "type": "string" },
+            "command": { "type": "string" },
+            "target_version": { "type": "string" },
+            "risk_score": { "type": "number" },
+            "impact": { "type": "string" },
+            "breaking_changes": { "type": "boolean" }
+          }
+        }
+      },
+      "batch_commands": { "type": "array", "items": { "type": "string" } },
+      "validation_steps": { "type": "array", "items": { "type": "string" } },
+      "estimated_time": { "type": "string" },
+      "rollback_plan": { "type": "string" }
+    }
+  }
+}

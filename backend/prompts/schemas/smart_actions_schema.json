@@ -1,0 +1,28 @@
+{
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "title": {
+        "type": "string",
+        "description": "Clear, action-oriented title (e.g., 'Start with Critical Vulnerabilities')"
+      },
+      "description": {
+        "type": "string",
+        "description": "Brief explanation of what this action accomplishes with dependencies in **bold** (e.g.: **langchain**)"
+      },
+      "impact": {
+        "type": "string",
+        "description": "Quantified impact (e.g., 'Resolves 25 vulnerabilities across 8 packages')"
+      },
+      "estimated_time": {
+        "type": "string",
+        "description": "Time estimate (e.g., '15-20 minutes')"
+      }
+    },
+    "required": ["title", "description", "impact", "estimated_time"],
+    "additionalProperties": false
+  },
+  "minItems": 3,
+  "maxItems": 3
+}

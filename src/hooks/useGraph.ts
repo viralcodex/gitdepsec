@@ -11,15 +11,20 @@ import {
   TransitiveDependency,
   Vulnerability,
 } from "@/constants/model";
-import { CACHE_TTL, manifestFiles } from "@/constants/constants";
-import { store, useErrorState, useGraphState, useRepoState } from "@/store/app-store";
+import { CACHE_TTL, MANIFEST_FILES } from "@/constants/constants";
+import {
+  store,
+  useErrorState,
+  useGraphState,
+  useRepoState,
+} from "@/store/app-store";
 
 export const useGraph = (
   username?: string,
   repo?: string,
   branch?: string,
   file?: string,
-  forceRefresh: boolean = false
+  forceRefresh: boolean = false,
 ) => {
   const { setError, setManifestError } = useErrorState();
   const {
@@ -37,7 +42,7 @@ export const useGraph = (
       repo?: string,
       branch?: string,
       file?: string,
-      forceRefresh: boolean = false
+      forceRefresh: boolean = false,
     ) => {
       try {
         const manifestData: ManifestFileContentsApiResponse =
@@ -46,7 +51,7 @@ export const useGraph = (
             repo!,
             branch!,
             file!,
-            forceRefresh
+            forceRefresh,
           );
         // console.log(
         //   "Manifest Data:",
@@ -84,13 +89,13 @@ export const useGraph = (
       } catch {
         // console.error("Error fetching manifest file contents:", err);
         setError(
-          "Failed to fetch manifest file contents. Please try again later."
+          "Failed to fetch manifest file contents. Please try again later.",
         );
         setLoading(false);
         return;
       }
     },
-    [setManifestData, setDependencies, setLoading, setManifestError, setError]
+    [setManifestData, setDependencies, setLoading, setManifestError, setError],
   );
 
   const createGraphData = useCallback(
@@ -105,8 +110,8 @@ export const useGraph = (
         const repoNodeId = `${username}/${repo}`;
         nodes.push({
           id: repoNodeId,
-          label: manifestFiles[ecosystem].file || ecosystem,
-          icon: manifestFiles[ecosystem].icon || undefined,
+          label: MANIFEST_FILES[ecosystem].file || ecosystem,
+          icon: MANIFEST_FILES[ecosystem].icon || undefined,
           type: Relation.CENTER,
         });
 
@@ -118,7 +123,7 @@ export const useGraph = (
             !dep.transitiveDependencies?.nodes?.some(
               (transNode) =>
                 transNode?.vulnerabilities &&
-                transNode?.vulnerabilities.length > 0
+                transNode?.vulnerabilities.length > 0,
             )
           ) {
             return;
@@ -241,7 +246,7 @@ export const useGraph = (
       // console.log("Graph Data:", graphData);
       return graphData;
     },
-    [username, repo]
+    [username, repo],
   );
 
   const getSeverityScores = (vulnerabilities: Vulnerability[]) => {
@@ -269,14 +274,17 @@ export const useGraph = (
         (item: HistoryItem) =>
           `${item.username}/${item.repo}/${item.branch}` === currentRepoKey &&
           item.graphData &&
-          Object.keys(item.graphData).length > 0
+          Object.keys(item.graphData).length > 0,
       );
 
       if (matchingItem && !forceRefresh) {
-        const isCacheStale = matchingItem.cachedAt && 
-          (Date.now() - matchingItem.cachedAt > CACHE_TTL);
+        const isCacheStale =
+          matchingItem.cachedAt &&
+          Date.now() - matchingItem.cachedAt > CACHE_TTL;
         if (isCacheStale) {
-          console.log("Cache found but stale (>3 days), fetching fresh data...");
+          console.log(
+            "Cache found but stale (>3 days), fetching fresh data...",
+          );
           return false;
         }
         console.log("Cache hit - using fresh cached data");
@@ -308,7 +316,7 @@ export const useGraph = (
       return;
     }
     setLoading(true);
-    
+
     if (fetchFromCache()) {
       console.log("Cache hit, skipping backend fetch...");
       return;

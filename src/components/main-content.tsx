@@ -102,7 +102,7 @@ const MainContent = () => {
               className={cn(
                 `flex-1 w-full rounded-md border-[3px] px-3 py-2.5 sm:px-4 sm:py-4 text-sm font-bold placeholder:text-base placeholder:font-normal sm:text-lg sm:placeholder:text-lg ${
                   branchError ? "border-red-600" : "border-black"
-                }`
+                }`,
               )}
               placeholder="https://github.com/username/repo"
               disabled={file !== null}
@@ -120,10 +120,7 @@ const MainContent = () => {
             )}
           </div>
           <div className="flex-1">
-            <Dropdown
-              shouldShowBranches={shouldShowBranches}
-              className=""
-            />
+            <Dropdown shouldShowBranches={shouldShowBranches} className="" />
           </div>
         </section>
         <section className="flex w-full flex-col items-center justify-center gap-y-2">

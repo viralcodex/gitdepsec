@@ -1,5 +1,5 @@
 import { Dependency } from "@/constants/model";
-import { manifestFiles } from "@/constants/constants";
+import { MANIFEST_FILES } from "@/constants/constants";
 import { clsx, type ClassValue } from "clsx";
 import { RefObject } from "react";
 import { twMerge } from "tailwind-merge";
@@ -16,14 +16,14 @@ export const getNewFileName = (originalName: string): string => {
 };
 
 /*
-* verify the repoUrl format and extract username and repo
-* @param repoUrl - The GitHub repository URL to verify
-* @param setError - Optional function to set error messages
-* @returns An object containing sanitizedUsername and sanitizedRepo if valid, otherwise undefined
-*/
+ * verify the repoUrl format and extract username and repo
+ * @param repoUrl - The GitHub repository URL to verify
+ * @param setError - Optional function to set error messages
+ * @returns An object containing sanitizedUsername and sanitizedRepo if valid, otherwise undefined
+ */
 export const verifyUrl = (
   repoUrl: string,
-  setError?: (error: string) => void
+  setError?: (error: string) => void,
 ) => {
   const githubUrlPattern =
     /^https?:\/\/github\.com\/([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_\.]+)\/?$/;
@@ -58,16 +58,16 @@ export const getRepoKeyFromUrl = (url: string): string | null => {
 };
 
 /*
-* verify the uploaded manifest file
-* @param file - The uploaded file to verify
-* @param setError - Function to set error messages
-* @param setFile - Function to set the valid file
-* @returns true if the file is valid, otherwise undefined
-*/
+ * verify the uploaded manifest file
+ * @param file - The uploaded file to verify
+ * @param setError - Function to set error messages
+ * @param setFile - Function to set the valid file
+ * @returns true if the file is valid, otherwise undefined
+ */
 export const verifyFile = (
   file: File,
   setError: (error: string) => void,
-  setFile: (file: File) => void
+  setFile: (file: File) => void,
 ) => {
   if (!file) {
     setError("No file selected");
@@ -83,7 +83,7 @@ export const verifyFile = (
   const fileExtension = file.name.split(".").pop()?.toLowerCase();
   if (
     !fileExtension ||
-    !Object.values(manifestFiles).some((f) => f.file.endsWith(fileExtension))
+    !Object.values(MANIFEST_FILES).some((f) => f.file.endsWith(fileExtension))
   ) {
     setError("Invalid manifest file type");
     return;
@@ -98,8 +98,8 @@ export const verifyFile = (
 export const parseFileName = (file: string) => {
   if (!file) return "No file selected";
   const fileName = file.split("_")[0] + file.slice(file.indexOf("."));
-  const ecosystem = Object.keys(manifestFiles).find(
-    (f) => manifestFiles[f].file === fileName
+  const ecosystem = Object.keys(MANIFEST_FILES).find(
+    (f) => MANIFEST_FILES[f].file === fileName,
   );
   return `${ecosystem} : ${fileName}`;
 };
@@ -217,12 +217,12 @@ export const depVulnCount = (deps: Dependency): boolean => {
 String.prototype.toTitleCase = function (): string {
   return this.replace(
     /\w\S*/g,
-    (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase()
+    (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase(),
   );
 };
 
 export const downloadFixPlanPDF = async (
-  fixPlanRef: RefObject<HTMLDivElement | null>
+  fixPlanRef: RefObject<HTMLDivElement | null>,
 ) => {
   if (!fixPlanRef.current) return;
 };

@@ -105,7 +105,6 @@ class AnalysisService {
     concurrency: number,
     processor: (item: T) => Promise<R>,
     description: string,
-    progressNumber: number,
   ): Promise<R[]> {
     const results: R[] = [];
 
@@ -141,11 +140,7 @@ class AnalysisService {
       );
 
       // Send progress update with the current step and percentage (not decimal sequence numbers)
-      this.progressService.progressUpdater(
-        description,
-        progressPercentage,
-        progressNumber, // Use the base progress number, not decimal adjustments
-      );
+      this.progressService.progressUpdater(description, progressPercentage);
     }
 
     return results;
@@ -456,14 +451,14 @@ class AnalysisService {
   ): Promise<{ dependencies: DependencyGroups }> {
     this.resetGlobalState();
 
-    this.progressService.progressUpdater(PROGRESS_STEPS[0], 0, 1); // Progress #1
+    this.progressService.progressUpdater(PROGRESS_STEPS[0], 0); // Progress #1
 
     const manifestFiles =
       fileContents ?? (await this.getAllManifestData(username, repo, branch));
 
-    this.progressService.progressUpdater(PROGRESS_STEPS[0], 100, 2); // Progress #2
+    this.progressService.progressUpdater(PROGRESS_STEPS[0], 100); // Progress #2
 
-    this.progressService.progressUpdater(PROGRESS_STEPS[1], 0, 3); // Progress #3
+    this.progressService.progressUpdater(PROGRESS_STEPS[1], 0); // Progress #3
 
     await Promise.all([
       this.processNpmFiles(manifestFiles['npm'] ?? []),
@@ -480,7 +475,7 @@ class AnalysisService {
     // Map dependencies back to their respective files
     const result = this.mapDependenciesToFiles(processedDependencies);
 
-    this.progressService.progressUpdater(PROGRESS_STEPS[1], 100, 4); // Progress #4
+    this.progressService.progressUpdater(PROGRESS_STEPS[1], 100); // Progress #4
 
     // console.log('Parsed dependencies:', result);
     return { dependencies: result };
@@ -809,7 +804,7 @@ class AnalysisService {
     console.log(
       `Fetching transitive dependencies for ${validDeps.length} dependencies...`,
     );
-    this.progressService.progressUpdater(PROGRESS_STEPS[2], 0, 5); // Progress #5
+    this.progressService.progressUpdater(PROGRESS_STEPS[2], 0); // Progress #5
 
     // Process transitive dependencies in parallel batches
     const transitiveDepsResults = await this.processBatchesInParallel(
@@ -875,11 +870,10 @@ class AnalysisService {
           success: false,
         };
       },
-      PROGRESS_STEPS[2],
-      6, // Progress #6 for intermediate tracking
+      PROGRESS_STEPS[2], // Progress #6 for intermediate tracking
     );
 
-    this.progressService.progressUpdater(PROGRESS_STEPS[2], 100, 7); // Progress #7
+    this.progressService.progressUpdater(PROGRESS_STEPS[2], 100); // Progress #7
 
     // Apply results back to the original dependencies
     const erroredDeps: Dependency[] = [];
@@ -908,7 +902,7 @@ class AnalysisService {
       );
     }
 
-    this.progressService.progressUpdater(PROGRESS_STEPS[2], 100, 7); // Progress #7
+    this.progressService.progressUpdater(PROGRESS_STEPS[2], 100); // Progress #7
     return dependencies;
   }
 
@@ -944,7 +938,7 @@ class AnalysisService {
       console.log(
         `Processing ${allForVuln.length} dependencies in parallel batches...`,
       );
-      this.progressService.progressUpdater(PROGRESS_STEPS[3], 0, 8); // Progress #8
+      this.progressService.progressUpdater(PROGRESS_STEPS[3], 0); // Progress #8
 
       // Process vulnerabilities for dependencies using parallel batches
       const batches: Dependency[][] = [];
@@ -1029,12 +1023,11 @@ class AnalysisService {
         );
         this.progressService.progressUpdater(
           PROGRESS_STEPS[3],
-          progressPercentage,
-          9, // Progress #9 for intermediate tracking
+          progressPercentage, // Progress #9 for intermediate tracking
         );
       }
 
-      this.progressService.progressUpdater(PROGRESS_STEPS[3], 100, 10); // Progress #10
+      this.progressService.progressUpdater(PROGRESS_STEPS[3], 100); // Progress #10
 
       // Handle pagination for all collected paginated queries
       while (globalPaginatedQueries.length > 0) {
@@ -1081,7 +1074,7 @@ class AnalysisService {
         `Fetching details for ${vulnsIDs.size} unique vulnerabilities...`,
       );
 
-      this.progressService.progressUpdater(PROGRESS_STEPS[4], 0, 11); // Progress #11
+      this.progressService.progressUpdater(PROGRESS_STEPS[4], 0); // Progress #11
 
       const vulnDetailsResults = await this.processBatchesInParallel(
         Array.from(vulnsIDs),
@@ -1105,11 +1098,10 @@ class AnalysisService {
             return null;
           }
         },
-        PROGRESS_STEPS[4],
-        12, // Progress #12 for intermediate tracking
+        PROGRESS_STEPS[4], // Progress #12 for intermediate tracking
       );
 
-      this.progressService.progressUpdater(PROGRESS_STEPS[4], 100, 13); // Progress #13
+      this.progressService.progressUpdater(PROGRESS_STEPS[4], 100); // Progress #13
 
       // Filter out failed requests
       const validVulnDetails = vulnDetailsResults.filter(
@@ -1147,7 +1139,7 @@ class AnalysisService {
           }
         });
       });
-      this.progressService.progressUpdater(PROGRESS_STEPS[4], 100, 14); // Progress #14
+      this.progressService.progressUpdater(PROGRESS_STEPS[4], 100); // Progress #14
     } catch (err) {
       console.error('Error fetching vulnerabilities:', err);
       this.addStepError('Vulnerability Enrichment', err);
@@ -1224,10 +1216,10 @@ class AnalysisService {
       }
 
       const consolidatedErrors = this.consolidateStepErrors();
-      this.progressService.progressUpdater(PROGRESS_STEPS[5], 100, 15); // Progress #15
+      this.progressService.progressUpdater(PROGRESS_STEPS[5], 100); // Progress #15
 
       // Final completion step
-      this.progressService.progressUpdater(PROGRESS_STEPS[5], 100, 16); // Progress #16 - Complete
+      this.progressService.progressUpdater(PROGRESS_STEPS[5], 100); // Progress #16 - Complete
 
       return {
         dependencies: analysedDependencies,
@@ -1237,7 +1229,7 @@ class AnalysisService {
       this.addStepError('Overall Analysis', error);
 
       // Complete progress even on error
-      this.progressService.progressUpdater(PROGRESS_STEPS[5], 100, 16); // Progress #16 - Complete with error
+      this.progressService.progressUpdater(PROGRESS_STEPS[5], 100); // Progress #16 - Complete with error
 
       return {
         dependencies: {},
@@ -1272,7 +1264,7 @@ class AnalysisService {
     }
 
     // Step 1: Start file parsing
-    this.progressService.progressUpdater(PROGRESS_STEPS[0], 0, 1); // Progress #1
+    this.progressService.progressUpdater(PROGRESS_STEPS[0], 0); // Progress #1
 
     const groupedFileContent = {
       [ecosystem]: [{ path: parsedFileName, content }],

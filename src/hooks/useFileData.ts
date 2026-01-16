@@ -1,4 +1,4 @@
-import { manifestFiles } from "@/constants/constants";
+import { MANIFEST_FILES } from "@/constants/constants";
 import { uploadFile } from "@/lib/api";
 import React, { useEffect } from "react";
 import toast from "react-hot-toast";
@@ -23,8 +23,8 @@ const useFileData = (file: File) => {
     const fileName = file.name;
     if (
       !fileName ||
-      !Object.keys(manifestFiles).some(
-        (f) => manifestFiles[f].file === fileName
+      !Object.keys(MANIFEST_FILES).some(
+        (f) => MANIFEST_FILES[f].file === fileName,
       )
     ) {
       setFileError("Invalid manifest file type");

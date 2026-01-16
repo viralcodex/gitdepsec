@@ -1,0 +1,29 @@
+{
+  "type": "object",
+  "properties": {
+    "batchId": { "type": "number" },
+    "dependencies": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "package": { "type": "string" },
+          "currentVersion": { "type": "string" },
+          "vulnerabilityCount": { "type": "number" },
+          "recommendedAction": {
+            "type": "string",
+            "enum": ["upgrade", "patch", "replace", "remove"]
+          },
+          "targetVersion": { "type": "string" },
+          "command": { "type": "string" },
+          "riskLevel": {
+            "type": "string",
+            "enum": ["critical", "high", "medium", "low"]
+          },
+          "breakingChanges": { "type": "boolean" },
+          "estimatedTime": { "type": "string" }
+        }
+      }
+    }
+  }
+}

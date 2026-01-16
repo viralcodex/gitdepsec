@@ -32,6 +32,7 @@
     "@langchain/core": "^0.3.72",
     "@langchain/google-genai": "^0.2.16",
     "@langchain/langgraph": "^0.4.9",
+    "@openrouter/sdk": "^0.3.11",
     "@types/pg": "^8.15.5",
     "ae-cvss-calculator": "^1.0.8",
     "axios": "^1.10.0",

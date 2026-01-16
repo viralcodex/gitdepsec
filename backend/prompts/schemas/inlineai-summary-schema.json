@@ -1,5 +1,4 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "title": "Vulnerability Summary Schema",
   "description": "Schema for AI-generated vulnerability summaries with strict formatting and prioritization rules.",

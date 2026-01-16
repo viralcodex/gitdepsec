@@ -8,6 +8,7 @@ import { TooltipTrigger } from "../ui/tooltip";
 import { useSavedHistoryState, useUIState } from "@/store/app-store";
 import { HistoryItem } from "@/constants/model";
 import { useHistoryNavigation } from "@/hooks/useHistoryNavigation";
+import Image from "next/image";
 
 interface SavedHistoryProps {
   addButtonRef: React.RefObject<HTMLDivElement | null>;
@@ -22,7 +23,6 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
   const histCardRef = useRef<HTMLDivElement>(null);
   const toggleBarRef = useRef<HTMLDivElement>(null);
 
-  
   const closeHistoryCard = useCallback(() => {
     if (histCardRef.current) {
       histCardRef.current.style.transform = "translateX(calc(-95%))";
@@ -31,7 +31,7 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
       setSavedHistorySidebarOpen(false);
     }
   }, [setSavedHistorySidebarOpen]);
-  
+
   const openHistoryCard = useCallback(() => {
     if (histCardRef.current) {
       histCardRef.current.style.transform = "translateX(0)";
@@ -44,7 +44,7 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
       setSavedHistorySidebarOpen(true);
     }
   }, [setSavedHistorySidebarOpen]);
-  
+
   const toggleHistoryCard = useCallback(() => {
     if (isSavedHistorySidebarOpen) {
       closeHistoryCard();
@@ -52,7 +52,7 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
       openHistoryCard();
     }
   }, [isSavedHistorySidebarOpen, closeHistoryCard, openHistoryCard]);
-  
+
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
       if (
@@ -74,7 +74,7 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isSavedHistorySidebarOpen, closeHistoryCard, addButtonRef]);
-  
+
   //have to read from local storage again to get latest data
   const refreshHistory = () => {
     const persistedData = localStorage.getItem("gitdepsec_storage");
@@ -95,7 +95,7 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
       toast.error("No saved history found");
     }
   };
-  
+
   const parseAndNavigate = (hist: HistoryItem) => {
     navigateToHistory(hist);
     closeHistoryCard();
@@ -105,95 +105,103 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
     resetSavedHistoryState();
     toast.success("All history deleted!");
   };
-  
+
   return (
-    <>
-      <Card
-        ref={histCardRef}
-        id="history-card"
-        style={{ transform: "translateX(calc(-95%))", opacity: "0.3" }}
-        className="bg-background gap-0 w-[80%] h-130 rounded-xl sm:h-155 sm:w-80 fixed top-95 sm:top-50 left-0 z-101 overflow-auto scrollbar-background-thumb scrollbar-background-bg hover:opacity-100"
-        >
-        <div
-          ref={toggleBarRef}
-          id="togglebar"
-          className={cn(
-            "absolute bg-accent-foreground w-4 h-[100%] rounded-r-xl right-0 opacity-20 hover:opacity-100 cursor-pointer border-none"
-          )}
-          onClick={toggleHistoryCard}
-        />
-        <CardHeader className="p-4">
-          <div className="flex flex-row justify-between items-center cursor-pointer">
-            <span className="text-foreground text-xl font-semibold">
-              {"Saved history"}
-            </span>
-            <section
-              aria-label="History actions"
-              className="flex flex-row gap-x-4"
-            >
-              <Tooltip aria-label="refresh history">
-                <TooltipTrigger asChild id="refresh-history">
-                  <RefreshCcw
-                    className="text-accent"
-                    onClick={refreshHistory}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>Refresh History</TooltipContent>
-              </Tooltip>
-              <Tooltip aria-label="delete history">
-                <TooltipTrigger asChild id="delete-history">
-                  <Trash2 className="text-accent" onClick={deletehistory} />
-                </TooltipTrigger>
-                <TooltipContent>Delete all History</TooltipContent>
-              </Tooltip>
-            </section>
-          </div>
-        </CardHeader>
-        <hr className="" />
-        <CardContent className="p-2 py-4">
-          {savedHistoryItems && Object.keys(savedHistoryItems).length > 0 ? (
-            Object.entries(savedHistoryItems)
-              .sort(
-                ([dateA], [dateB]) =>
-                  new Date(dateB).getTime() - new Date(dateA).getTime()
-              )
-              .map(([date, items]) => {
-                return (
-                  <div key={date} className="px-3">
-                    <h4
-                      aria-label={`Saved history for ${date}`}
-                      className="text-md font-bold text-primary-foreground pb-2"
-                    >
-                      {date}
-                    </h4>
-                    <hr />
-                    <ul className="my-2">
-                      {items.map((hist, index) => (
-                        <li
-                          key={index}
-                          className="py-2 px-2 rounded-md cursor-pointer hover:bg-gray-400/40"
-                          onClick={() => parseAndNavigate(hist)}
-                        >
-                          <p className="font-semibold text-sm text-secondary flex flex-row justify-between items-center">
-                            <span>
-                              {hist.username}/{hist.repo} · {hist.branch}
-                            </span>
-                            <ArrowRight className="ml-1 h-4 w-4 text-secondary" />
-                          </p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })
-          ) : (
-            <p className="text-accent text-sm w-full p-5">
-              No saved history available...
+    <Card
+      ref={histCardRef}
+      id="history-card"
+      style={{ transform: "translateX(calc(-95%))", opacity: "0.3" }}
+      className="bg-background gap-0 w-[80%] h-130 rounded-xl sm:h-155 sm:w-80 fixed top-95 sm:top-50 left-0 z-101 overflow-auto scrollbar-background-thumb scrollbar-background-bg hover:opacity-100"
+    >
+      <div
+        ref={toggleBarRef}
+        id="togglebar"
+        className={cn(
+          "absolute bg-accent-foreground w-4 h-[100%] rounded-r-xl right-0 opacity-20 hover:opacity-100 cursor-pointer border-none",
+        )}
+        onClick={toggleHistoryCard}
+      />
+      <CardHeader className="p-4">
+        <div className="flex flex-row justify-between items-center cursor-pointer">
+          <span className="text-foreground text-xl font-semibold">
+            {"Saved history"}
+          </span>
+          <section
+            aria-label="History actions"
+            className="flex flex-row gap-x-4"
+          >
+            <Tooltip aria-label="refresh history">
+              <TooltipTrigger asChild id="refresh-history">
+                <RefreshCcw className="text-accent" onClick={refreshHistory} />
+              </TooltipTrigger>
+              <TooltipContent>Refresh History</TooltipContent>
+            </Tooltip>
+            <Tooltip aria-label="delete history">
+              <TooltipTrigger asChild id="delete-history">
+                <Trash2 className="text-accent" onClick={deletehistory} />
+              </TooltipTrigger>
+              <TooltipContent>Delete all History</TooltipContent>
+            </Tooltip>
+          </section>
+        </div>
+      </CardHeader>
+      <hr className="" />
+      <CardContent className="p-2 py-4">
+        {savedHistoryItems && Object.keys(savedHistoryItems).length > 0 ? (
+          Object.entries(savedHistoryItems)
+            .sort(
+              ([dateA], [dateB]) =>
+                new Date(dateB).getTime() - new Date(dateA).getTime(),
+            )
+            .map(([date, items]) => {
+              return (
+                <div key={date} className="px-3">
+                  <h4
+                    aria-label={`Saved history for ${date}`}
+                    className="text-md font-bold text-primary-foreground pb-2"
+                  >
+                    {date}
+                  </h4>
+                  <hr />
+                  <ul className="my-2">
+                    {items.map((hist, index) => (
+                      <li
+                        key={index}
+                        className="py-2 px-2 rounded-md cursor-pointer hover:bg-gray-400/40"
+                        onClick={() => parseAndNavigate(hist)}
+                      >
+                        <p className="font-semibold text-sm text-secondary flex flex-row justify-between items-center">
+                          <span>
+                            {hist.username}/{hist.repo} · {hist.branch}
+                          </span>
+                          <ArrowRight className="ml-1 h-4 w-4 text-secondary" />
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })
+        ) : (
+          <div className="flex flex-col items-center justify-center text-center w-full p-8 h-[100%] gap-3">
+            <p className="text-muted-foreground text-md">
+              No saved history yet...
             </p>
-          )}
-        </CardContent>
-      </Card>
-    </>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <span>Click</span>
+              <Image
+                src="/addhistory.png"
+                alt="Add History"
+                width={24}
+                height={24}
+                className="inline-block"
+              />
+              <span>to save</span>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 };
 

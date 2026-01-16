@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import { useState, useEffect } from "react";
 import { verifyUrl } from "@/lib/utils";
 import { useErrorState } from "@/store/app-store";

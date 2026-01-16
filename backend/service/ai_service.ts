@@ -1,90 +1,82 @@
-import { GoogleGenAI } from '@google/genai';
+import { OpenRouter } from '@openrouter/sdk';
 
 import { Vulnerability } from '../constants/model';
 import { prompts } from '../prompts/prompts';
 import inlineaiSummarySchema from '../prompts/schemas/inlineai-summary-schema.json';
 import vulnerabilitySummarySchema from '../prompts/schemas/vulnerability-summary-schema.json';
-import { parseAiResponseParts } from '../utils/utils';
+import { AIUtils } from '../utils/ai_utils';
 
 class AiService {
-  private ai: GoogleGenAI;
+  private ai: OpenRouter;
+  private defaultModel: string;
 
-  constructor() {
-    if (!process.env.GEMINI_API_KEY) {
-      throw new Error('GEMINI_API_KEY is not set');
+  constructor(model?: string) {
+    if (!process.env.OPEN_ROUTER_KEY) {
+      throw new Error('OPEN_ROUTER_KEY is not set');
     }
-    this.ai = new GoogleGenAI({
-      apiKey: process.env.GEMINI_API_KEY,
+    this.ai = new OpenRouter({
+      apiKey: process.env.OPEN_ROUTER_KEY,
     });
+    this.defaultModel =
+      model ?? process.env.DEFAULT_MODEL ?? 'xiaomi/mimo-v2-flash:free';
   }
 
-  async generateVulnerabilitySummary(
+  generateVulnerabilitySummary(
     vulnerabilities: Vulnerability[],
+    model?: string,
   ): Promise<string> {
     const prompt = prompts.VULNERABILITIES_SUMMARIZATION;
-    const finalPrompt = `System:${JSON.stringify(prompt.system)}\n\nConstraints:${JSON.stringify(prompt.constraints.join('\n'))}\n\nExamples:${JSON.stringify(prompt.examples)}`;
-    console.log('Final Prompt:', finalPrompt);
-
-    const response = await this.ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt.template.replace(
-        '{{vulnerabilities}}',
-        JSON.stringify(vulnerabilities),
-      ),
-      config: {
-        thinkingConfig: {
-          thinkingBudget: -1,
-        },
-        systemInstruction: finalPrompt,
-        responseSchema: vulnerabilitySummarySchema,
-        responseMimeType: 'application/json',
+    const systemPrompt = `${prompt.system}\n\nConstraints:\n${prompt.constraints.join('\n')}`;
+    const userPrompt = prompt.template.replace(
+      '{{vulnerabilities}}',
+      JSON.stringify(vulnerabilities),
+    );
+    console.log(
+      'Generating vulnerability summary with model:',
+      model ?? this.defaultModel,
+    );
+    return AIUtils.callAI(
+      this.ai,
+      systemPrompt,
+      userPrompt,
+      vulnerabilitySummarySchema,
+      {
+        model: model ?? this.defaultModel,
+        schemaName: 'vulnerability_summary',
+        returnString: true,
+        plugins: [{ id: 'response-healing' }],
       },
-    });
-
-    if (!response?.candidates?.[0]?.content?.parts) {
-      throw new Error('No response from AI model');
-    }
-
-    console.log('AI Response:', response.candidates[0].content);
-
-    // Analyze response parts structure
-    const parts = response.candidates[0].content.parts;
-
-    return parseAiResponseParts(parts);
+    );
   }
 
-  async generateInlineResponse(
-    prompt: string,
+  generateInlineResponse(
+    userPrompt: string,
     context: string,
     selectedText: string,
+    model?: string,
   ): Promise<string> {
-    if (!prompt || !selectedText || !context) {
+    if (!userPrompt || !selectedText || !context) {
       throw new Error('Missing required fields for inline AI response');
     }
 
-    const response = await this.ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: `${prompts.INLINE_AI_RESPONSE.template.replace('{{selectedText}}', selectedText)}\n\nContext: ${prompts.INLINE_AI_RESPONSE.context.replace('{{context}}', context)}`,
-      config: {
-        thinkingConfig: {
-          thinkingBudget: -1,
-        },
-        systemInstruction: prompts.INLINE_AI_RESPONSE.system,
-        responseSchema: inlineaiSummarySchema,
-        responseMimeType: 'application/json',
+    const systemPrompt = prompts.INLINE_AI_RESPONSE.system;
+    const fullUserPrompt = `${prompts.INLINE_AI_RESPONSE.template.replace('{{selectedText}}', selectedText)}\n\nContext: ${prompts.INLINE_AI_RESPONSE.context.replace('{{context}}', context)}\n\nUser Query: ${userPrompt}`;
+    console.log(
+      'Generating inline response with model:',
+      model ?? this.defaultModel,
+    );
+    return AIUtils.callAI(
+      this.ai,
+      systemPrompt,
+      fullUserPrompt,
+      inlineaiSummarySchema,
+      {
+        model: model ?? this.defaultModel,
+        schemaName: 'inline_ai_response',
+        returnString: true,
+        plugins: [{ id: 'response-healing' }],
       },
-    });
-
-    if (!response?.candidates?.[0]?.content?.parts) {
-      throw new Error('No response from AI model');
-    }
-
-    console.log('AI Response:', response.candidates[0].content);
-
-    // Analyze response parts structure
-    const parts = response.candidates[0].content.parts;
-
-    return parseAiResponseParts(parts);
+    );
   }
 }
 

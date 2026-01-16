@@ -111,7 +111,7 @@ export function Dropdown({
             !isBranchDropdown && !ecosystems.length
               ? "opacity-60 cursor-not-allowed"
               : "",
-            className
+            className,
           )}
         >
           {isBranchDropdown
@@ -162,7 +162,7 @@ export function Dropdown({
                           "ml-auto",
                           selectedBranch === branch
                             ? "opacity-100"
-                            : "opacity-0"
+                            : "opacity-0",
                         )}
                       />
                     </CommandItem>
@@ -198,7 +198,7 @@ export function Dropdown({
                         "ml-auto",
                         selectedEcosystem === ecosystem
                           ? "opacity-100"
-                          : "opacity-0"
+                          : "opacity-0",
                       )}
                     />
                   </CommandItem>
@@ -206,13 +206,17 @@ export function Dropdown({
               </CommandGroup>
             )}
           </CommandList>
-          {isBranchDropdown && !hasMore && branches.length > 0 ? (
-            <div className="p-2 text-center text-xs text-accent border-t">
-              All {branches.length} branches loaded
-            </div>
-          ) : (
-            <div className="p-2 text-center text-xs text-accent border-t">
-              Scroll to load more branches...
+          {isBranchDropdown && (
+            <div>
+              {!hasMore && branches.length > 0 ? (
+                <div className="p-2 text-center text-xs text-accent border-t">
+                  All {branches.length} branches loaded
+                </div>
+              ) : (
+                <div className="p-2 text-center text-xs text-accent border-t">
+                  Scroll to load more branches...
+                </div>
+              )}
             </div>
           )}
         </Command>

@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { Dependency, GraphNode, Vulnerability } from "@/constants/model";
+import {
+  Dependency,
+  GraphNode,
+  Vulnerability,
+  VulnerabilitySummaryResponse,
+} from "@/constants/model";
 import removeMarkdown from "remove-markdown";
 import { Check, Copy, Download, RefreshCcw, X } from "lucide-react";
 import { toast } from "react-hot-toast";
@@ -30,14 +35,16 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<string | null>(null);
+  const [summary, setSummary] = useState<VulnerabilitySummaryResponse | null>(
+    null,
+  );
   const [tabValue, setTabValue] = useState<string>("Vuln_details");
 
   let transitiveNodeDetails: Dependency | undefined;
   let matchedTransitiveNode: Dependency | undefined;
 
   const directDep = dependencies[node.ecosystem!]?.find(
-    (dep) => `${dep.name}@${dep.version}` === node.id
+    (dep) => `${dep.name}@${dep.version}` === node.id,
   );
 
   if (!directDep) {
@@ -45,13 +52,13 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
       .flat()
       .find((dep) =>
         dep.transitiveDependencies?.nodes?.some(
-          (transDep) => `${transDep.name}@${transDep.version}` === node.id
-        )
+          (transDep) => `${transDep.name}@${transDep.version}` === node.id,
+        ),
       );
     if (matchedTransitiveNode) {
       transitiveNodeDetails =
         matchedTransitiveNode.transitiveDependencies?.nodes?.find(
-          (transDep) => `${transDep.name}@${transDep.version}` === node.id
+          (transDep) => `${transDep.name}@${transDep.version}` === node.id,
         );
     }
   }
@@ -155,34 +162,38 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
               versions: [],
             })),
           };
-        }
+        },
       ),
     };
     try {
       const response = await getAiVulnerabilitiesSummary(vulnerabilities);
       setSummary(response);
+      console.log("AI Summary Response:", response);
       //remove old cache and set new cache
       sessionStorage.removeItem(
-        `ai-summary-${allDetails.name}@${allDetails.version}`
+        `ai-summary-${allDetails.name}@${allDetails.version}`,
       );
       sessionStorage.setItem(
         `ai-summary-${allDetails.name}@${allDetails.version}`,
-        response
+        JSON.stringify(response),
       );
+      setIsLoading(false);
     } catch (err) {
-      setError("Failed to fetch AI summary: " + (err as Error).message);
+      setError("Error: " + (err as Error).message);
       setIsLoading(false);
     }
   }, [allDetails]);
 
   useEffect(() => {
-    const cachedSummary = sessionStorage.getItem(
-      `ai-summary-${allDetails?.name}@${allDetails?.version}`
-    );
-    if (cachedSummary) {
-      setSummary(cachedSummary);
-      setIsLoading(false);
-      return;
+    if (sessionStorage) {
+      const cachedSummary = sessionStorage.getItem(
+        `ai-summary-${allDetails?.name}@${allDetails?.version}`,
+      );
+      if (cachedSummary) {
+        setSummary(JSON.parse(cachedSummary));
+        setIsLoading(false);
+        return;
+      }
     }
     if (!allDetails || !allDetails.vulnerabilities) {
       setError("No vulnerabilities available for this dependency");
@@ -241,19 +252,19 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
         isMobile
           ? "w-full p-1 h-[calc(100vh-4rem)] pr-1"
           : "w-[35%] p-1 h-[calc(100vh-4rem)] pr-1",
-        "z-105 p-1 pr-1"
+        "z-105 p-1 pr-1",
       )}
     >
       <Card
         className={cn(
           "bg-background border-none text-accent p-0 gap-0 relative rounded-lg",
-          isMobile ? "h-[92vh]" : "h-[100%]"
+          isMobile ? "h-[92vh]" : "h-[100%]",
         )}
       >
         <CardHeader
           className={cn(
             getSeverityColor(node.severity!),
-            "font-bold px-4 py-3 rounded-t-lg border-b-1"
+            "font-bold px-4 py-3 rounded-t-lg border-b-1",
           )}
         >
           <div className="flex flex-row items-center justify-between">
@@ -358,7 +369,7 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
           <p
             className={cn(
               isMobile ? "text-sm" : "text-xs",
-              "italic text-foreground px-2"
+              "italic text-foreground px-2",
             )}
           >
             *AI results can be inaccurate. Always verify before taking action.

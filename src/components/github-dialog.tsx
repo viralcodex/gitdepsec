@@ -41,15 +41,25 @@ export function GithubDialog({ isOpen, onClose, onSubmit }: GithubDialogProps) {
             Enter GitHub Personal Access Token
           </DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4" aria-label="GitHub Personal Access Token configuration">
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-4"
+          aria-label="GitHub Personal Access Token configuration"
+        >
           <div className="text-sm" role="note" id="pat-description">
             To enable private repositories and increased request limits (5000
             req/hour), you&apos;ll need to provide a GitHub Personal Access
             Token with repo scope. This token is only used for making API calls
             to Github API and it is stored locally in your browser.
           </div>
-          <details className="group text-sm [&>summary:focus-visible]:outline-none" aria-label="Data storage information">
-            <summary className="cursor-pointer font-medium text-primary-foreground hover:text-muted-foreground" tabIndex={0}>
+          <details
+            className="group text-sm [&>summary:focus-visible]:outline-none"
+            aria-label="Data storage information"
+          >
+            <summary
+              className="cursor-pointer font-medium text-primary-foreground hover:text-muted-foreground"
+              tabIndex={0}
+            >
               Data storage disclaimer
             </summary>
             <div className="animate-accordion-down mt-2 space-y-2 overflow-hidden pl-2">

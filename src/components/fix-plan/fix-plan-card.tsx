@@ -1,150 +1,88 @@
-import {
-  useState,
-  useEffect,
-  RefObject,
-} from "react";
-import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import { Download, RefreshCcw, X, Eye, EyeOff } from "lucide-react";
-import { cn, depVulnCount } from "@/lib/utils";
+import { Card, CardContent, CardHeader, CardFooter } from "../ui/card";
+import { Download, RefreshCcw, X } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import Image from "next/image";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import {
+  useFixPlanData,
+  useFixPlanProgress,
+  useFixPlanState,
+} from "@/store/app-store";
+import { useMemo } from "react";
+import FixPlanProgress from "./fix-plan-progress";
 import GlobalFixPlan from "./global-fix-plan";
-import IndividualFixPlan from "./indv-fix-plan";
-import { useFixPlanState, useGraphState, useErrorState } from "@/store/app-store";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 
 interface FixPlanCardProps {
   onClose: () => void;
   onDownload: () => void;
-  ecosystemOptions?: string[];
-  fixPlanRef: RefObject<HTMLDivElement | null>;
   regenerateFixPlan: (regenerateFixPlan: boolean) => void;
+  ecosystemOptions?: string[];
 }
 
 const FixPlanCard = (props: FixPlanCardProps) => {
+  const { onClose, onDownload, regenerateFixPlan, ecosystemOptions } = props;
+
+  const { globalFixPlan } = useFixPlanData();
   const {
-    onClose,
-    onDownload,
-    regenerateFixPlan,
-    fixPlanRef,
-  } = props;
+    isLoading: isFixPlanLoading,
+    currentPhase: currentFixPlanPhase,
+    progress: fixPlanProgress,
+  } = useFixPlanProgress();
 
   const {
-    fixPlan,
-    globalFixPlan,
-    fixOptimizationPlan: optimisationPlan,
-    conflictResolutionPlan,
-    isFixPlanLoading,
-    isFixPlanGenerated: fixPlanComplete,
+    ecosystemFixPlans,
+    selectedEcosystem,
+    setSelectedEcosystem,
+    ecosystemProgress,
   } = useFixPlanState();
-  const { manifestData } = useGraphState();
-  const { fixPlanError } = useErrorState();
 
-  const [showFixPlans, setShowFixPlans] = useState<Record<string, boolean>>({});
-  const [isExpandedAll, setIsExpandedAll] = useState(true);
+  const shouldShowEcosystemTabs = useMemo(() => {
+    return ecosystemOptions && ecosystemOptions.length > 1;
+  }, [ecosystemOptions]);
 
-  useEffect(() => {
-    //if any one of the values in the object is false, then set isExpandedAll to false
-    const isAnyOneSectionClosed = Object.values(showFixPlans).some(
-      (v) => v === false
-    );
-    if (isAnyOneSectionClosed) {
-      setIsExpandedAll(false);
-    } else {
-      setIsExpandedAll(true);
+  // Determine the active ecosystem tab (use first option if none selected)
+  const activeEcosystem = useMemo(() => {
+    if (!shouldShowEcosystemTabs || !ecosystemOptions) {
+      return null;
     }
-  }, [showFixPlans, setIsExpandedAll]);
+    return selectedEcosystem || ecosystemOptions[0];
+  }, [shouldShowEcosystemTabs, ecosystemOptions, selectedEcosystem]);
 
-  useEffect(()=>{
-    if(fixPlanComplete){
-      console.log(fixPlan);
-    }
-  }, [fixPlan, fixPlanComplete]);
+  // Check if fix plan is complete
+  const fixPlanComplete = useMemo(() => {
+    if (globalFixPlan) return true;
+    if (!shouldShowEcosystemTabs || !ecosystemOptions) return false;
 
-  const toggleShowFixPlan = (key: string) => {
-    setShowFixPlans((prev) => ({
-      ...prev,
-      [key]: prev[key] === undefined ? false : !prev[key], // Default to true (open) if undefined
-    }));
-  };
-
-  const isOpen = (key: string) => {
-    return showFixPlans[key] !== false; // Default to true unless explicitly set to false
-  };
-
-  const expandCollapseAll = (expand: boolean) => {
-    if (!manifestData?.dependencies) return;
-
-    const newShowFixPlans: Record<string, boolean> = {};
-
-    // Set all file-level items
-    Object.entries(manifestData.dependencies).forEach(
-      ([filename, dependencies]) => {
-        newShowFixPlans[filename] = expand;
-
-        // Set all main dependencies
-        dependencies.forEach((dep) => {
-          newShowFixPlans[`${dep.name}@${dep.version}`] = expand;
-
-          // Set all transitive dependencies
-          if (dep.transitiveDependencies?.nodes) {
-            Object.entries(dep.transitiveDependencies.nodes).forEach(
-              ([, transDep]) => {
-                if (
-                  transDep.dependencyType !== "SELF" &&
-                  depVulnCount(transDep)
-                ) {
-                  newShowFixPlans[
-                    `${transDep.name}@${transDep.version}@transitive`
-                  ] = expand;
-                }
-              }
-            );
-          }
-        });
-      }
-    );
-
-    setShowFixPlans(newShowFixPlans);
-    setIsExpandedAll(expand);
-  };
-
-
+    return ecosystemOptions.every((ecosystem) => {
+      const plan = ecosystemFixPlans[ecosystem];
+      const progress = ecosystemProgress[ecosystem]?.progress;
+      return Boolean(plan) || progress === 100;
+    });
+  }, [
+    globalFixPlan,
+    ecosystemFixPlans,
+    ecosystemProgress,
+    shouldShowEcosystemTabs,
+    ecosystemOptions,
+  ]);
 
   return (
-    <div className="fixed inset-0 z-106 flex items-center justify-center bg-black/20 backdrop-blur-xs py-4 px-2 sm:p-6">
-      <Card className="bg-background border-none text-card w-full h-full sm:max-h-[90vh] flex flex-col gap-0">
-        <CardHeader className="sm:px-5 sm:py-4 px-2 py-2 gap-0 bg-muted rounded-t-lg">
+    <div className="fixed inset-0 z-106 flex items-center justify-center bg-black/20 backdrop-blur-xs p-2 sm:p-4">
+      <Card className="bg-background border-none text-card w-full h-full flex flex-col gap-0 rounded-b-md">
+        <CardHeader className="sm:px-6 px-2 py-2 gap-0 bg-muted rounded-t-md border-b-2 border-muted-foreground/50">
           <div className="flex flex-row items-center justify-between w-full">
-            <div className="flex flex-row items-center gap-x-2">
+            <div className="flex flex-row items-center gap-x-2 font-bold">
               <Image
                 priority
                 src="/genaibutton.svg"
                 alt="GenAI Glowing Button"
-                width={48}
-                height={48}
+                width={36}
+                height={36}
               />{" "}
               AI Fix Plan
             </div>
             <div className="flex flex-row justify-between space-x-2 sm:space-x-4 lg:space-x-8 xl:space-x-12">
-              <Tooltip>
-                <TooltipTrigger asChild id="expand-collapse-all">
-                  <button onClick={() => expandCollapseAll(!isExpandedAll)}>
-                    {isExpandedAll ? (
-                      <EyeOff
-                        className={cn("text-muted-foreground cursor-pointer")}
-                      />
-                    ) : (
-                      <Eye
-                        className={cn("text-muted-foreground cursor-pointer")}
-                      />
-                    )}
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {isExpandedAll ? "Collapse All" : "Expand All"}
-                </TooltipContent>
-              </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild id="regenerate-fix-plan">
                   <button
@@ -185,64 +123,81 @@ const FixPlanCard = (props: FixPlanCardProps) => {
             </div>
           </div>
         </CardHeader>
-        <CardContent className="h-full overflow-y-scroll scrollbar-background-bg scrollbar-background-thumb">
-          <Tabs
-            className="flex w-full items-center justify-between"
-            defaultValue="global_fix_plan"
-          >
-            <div>
-              <TabsList className="grid w-full grid-cols-2 items-center justify-center rounded-t-none">
-                <TabsTrigger
-                  value="indv_fix_plan"
-                  className="rounded-t-none cursor-pointer"
+        <CardContent className="h-full overflow-hidden">
+          <div className="w-full h-full overflow-y-auto scrollbar-background-bg scrollbar-background-thumb">
+            {shouldShowEcosystemTabs ? (
+              <Tabs
+                value={activeEcosystem || ecosystemOptions![0]}
+                onValueChange={setSelectedEcosystem}
+                className="w-full"
+                defaultValue={ecosystemOptions![0]}
+              >
+                <TabsList
+                  className="w-full grid items-center rounded-t-none"
+                  style={{
+                    gridTemplateColumns: `repeat(${ecosystemOptions!.length}, minmax(0, 1fr))`,
+                  }}
                 >
-                  Individual Fix Plans
-                </TabsTrigger>
-                <TabsTrigger
-                  value="global_fix_plan"
-                  className="rounded-t-none cursor-pointer"
-                >
-                  Global Fix Plan
-                </TabsTrigger>
-                {/* <TabsTrigger
-                  value="strategy_plan"
-                  className="rounded-t-none cursor-pointer"
-                >
-                  Strategy Plan
-                </TabsTrigger> */}
-              </TabsList>
-            </div>
-            <div className="flex flex-col w-full overflow-y-auto scrollbar-background-bg scrollbar-background-thumb">
-              <TabsContent value="indv_fix_plan">
-                <IndividualFixPlan
-                  fixPlanRef={fixPlanRef}
-                  manifestData={manifestData}
-                  fixPlan={fixPlan}
-                  fixPlanError={fixPlanError}
-                  isFixPlanLoading={isFixPlanLoading}
-                  toggleShowFixPlan={toggleShowFixPlan}
-                  isOpen={isOpen}
+                  {ecosystemOptions!.map((ecosystem) => (
+                    <TabsTrigger
+                      key={ecosystem}
+                      value={ecosystem}
+                      className="font-bold tracking-wide cursor-pointer rounded-t-none"
+                    >
+                      {ecosystem.toUpperCase()}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {ecosystemOptions!.map((ecosystem) => {
+                  const ecosystemFixPlan = ecosystemFixPlans[ecosystem];
+                  const ecosystemProgressData = ecosystemProgress[ecosystem];
+                  // Ecosystem is done if it has a fix plan OR progress is 100%
+                  const isEcosystemComplete =
+                    Boolean(ecosystemFixPlan) ||
+                    ecosystemProgressData?.progress === 100;
+                  const isEcosystemLoading =
+                    isFixPlanLoading && !isEcosystemComplete;
+
+                  return (
+                    <TabsContent
+                      key={ecosystem}
+                      value={ecosystem}
+                      className="mt-0"
+                    >
+                      {isEcosystemLoading && (
+                        <FixPlanProgress
+                          isLoading={true}
+                          currentPhase={ecosystemProgressData?.phase || ""}
+                          progress={ecosystemProgressData?.progress || 0}
+                        />
+                      )}
+                      <GlobalFixPlan
+                        globalFixPlan={ecosystemFixPlan}
+                        ecosystem={ecosystem}
+                        isFixPlanLoading={isEcosystemLoading}
+                      />
+                    </TabsContent>
+                  );
+                })}
+              </Tabs>
+            ) : (
+              <>
+                <FixPlanProgress
+                  isLoading={isFixPlanLoading}
+                  currentPhase={currentFixPlanPhase || ""}
+                  progress={fixPlanProgress}
                 />
-              </TabsContent>
-              <TabsContent value="global_fix_plan">
+                {/* UNIFIED GLOBAL FIX PLAN */}
                 <GlobalFixPlan
                   globalFixPlan={globalFixPlan}
-                  optimisationPlan={optimisationPlan}
-                  conflictResolutionPlan={conflictResolutionPlan}
                   isFixPlanLoading={isFixPlanLoading}
                 />
-              </TabsContent>
-              {/* <TabsContent value="strategy_plan">
-                <StrategyPlan
-                  strategyPlan={strategyPlan}
-                  isFixPlanLoading={isFixPlanLoading}
-                />
-              </TabsContent> */}
-            </div>
-          </Tabs>
+              </>
+            )}
+          </div>
         </CardContent>
         <CardFooter className="px-4 flex flex-row">
-          <p className={cn("text-sm", "italic text-foreground py-3")}>
+          <p className={cn("text-xs", "italic text-foreground pb-2")}>
             *AI results can be inaccurate. Always verify before taking action.
           </p>
         </CardFooter>

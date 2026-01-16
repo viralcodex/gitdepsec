@@ -341,7 +341,7 @@ app.post('/aiVulnSummary', aiRateLimiter, (req: Request, res: Response) => {
     try {
       const summary =
         await aiService.generateVulnerabilitySummary(vulnerabilities);
-      res.json({ summary });
+      res.json(summary);
     } catch (error) {
       console.error('Error generating vulnerability summary:', error);
       res
@@ -404,20 +404,29 @@ app.get('/fixPlan', fixPlanRateLimiter, (req: Request, res: Response) => {
     );
 
     // Set a timeout to prevent hanging connections
-    const timeout = setTimeout(() => {
+    let timeoutHandle = setTimeout(() => {
       res.write(`data: ${JSON.stringify({ error: 'Request timeout' })}\n\n`);
       res.end();
-    }, 120000); // 2 minutes timeout
+    }, 600000);
+
+    // Helper to reset timeout on activity
+    const resetTimeout = () => {
+      clearTimeout(timeoutHandle);
+      timeoutHandle = setTimeout(() => {
+        res.write(`data: ${JSON.stringify({ error: 'Request timeout' })}\n\n`);
+        res.end();
+      }, 600000);
+    };
 
     req.on('close', () => {
       console.log('Connection closed by client');
-      clearTimeout(timeout);
+      clearTimeout(timeoutHandle);
       res.end();
     });
 
     req.on('error', () => {
       console.log('Connection error');
-      clearTimeout(timeout);
+      clearTimeout(timeoutHandle);
       res.end();
     });
 
@@ -443,37 +452,49 @@ app.get('/fixPlan', fixPlanRateLimiter, (req: Request, res: Response) => {
         message: string,
         dependencyData?: Record<string, unknown>,
       ) => {
-        res.write(
-          `data: ${JSON.stringify({
-            step: step,
-            progress: message,
-            data: dependencyData,
-            timestamp: new Date().toISOString(),
-          })}\n\n`,
-        );
+        // Reset timeout on each progress update to keep connection alive
+        resetTimeout();
+
+        const progressData = {
+          step: step,
+          progress: message,
+          data: dependencyData,
+          timestamp: new Date().toISOString(),
+        };
+
+        res.write(`data: ${JSON.stringify(progressData)}\n\n`);
+
+        // Force flush using the underlying socket
+        res.flushHeaders();
       };
 
       const response =
-        await agentsService.generateComprehensiveFixPlan(progressCallback);
+        await agentsService.generateEcosystemFixPlans(progressCallback);
 
-      // Send final result
+      // Send unified fix plan with correct step for frontend
       res.write(
         `data: ${JSON.stringify({
-          result: response,
-          step: 'analysis_complete',
+          step: 'global_planning_complete',
           progress: 'Fix plan generation completed!',
+          data: {
+            globalFixPlan: response,
+          },
         })}\n\n`,
       );
 
       // Send end event to signal completion
       res.write(`event: end\ndata: ${JSON.stringify({ complete: true })}\n\n`);
+      clearTimeout(timeoutHandle);
       res.end();
     } catch (error) {
       console.error('Error generating fix plan:', error);
+      clearTimeout(timeoutHandle);
       res.write(
         `data: ${JSON.stringify({
+          step: 'global_planning_error',
           error: 'Failed to generate fix plan',
           details: error instanceof Error ? error.message : 'Unknown error',
+          phase: 'error',
         })}\n\n`,
       );
       res.end();
