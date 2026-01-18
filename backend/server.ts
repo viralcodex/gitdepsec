@@ -24,7 +24,14 @@ import {
   inlineAiRateLimiter,
   fixPlanRateLimiter,
 } from './utils/rate_limits';
-import { sanitize, sanitizeFileName } from './utils/utils';
+import {
+  decryptCredentials,
+  getAiService,
+  getSessionCredentials,
+  sanitize,
+  sanitizeFileName,
+  userCredentialsStore,
+} from './utils/utils';
 import {
   validateAndReturnAnalysisCache,
   validateFile,
@@ -78,7 +85,12 @@ app.use(
   cors({
     origin: origin,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-OpenRouter-Key',
+      'X-OpenRouter-Model',
+    ],
   }),
 );
 
@@ -117,6 +129,58 @@ app.get('/health', (req: Request, res: Response) => {
     timestamp: new Date().toISOString(),
     memory: process.memoryUsage(),
   });
+});
+
+// Endpoint to set user credentials for session
+app.post('/setCredentials', (req: Request, res: Response) => {
+  try {
+    const { sessionId, apiKey, model, encrypted } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
+
+    // Decrypt credentials if they were encrypted
+    let decryptedKey = apiKey;
+    let decryptedModel = model;
+
+    if (encrypted && apiKey) {
+      decryptedKey = decryptCredentials(apiKey);
+    }
+    if (encrypted && model) {
+      decryptedModel = decryptCredentials(model);
+    }
+
+    // Store credentials for this session
+    userCredentialsStore.set(sessionId, {
+      apiKey: decryptedKey ?? undefined,
+      model: decryptedModel ?? undefined,
+    });
+
+    console.log(`Stored encrypted credentials for session: ${sessionId}`);
+    res.json({ success: true, message: 'Credentials stored successfully' });
+  } catch (error) {
+    console.error('Error storing credentials:', error);
+    res.status(500).json({ error: 'Failed to store credentials' });
+  }
+});
+
+// Endpoint to clear user credentials for session
+app.post('/clearCredentials', (req: Request, res: Response) => {
+  try {
+    const { sessionId } = req.body;
+
+    if (!sessionId) {
+      return res.status(400).json({ error: 'Session ID is required' });
+    }
+
+    userCredentialsStore.delete(sessionId);
+    console.log(`Cleared credentials for session: ${sessionId}`);
+    res.json({ success: true, message: 'Credentials cleared successfully' });
+  } catch (error) {
+    console.error('Error clearing credentials:', error);
+    res.status(500).json({ error: 'Failed to clear credentials' });
+  }
 });
 
 app.post('/branches', (req: Request, res: Response) => {
@@ -330,7 +394,7 @@ app.post('/analyseFile', analysisRateLimiter, (req: Request, res: Response) => {
 
 app.post('/aiVulnSummary', aiRateLimiter, (req: Request, res: Response) => {
   (async () => {
-    const { vulnerabilities } = req.body;
+    const { vulnerabilities, sessionId } = req.body;
     if (!vulnerabilities || vulnerabilities.vulnerabilities.length === 0) {
       return res.status(400).json({ error: 'No vulnerabilities provided' });
     }
@@ -339,8 +403,11 @@ app.post('/aiVulnSummary', aiRateLimiter, (req: Request, res: Response) => {
       vulnerabilities,
     );
     try {
+      // Get credentials from session store
+      const { apiKey, model } = getSessionCredentials(sessionId);
+      const service = getAiService(aiService, model, apiKey);
       const summary =
-        await aiService.generateVulnerabilitySummary(vulnerabilities);
+        await service.generateVulnerabilitySummary(vulnerabilities);
       res.json(summary);
     } catch (error) {
       console.error('Error generating vulnerability summary:', error);
@@ -356,13 +423,16 @@ app.post('/aiVulnSummary', aiRateLimiter, (req: Request, res: Response) => {
 
 app.post('/inlineai', inlineAiRateLimiter, (req: Request, res: Response) => {
   (async () => {
-    const { prompt, context, selectedText } = req.body;
+    const { prompt, context, selectedText, sessionId } = req.body;
     if (!selectedText || !prompt || !context) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
     console.log('Received inlineai request with text:', selectedText);
     try {
-      const response = await aiService.generateInlineResponse(
+      // Get credentials from session store
+      const { apiKey, model } = getSessionCredentials(sessionId);
+      const service = getAiService(aiService, model, apiKey);
+      const response = await service.generateInlineResponse(
         prompt,
         context,
         selectedText,
@@ -380,7 +450,7 @@ app.post('/inlineai', inlineAiRateLimiter, (req: Request, res: Response) => {
 
 app.get('/fixPlan', fixPlanRateLimiter, (req: Request, res: Response) => {
   (async () => {
-    const { username, repo, branch } = req.query;
+    const { username, repo, branch, sessionId } = req.query;
 
     if (!username || !repo || !branch) {
       return res.status(400).json({ error: 'Missing required fields' });
@@ -445,7 +515,11 @@ app.get('/fixPlan', fixPlanRateLimiter, (req: Request, res: Response) => {
         })}\n\n`,
       );
 
-      const agentsService = new AgentsService(data); //initial service with stored analysis data
+      // Get credentials from session store
+      const { apiKey, model } = getSessionCredentials(
+        sessionId ? String(sessionId) : undefined,
+      );
+      const agentsService = new AgentsService(data, model, apiKey); //initial service with stored analysis data
 
       const progressCallback = (
         step: string,

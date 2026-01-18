@@ -10,15 +10,16 @@ class AiService {
   private ai: OpenRouter;
   private defaultModel: string;
 
-  constructor(model?: string) {
-    if (!process.env.OPEN_ROUTER_KEY) {
-      throw new Error('OPEN_ROUTER_KEY is not set');
+  constructor(model?: string, apiKey?: string) {
+    const key = apiKey ?? process.env.OPEN_ROUTER_KEY;
+    if (!key) {
+      throw new Error('OPEN_ROUTER_KEY is not set and no API key provided');
     }
     this.ai = new OpenRouter({
-      apiKey: process.env.OPEN_ROUTER_KEY,
+      apiKey: key,
     });
     this.defaultModel =
-      model ?? process.env.DEFAULT_MODEL ?? 'xiaomi/mimo-v2-flash:free';
+      model ?? process.env.DEFAULT_MODEL ?? 'mistralai/devstral-2512:free';
   }
 
   generateVulnerabilitySummary(

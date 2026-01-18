@@ -1,5 +1,7 @@
 import { writeFileSync } from 'fs';
 
+import AiService from '../service/ai_service';
+
 //PNG Image for the graph
 /**
  * Generating graph image for visualization
@@ -17,6 +19,74 @@ export async function generateGraphImage(graph: any) {
     console.error('Error generating or saving graph image:', error);
   }
 }
+
+// Cache for AI service instances (keyed by model+apiKey)
+const aiServiceCache = new Map<string, AiService>();
+
+const ENCRYPTION_KEY =
+  process.env.ENCRYPTION_KEY ?? 'gitdepsec-2026-secure-key-v1-fallback';
+
+// Session storage for user credentials (in-memory, session-based)
+// Key: sessionId, Value: { apiKey, model }
+export const userCredentialsStore = new Map<
+  string,
+  { apiKey?: string; model?: string }
+>();
+
+// Helper to get or create AI service instance
+export const getAiService = (
+  aiService: AiService,
+  model?: string,
+  apiKey?: string,
+): AiService => {
+  // If no custom key provided, use the default singleton
+  if (!apiKey) return aiService;
+
+  const cacheKey = `${model ?? 'default'}:${apiKey}`;
+  let service = aiServiceCache.get(cacheKey);
+
+  if (!service) {
+    service = new AiService(model, apiKey);
+    aiServiceCache.set(cacheKey, service);
+  }
+
+  return service;
+};
+
+// Helper to get credentials for a session
+export const getSessionCredentials = (sessionId?: string) => {
+  if (!sessionId) return { apiKey: undefined, model: undefined };
+  return (
+    userCredentialsStore.get(sessionId) ?? {
+      apiKey: undefined,
+      model: undefined,
+    }
+  );
+};
+
+// Decryption function matching frontend encryption
+
+export const decryptCredentials = (encryptedData: string): string => {
+  try {
+    // Base64 decode
+    const decoded = Buffer.from(encryptedData, 'base64').toString('binary');
+
+    // XOR decrypt
+    const decrypted = Array.from(decoded)
+      .map((char, i) =>
+        String.fromCharCode(
+          char.charCodeAt(0) ^
+            ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length),
+        ),
+      )
+      .join('');
+
+    return decrypted;
+  } catch (error) {
+    console.error('Decryption failed:', error);
+    return encryptedData; // Fallback
+  }
+};
 
 // Define types for sanitization
 type SanitizableValue =

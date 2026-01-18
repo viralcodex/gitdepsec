@@ -1,11 +1,12 @@
 "use client";
 import Link from "next/link";
 import React, { useEffect, useState } from "react";
-import { AiDialog } from "./ai-dialog";
-import { GithubDialog } from "./github-dialog";
+import { AiDialog } from "./dialogs/ai-dialog";
+import { GithubDialog } from "../components/dialogs/github-dialog";
 import { useIsMobile } from "@/hooks/useMobile";
 import { KeyRound, Menu, Sparkle, X } from "lucide-react";
 import { GithubIcon } from "@/components/icons";
+import toast from "react-hot-toast";
 
 const Header = () => {
   const [githubDialogOpen, setGithubDialogOpen] = useState(false);
@@ -114,8 +115,22 @@ const Header = () => {
         <AiDialog
           isOpen={aiDialogOpen}
           onClose={() => setAIDialogOpen(false)}
-          onSubmit={(aiKey) => {
-            localStorage.setItem("aiApiKey", aiKey);
+          onSubmit={async (aiKey, modelName) => {
+            localStorage.setItem("openrouter_key", aiKey);
+            if (modelName) {
+              localStorage.setItem("openrouter_model", modelName);
+            } else {
+              localStorage.removeItem("openrouter_model");
+            } 
+            // Store on backend for session-based access
+            try {
+              const { setCredentialsOnBackend } = await import("@/lib/api");
+              await setCredentialsOnBackend(aiKey, modelName || undefined);
+              toast.success("API credentials saved securely");
+            } catch (error) {
+              console.error("Failed to store credentials on backend:", error);
+              toast.error("Failed to save credentials. Check console for details.");
+            }
             setAIDialogOpen(false);
           }}
         />

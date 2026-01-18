@@ -30,7 +30,9 @@ export const validateFile = (
   const fileExtension = file.originalname.toLowerCase().split('.').pop();
   if (
     !fileExtension ||
-    !Object.values(manifestFiles).some((type) => type.includes(fileExtension))
+    !Object.values(manifestFiles).some((type) =>
+      type.toLowerCase().includes(fileExtension),
+    )
   ) {
     return res.status(400).json({
       error: 'Invalid file type',

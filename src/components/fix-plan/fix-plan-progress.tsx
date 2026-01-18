@@ -59,7 +59,7 @@ const FixPlanProgress = ({
               </div>
               <span
                 className={cn(
-                  "text-[10px] text-center max-w-[100px] transition-all hidden sm:block leading-tight",
+                  "text-[10px] text-center max-w-25 transition-all hidden sm:block leading-tight",
                   isActive && "font-semibold text-foreground",
                   isCompleted && "text-green-600 dark:text-green-400",
                   !isActive && !isCompleted && "text-muted-foreground",

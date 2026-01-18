@@ -28,7 +28,7 @@ interface UnifiedFixPlanProps {
 
 const SectionSkeleton = () => (
   <div className="space-y-3">
-    <Skeleton className="min-h-[400px] w-full rounded-xl" />
+    <Skeleton className="min-h-100 w-full rounded-xl" />
   </div>
 );
 
@@ -428,7 +428,7 @@ const UnifiedFixPlanComponent = ({
                           {phase.fixes.map((fix, i) => (
                             <div
                               key={i}
-                              className="flex-1 min-w-[280px] p-3 bg-accent-foreground rounded-lg border border-muted text-sm space-y-2 hover:shadow-md transition-shadow"
+                              className="flex-1 min-w-70 p-3 bg-accent-foreground rounded-lg border border-muted text-sm space-y-2 hover:shadow-md transition-shadow"
                             >
                               <div className="flex items-center justify-between">
                                 <span className="font-semibold">
@@ -603,7 +603,7 @@ const UnifiedFixPlanComponent = ({
                       {dependency_intelligence.critical_paths.map((path, i) => (
                         <div
                           key={i}
-                          className="flex-1 min-w-[280px] p-3 bg-muted rounded-lg border border-muted text-sm space-y-4 hover:shadow-md transition-shadow"
+                          className="flex-1 min-w-70 p-3 bg-muted rounded-lg border border-muted text-sm space-y-4 hover:shadow-md transition-shadow"
                         >
                           <div className="font-mono text-md mb-1 break-all">
                             {path.path}
@@ -651,7 +651,7 @@ const UnifiedFixPlanComponent = ({
                         (vuln, i) => (
                           <div
                             key={i}
-                            className="flex-1 min-w-[280px] p-3 bg-muted rounded-lg border border-muted text-sm space-y-2 hover:shadow-md transition-shadow"
+                            className="flex-1 min-w-70 p-3 bg-muted rounded-lg border border-muted text-sm space-y-2 hover:shadow-md transition-shadow"
                           >
                             <div className="font-semibold">{vuln.package}</div>
                             <div className="text-muted-foreground text-xs">
