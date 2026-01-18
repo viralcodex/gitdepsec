@@ -88,7 +88,8 @@ export function AiDialog({ isOpen, onClose, onSubmit }: AiDialogProps) {
             <p className="text-yellow-700 font-semibold dark:text-yellow-300">
               Your API key is <b>encrypted before transmission</b> and stored
               securely on the server for your session. Only a session ID is sent
-              with subsequent requests.But still, issues can occure and I recommend for production use 
+              with subsequent requests. But still, <b>security issues</b> can
+              occur and <b>I recommend for production use </b>
               <b>self-hosting</b> with environment variables is best.
             </p>
           </div>
