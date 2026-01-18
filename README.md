@@ -1,8 +1,12 @@
 # GitDepSec
-GitDepSec is a dependencies vulnerabilities visualizer with AI powered insights to help you resolve them and ship code more secure and faster.
+GitDepSec is a dependencies vulnerabilities visualizer with AI-powered insights to help you resolve them and ship code more secure and faster.
+
+## **Who should use GitDepSec?**
+
+  **Anyone** working with Node.js, Python, Java, Ruby, or Dart projects who needs to identify and fix vulnerable dependencies for their project.
 
 # Features
- - Popular programming ecosystems supported (names from <a href='https://osv.dev/'>OSV.dev</a>)
+- Popular programming ecosystems supported (names from <a href='https://osv.dev/'>OSV.dev</a>)
    - JS/TS (Node (npm)) - package.json (Tested) 
    - Python (PyPI) - requirements.txt(Tested)
    - Java (Maven) - pom.xml (Partially Tested)
@@ -22,18 +26,13 @@ Clone the repository and open the repository in any text editor/IDE you like.
    - Run the command inside the root folder to install dependencies.
      
      ```bash
-     npm install
-     ```
-   - Create an **.env** file by doing:
-      
-     ```bash
-     cp .env.example .env
+     bun install
      ```
    - Add your Github PAT to the **.env** file as it is important to increase the limit to 5000 req/hour.
    - Finally, execute the command below to start the frontend at **localhost:3000**.
      
      ```bash
-     npm run dev
+     bun run dev
      ```
  ## Backend
   - Navigate to the **./backend** directory inside the repository
@@ -44,39 +43,45 @@ Clone the repository and open the repository in any text editor/IDE you like.
   - Install dependencies for backend
     
     ```bash
-     npm install
+     bun install
     ```
-  - Create **.env** file just like the frontend and add your Gemini AI API Key in **GEMINI_API_KEY** for the AI functionalities.
+  - Create a **.env** file in the backend directory and add:
+    - **OPEN_ROUTER_KEY** - Your OpenRouter API Key for AI functionalities
+    - **ENCRYPTION_KEY** (Optional) - Custom encryption key for securing API credentials in transit (defaults to built-in key if not set)
   - ### Database
     - To setup the Database, run the bash script that will start a docker container running a **postgresql** image in it.
+      
+      ```bash
+      ./database-start.sh
+      ```
     - When prompted to generate a random password, input yes. The Postgres database will start in a container at **localhost:5432**.
       
     - After the container is running, run the following command to generate the Tables from the schema.
       
       ```bash
-         npm run db:generate
+         bun run db:generate
       ```
     - Then push the changes to the container by running:
       
       ```bash
-         npm run db:push
+         bun run db:push
       ```
     - OPTIONAL: to check if the DB is running as expected, run the following command to see if you can open the studio.
 
       ```bash
-         npm run db:studio
+         bun run db:studio
       ```
 - Finally, after setting up both Backend and DB, run the service with
 
   ```bash
-  npm run dev
+  bun run dev
   ```
 # Ideation and Motivation
 I came across <a href='https://gitdiagram.com/'>GitDiagram</a> where I made some contributions to the repository, I also had some idea to before this to build something like a visualisation for vulnerable dependencies, which can help people find, see and resolve them easily.
 So there began the development for **GitDepSec**. You will see the inspiration in my code.
 
 # AI Information
-  Currently I am using Gemini AI API for the generation features using different JSON schemas to provide a structured and uniform response throughout.
+  You can add your OpenRouter API Key (OPEN_ROUTER_KEY) to use any AI model through their platform. OpenRouter provides access to various models including GPT-4, Claude, Gemini, and many others.
 
 # How it works
   Let's ask **GitDiagram** itself...
@@ -85,15 +90,7 @@ So there began the development for **GitDepSec**. You will see the inspiration i
   Then we parse your dependencies and fetch transitive dependencies of each of them from <a href='https://deps.dev/'>deps.dev</a> and vulnerabilities for each of them dependencies from <a href='https://osv.dev/'>OSV.dev</a>, combine all of them and return to the frontend.
 
 # Future Plans 
-I have a lot of things in mind, including:
-  - Improve performance to generate the graph, currently it takes a lot of time for big graph which have 100s of dependencies and all of them have 100s of vulnerabilities in them, maybe split the responsibilities and then rewrite the backend.
-  - Improve UI and UX for some parts that I feel need more polishing to keep the users informed.
-  - Clustering in the graph to prevent cluttering and density of the graph.
-  - Improve and provide filtering options for large graphs, as it does become cluttered (critical deps, low priority deps, etc)
-  - Provide options to give users their own schemas for personalised AI responses so that suits them and their needs.
-  - Provide an option to query the tree and find the information needed directly.
-  - Support for different AI Platforms, not just Gemini (which is the most cost effective right now).
-  - A simpler CLI Tool so that people can run it in bash and terminals as well, which can provide a more secure and private usage experience.
+I have a lot of things in mind, and would like to make this a tool that all software developers can use and analyse their projects dependencies locally or online. Also, a CLI tool in the current landscape of people moving to more TUI based apps.
 
 # Contributions and Bug Reporting
   - People are welcome to improve and support this project by contributing to the codebase.

@@ -6,7 +6,7 @@ import {
   GlobalFixPlanSSEMessage,
   VulnerabilitySummaryResponse,
 } from "@/constants/model";
-import { getNewFileName } from "./utils";
+import { encryptData, getNewFileName, getSessionId } from "./utils";
 import { PROGRESS_STEPS } from "@/constants/constants";
 
 const baseUrl =
@@ -23,11 +23,72 @@ const github_pat =
 // Default timeout for API calls (20 seconds)
 const DEFAULT_TIMEOUT = 20000;
 
+// Store credentials on backend for session (with encryption)
+export async function setCredentialsOnBackend(
+  apiKey?: string,
+  model?: string,
+): Promise<void> {
+  try {
+    const sessionId = getSessionId();
+    const url = new URL(`${baseUrl}/setCredentials`);
+    
+    // Encrypt credentials before sending
+    const encryptedKey = apiKey ? await encryptData(apiKey) : undefined;
+    const encryptedModel = model ? await encryptData(model) : undefined;
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ 
+        sessionId, 
+        apiKey: encryptedKey, 
+        model: encryptedModel,
+        encrypted: true,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to store credentials");
+    }
+    
+    console.log("🔒 Encrypted credentials stored on backend");
+  } catch (error) {
+    console.error("Error storing credentials:", error);
+    throw error;
+  }
+}
+
+// Clear credentials from backend
+export async function clearCredentialsOnBackend(): Promise<void> {
+  try {
+    const sessionId = getSessionId();
+    const url = new URL(`${baseUrl}/clearCredentials`);
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ sessionId }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to clear credentials");
+    }
+    console.log("Credentials cleared from backend");
+  } catch (error) {
+    console.error("Error clearing credentials:", error);
+    throw error;
+  }
+}
+
 export async function getRepoBranches(
   username: string,
   repo: string,
   page?: number,
-  pageSize?: number,
+  pageSize?: number
 ): Promise<BranchesApiResponse> {
   try {
     if (!page) page = 1;
@@ -60,7 +121,7 @@ export async function getRepoBranches(
 export async function getManifestFileContents(
   username: string,
   repo: string,
-  branch: string,
+  branch: string
 ): Promise<ManifestFileContentsApiResponse> {
   try {
     const url = new URL(`${baseUrl}/manifestData`);
@@ -86,7 +147,7 @@ export async function getManifestFileContents(
       throw new Error("Request timed out. Please try again.");
     }
     throw new Error(
-      "Failed to fetch manifest file contents. Please try again later.",
+      "Failed to fetch manifest file contents. Please try again later."
     );
   }
 }
@@ -96,7 +157,7 @@ export async function analyseDependencies(
   repo: string,
   branch: string,
   file: string,
-  forceRefresh: boolean = false,
+  forceRefresh: boolean = false
 ): Promise<ManifestFileContentsApiResponse> {
   try {
     const url = file
@@ -130,7 +191,7 @@ export async function analyseDependencies(
 }
 
 export async function uploadFile(
-  file: File,
+  file: File
 ): Promise<{ response: JSON; newFileName: string }> {
   try {
     const url = new URL(`${baseUrl}/uploadFile`);
@@ -174,13 +235,17 @@ export async function getAiVulnerabilitiesSummary(vulnerabilities: {
 }): Promise<VulnerabilitySummaryResponse> {
   try {
     const url = new URL(`${baseUrl}/aiVulnSummary`);
+    const sessionId = getSessionId();
 
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ vulnerabilities }),
+      body: JSON.stringify({
+        vulnerabilities,
+        sessionId,
+      }),
       signal: AbortSignal.timeout(60000), // 60 seconds for AI requests
     });
 
@@ -204,7 +269,7 @@ export async function getAiVulnerabilitiesSummary(vulnerabilities: {
       throw new Error("AI summary generation timed out. Please try again.");
     }
     throw new Error(
-      "Failed to generate AI vulnerabilities summary. Please try again later.",
+      "Failed to generate AI vulnerabilities summary. Please try again later."
     );
   }
 }
@@ -216,16 +281,23 @@ export async function getInlineAiResponse(
     name?: string;
     version?: string;
     vulnerabilities?: Vulnerability[];
-  },
+  }
 ): Promise<string> {
   try {
     const url = new URL(`${baseUrl}/inlineai`);
+    const sessionId = getSessionId();
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ prompt, selectedText, context }),
+      body: JSON.stringify({
+        prompt,
+        selectedText,
+        context,
+        sessionId,
+      }),
       signal: AbortSignal.timeout(60000), // 60 seconds for AI requests
     });
 
@@ -249,7 +321,7 @@ export async function getInlineAiResponse(
       throw new Error("AI response timed out. Please try again.");
     }
     throw new Error(
-      "Failed to get inline AI response. Please try again later.",
+      "Failed to get inline AI response. Please try again later."
     );
   }
 }
@@ -257,7 +329,7 @@ export async function getInlineAiResponse(
 export function progressSSE(
   onProgress: (step: string, progress: number) => void,
   onConnection: () => void,
-  onError: (error: string) => void,
+  onError: (error: string) => void
 ): EventSource {
   try {
     const url = new URL(`${baseUrl}/progress`);
@@ -274,7 +346,7 @@ export function progressSSE(
         }
         if (data.step && typeof data.progress === "number") {
           const currentStepIndex = Object.keys(PROGRESS_STEPS).indexOf(
-            data.step,
+            data.step
           );
 
           // Only process if step is in correct order or is a valid step
@@ -283,7 +355,7 @@ export function progressSSE(
             onProgress(PROGRESS_STEPS[data.step], data.progress);
           } else {
             console.warn(
-              `Out of order step received: ${data.step} (index: ${currentStepIndex}, last: ${lastStepIndex})`,
+              `Out of order step received: ${data.step} (index: ${currentStepIndex}, last: ${lastStepIndex})`
             );
           }
         }
@@ -319,7 +391,7 @@ export async function getFixPlanSSE(
     step?: string;
     progress?: string | number;
     data?: Record<string, unknown>;
-  }) => void,
+  }) => void
 ): Promise<EventSource> {
   const url = new URL(`${baseUrl}/fixPlan`);
   url.searchParams.append("username", username);
@@ -328,7 +400,7 @@ export async function getFixPlanSSE(
 
   const eventSource = new EventSource(url.toString());
 
-  eventSource.onmessage = (event) => {
+  eventSource.onmessage = (event: MessageEvent) => {
     try {
       const data = JSON.parse(event.data);
       if (data.type === "connection") {
@@ -391,8 +463,8 @@ export async function getFixPlanSSE(
     eventSource.close();
   });
 
-  eventSource.onerror = (error) => {
-    console.error("SSE connection error:", error);
+  eventSource.onerror = () => {
+    console.error("SSE connection error");
     const errorMsg =
       typeof navigator !== "undefined" && !navigator.onLine
         ? "You appear to be offline. Please check your internet connection."

@@ -261,3 +261,58 @@ export const downloadFixPlanPDF = async (
     throw new Error('Failed to generate PDF report');
   }
 };
+
+
+// Helper to get OpenRouter credentials from localStorage
+// Only sends credentials if user has provided their own key
+export const getOpenRouterCredentials = () => {
+  if (typeof window === "undefined") return { key: undefined, model: undefined };
+  
+  const key = localStorage.getItem("openrouter_key");
+  const model = localStorage.getItem("openrouter_model");
+  
+  // Only return credentials if user has explicitly set them
+  // Backend will use env vars if these are undefined
+  return {
+    key: key || undefined,
+    model: model || undefined,
+  };
+};
+
+// Helper to get or generate session ID
+export const getSessionId = () => {
+  if (typeof window === "undefined") return undefined;
+  
+  let sessionId = sessionStorage.getItem("api_session_id");
+  if (!sessionId) {
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionStorage.setItem("api_session_id", sessionId);
+  }
+  return sessionId;
+};
+
+// Encryption utilities for secure credential transmission
+const ENCRYPTION_KEY =
+  process.env.NEXT_PUBLIC_ENCRYPTION_KEY ??
+  "gitdepsec-2026-secure-key-v1-fallback";
+
+export async function encryptData(data: string): Promise<string> {
+  if (typeof window === "undefined") return data;
+  
+  try {
+    // XOR encryption with base64 encoding
+    const encrypted = Array.from(data)
+      .map((char, i) => 
+        String.fromCharCode(
+          char.charCodeAt(0) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length)
+        )
+      )
+      .join("");
+    
+    return btoa(encrypted); // Base64 encode
+  } catch (error) {
+    console.error("Encryption failed:", error);
+    return data; // Fallback
+  }
+}
+

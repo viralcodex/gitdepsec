@@ -1,8 +1,8 @@
 "use client";
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "./ui/dialog";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Input } from "../ui/input";
+import { Button } from "../ui/button";
 import { useState, useEffect } from "react";
 import Link from "next/link";
 
@@ -35,7 +35,7 @@ export function GithubDialog({ isOpen, onClose, onSubmit }: GithubDialogProps) {
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="border-[2px] border-accent bg-background shadow-[1px_1px_10px_2px_#000000] p-6 sm:max-w-md">
+      <DialogContent className="border-2 border-accent bg-background shadow-[1px_1px_10px_2px_#000000] p-6 sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold text-primary-foreground">
             Enter GitHub Personal Access Token

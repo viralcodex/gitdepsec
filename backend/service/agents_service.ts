@@ -50,6 +50,7 @@ import { AIUtils } from '../utils/ai_utils';
 class AgentsService {
   private ai: OpenRouter;
   private defaultModel: string;
+  private apiKey: string;
   private analysisData: DependencyApiResponse;
   private ecosystemMappedAnalysisData: Record<string, DependencyApiResponse>;
   private ecosystemFlattenedData: Record<string, FlattenedDependency[]> = {};
@@ -69,12 +70,18 @@ class AgentsService {
   private totalVulnerabilitiesCache: number | null = null;
   private fixableVulnerabilitiesCache: number | null = null;
 
-  constructor(analysisData: DependencyApiResponse, model?: string) {
-    if (!process.env.OPEN_ROUTER_KEY) {
-      throw new Error('OPEN_ROUTER_KEY is not set');
+  constructor(
+    analysisData: DependencyApiResponse,
+    model?: string,
+    apiKey?: string,
+  ) {
+    const key = apiKey ?? process.env.OPEN_ROUTER_KEY;
+    if (!key) {
+      throw new Error('OPEN_ROUTER_KEY is not set and no API key provided');
     }
+    this.apiKey = key;
     this.ai = new OpenRouter({
-      apiKey: process.env.OPEN_ROUTER_KEY,
+      apiKey: key,
     });
     this.defaultModel =
       model ?? process.env.DEFAULT_MODEL ?? 'xiaomi/mimo-v2-flash:free';
@@ -240,6 +247,7 @@ class AgentsService {
         const ecosystemService = new AgentsService(
           ecosystemData,
           this.defaultModel,
+          this.apiKey,
         );
 
         const result =
