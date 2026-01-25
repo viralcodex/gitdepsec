@@ -19,3 +19,4 @@ out/
 /backend/drizzle
 /backend/graph_image-*
 .VSCODECounter
+*.bak
