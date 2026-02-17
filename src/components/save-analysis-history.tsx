@@ -1,9 +1,4 @@
-import {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-} from "@/components/ui/tooltip";
+import { TooltipProvider, Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import React from "react";
 import { PlusCircle } from "lucide-react";
 import toast from "react-hot-toast";
@@ -15,10 +10,7 @@ interface SaveAnalysisHistoryProps {
   data?: HistoryItem;
   addButtonRef?: React.RefObject<HTMLDivElement | null>;
 }
-const SaveAnalysisHistory = ({
-  data,
-  addButtonRef,
-}: SaveAnalysisHistoryProps) => {
+const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) => {
   const { savedHistoryItems, setSavedHistoryItems } = useSavedHistoryState();
   const { graphRepoKey } = useGraphState();
 
@@ -39,19 +31,12 @@ const SaveAnalysisHistory = ({
       toast.error("No history to save!");
       return;
     }
-    if (
-      !data.username ||
-      !data.repo ||
-      !data.branch ||
-      data.branch.trim() === ""
-    ) {
+    if (!data.username || !data.repo || !data.branch || data.branch.trim() === "") {
       toast.error("Incomplete data to save history!");
       return;
     }
     if (Object.values(savedHistoryItems).flat().length >= MAX_HISTORY_ITEMS) {
-      toast.error(
-        "History limit reached! Please delete some entries before adding new ones.",
-      );
+      toast.error("History limit reached! Please delete some entries before adding new ones.");
       return;
     }
 
@@ -100,7 +85,7 @@ const SaveAnalysisHistory = ({
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <button disabled={isDisabled} onClick={addGithubPreference}>
+          <button type="button" disabled={isDisabled} onClick={addGithubPreference}>
             <div
               ref={addButtonRef}
               className={`rounded-2xl p-1 absolute -top-3 -left-3 ${

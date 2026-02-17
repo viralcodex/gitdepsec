@@ -4,14 +4,12 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 
-const HistoryPanel = dynamic(
-  () => import("@/components/history-items/history-panel"),
-  { ssr: true },
-);
+const HistoryPanel = dynamic(() => import("@/components/history-items/history-panel"), {
+  ssr: true,
+});
 
 export const metadata: Metadata = {
-  title:
-    "GitVulSafe - Free Dependency Vulnerability Scanner for GitHub & Manifest Files",
+  title: "GitVulSafe - Free Dependency Vulnerability Scanner for GitHub & Manifest Files",
   description:
     "Scan your GitHub repositories and manifest files for security vulnerabilities. Visualize dependency graphs, get AI-powered fix recommendations, and secure your code. Supports npm, pip, Maven, Gradle, and more. 100% free and open-source.",
   openGraph: {
@@ -32,7 +30,7 @@ export default function Home() {
         <MainContent />
         <HistoryPanel />
       </div>
-      <div className="hidden sm:block absolute top-30 left-0 -z-10 w-[300px] h-[300px] opacity-40">
+      <div className="hidden sm:block absolute top-30 left-0 -z-10 w-75 h-75 opacity-40">
         <Image
           priority
           src="/file.svg"
@@ -42,7 +40,7 @@ export default function Home() {
           style={{ objectFit: "contain" }}
         />
       </div>
-      <div className="hidden sm:block absolute bottom-10 right-0 -z-10 w-[300px] h-[300px] opacity-40">
+      <div className="hidden sm:block absolute bottom-10 right-0 -z-10 w-75 h-75 opacity-40">
         <Image
           priority
           src="/file.svg"

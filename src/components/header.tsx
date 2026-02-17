@@ -31,22 +31,14 @@ const Header = () => {
       aria-label="Main site header"
     >
       <div className="mx-auto flex h-16 max-w-4xl items-center justify-between px-4 sm:px-8">
-        <Link
-          href="/"
-          className="flex items-center space-x-2"
-          aria-label="Home Page - GitDepSec"
-        >
+        <Link href="/" className="flex items-center space-x-2" aria-label="Home Page - GitDepSec">
           <span className="text-lg font-bold">
             <span className="text-gray-200">Git</span>
             <span className="text-foreground">Dep</span>
             <span className="text-blue-400">Sec</span>
           </span>
         </Link>
-        <nav
-          role="navigation"
-          aria-label="Main navigation"
-          className="text-white"
-        >
+        <nav role="navigation" aria-label="Main navigation" className="text-white">
           {isMobile ? (
             <div className="relative">
               {isMenuOpen ? (
@@ -71,7 +63,7 @@ const Header = () => {
             </div>
           ) : (
             <ul className="flex space-x-4" role="list">
-              <li>
+              <li className="cursor-pointer">
                 <Link
                   href="https://github.com/viralcodex/"
                   className="flex flex-row items-center space-x-1"
@@ -81,21 +73,20 @@ const Header = () => {
                   <span>My Github</span>
                 </Link>
               </li>
-              <li className="flex flex-row items-center space-x-1">
+              <li className="flex flex-row items-center space-x-1 cursor-pointer" onClick={() => setGithubDialogOpen(true)}
+              >
                 <KeyRound className="" aria-hidden="true" />
                 <button
-                  onClick={() => setGithubDialogOpen(true)}
-                  className="cursor-pointer border-none bg-transparent "
+                  className="cursor-pointer border-none bg-transparent"
                   aria-label="Set GitHub Personal Access Token"
                 >
                   <span>Github PAT</span>
                 </button>
               </li>
-              <li className="flex flex-row items-center space-x-1">
+              <li className="flex flex-row items-center space-x-1 cursor-pointer" onClick={() => setAIDialogOpen(true)}>
                 <Sparkle className="" aria-hidden="true" />
                 <button
-                  onClick={() => setAIDialogOpen(true)}
-                  className="cursor-pointer border-none bg-transparent "
+                  className="cursor-pointer border-none bg-transparent"
                   aria-label="Set AI API Key"
                 >
                   <span>AI API Key</span>
@@ -121,7 +112,7 @@ const Header = () => {
               localStorage.setItem("openrouter_model", modelName);
             } else {
               localStorage.removeItem("openrouter_model");
-            } 
+            }
             // Store on backend for session-based access
             try {
               const { setCredentialsOnBackend } = await import("@/lib/api");

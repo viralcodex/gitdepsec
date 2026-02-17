@@ -13,9 +13,7 @@ const GlobalFixPlan = (props: GlobalFixPlanProps) => {
   const { globalFixPlan, isFixPlanLoading, ecosystem } = props;
   // Access appropriate partial fix plan from store
   const { partialFixPlan, ecosystemPartialFixPlans } = useFixPlanState();
-  const partialFixPlanData = ecosystem 
-    ? ecosystemPartialFixPlans[ecosystem] 
-    : partialFixPlan;
+  const partialFixPlanData = ecosystem ? ecosystemPartialFixPlans[ecosystem] : partialFixPlan;
 
   // Parse the unified fix plan from JSON string
   const parsedFixPlan = useMemo<UnifiedFixPlan | null>(() => {
@@ -29,9 +27,7 @@ const GlobalFixPlan = (props: GlobalFixPlanProps) => {
 
         // Remove markdown code fences if present
         if (cleanedData.includes("```json")) {
-          cleanedData = cleanedData
-            .replace(/```json\s*/g, "")
-            .replace(/\s*```/g, "");
+          cleanedData = cleanedData.replace(/```json\s*/g, "").replace(/\s*```/g, "");
         }
         // Try parsing once
         let parsed = JSON.parse(cleanedData);

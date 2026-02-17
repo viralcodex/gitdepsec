@@ -1,17 +1,14 @@
-import { Response } from 'express';
+import { Response } from "express";
 
-import { DependencyApiResponse, manifestFiles } from '../constants/model';
-import { getCachedAnalysis } from '../db/actions';
+import { DependencyApiResponse, manifestFiles } from "../constants/model";
+import { getCachedAnalysis } from "../db/actions";
 
-import { sanitizeString } from './utils';
+import { sanitizeString } from "./utils";
 
-export const validateFile = (
-  file: Express.Multer.File | undefined,
-  res: Response,
-) => {
+export const validateFile = (file: Express.Multer.File | undefined, res: Response) => {
   if (!file) {
     return res.status(400).json({
-      error: 'No file uploaded',
+      error: "No file uploaded",
       timestamp: new Date().toISOString(),
     });
   }
@@ -20,22 +17,20 @@ export const validateFile = (
   const maxSize = 5 * 1024 * 1024; // 5MB limit
   if (file.size > maxSize) {
     return res.status(400).json({
-      error: 'File size exceeds the 5MB limit',
-      maxSize: '5MB',
+      error: "File size exceeds the 5MB limit",
+      maxSize: "5MB",
       receivedSize: `${Math.round((file.size / 1024 / 1024) * 100) / 100}MB`,
       timestamp: new Date().toISOString(),
     });
   }
   // File type validation
-  const fileExtension = file.originalname.toLowerCase().split('.').pop();
+  const fileExtension = file.originalname.toLowerCase().split(".").pop();
   if (
     !fileExtension ||
-    !Object.values(manifestFiles).some((type) =>
-      type.toLowerCase().includes(fileExtension),
-    )
+    !Object.values(manifestFiles).some((type) => type.toLowerCase().includes(fileExtension))
   ) {
     return res.status(400).json({
-      error: 'Invalid file type',
+      error: "Invalid file type",
       timestamp: new Date().toISOString(),
     });
   }
@@ -56,7 +51,7 @@ export const validateAndReturnAnalysisCache = async (
     res.write(
       `data: ${JSON.stringify({
         error:
-          'Error: No analysis data found for the specified repo and branch. Please run dependency analysis first.',
+          "Error: No analysis data found for the specified repo and branch. Please run dependency analysis first.",
       })}\n\n`,
     );
     res.end();

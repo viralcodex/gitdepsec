@@ -117,14 +117,14 @@ User Interface
 // Automatic detection in GlobalFixPlan component
 const isUnifiedArchitecture = useMemo(() => {
   if (!globalFixPlan) return false;
-  
+
   try {
     const parsed = JSON.parse(globalFixPlan);
-    
+
     // Check for NEW architecture fields
     return !!(
-      parsed.executive_summary || 
-      parsed.priority_phases || 
+      parsed.executive_summary ||
+      parsed.priority_phases ||
       parsed.automated_execution
     );
   } catch {
@@ -142,6 +142,7 @@ return <LegacyComponent />;  // EXISTING
 ## Performance Strategy
 
 ### Lazy Rendering
+
 ```typescript
 // CollapsibleSection only renders when open
 const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -155,16 +156,16 @@ return (
 ```
 
 ### Memoization
+
 ```typescript
 // Parse once, use everywhere
 const parsedPlan = useMemo(() => {
-  return typeof fixPlan === "string" 
-    ? JSON.parse(fixPlan) 
-    : fixPlan;
-}, [fixPlan]);  // Only re-parse if fixPlan changes
+  return typeof fixPlan === "string" ? JSON.parse(fixPlan) : fixPlan;
+}, [fixPlan]); // Only re-parse if fixPlan changes
 ```
 
 ### Progressive Loading
+
 ```typescript
 // Show skeleton immediately
 {isLoading ? (
@@ -177,17 +178,18 @@ const parsedPlan = useMemo(() => {
 ## State Management
 
 ### Zustand Store Structure
+
 ```typescript
 interface FixPlanState {
   // Existing (preserved)
   fixPlan: Record<string, string>;
-  globalFixPlan: string;  // Used for BOTH architectures
+  globalFixPlan: string; // Used for BOTH architectures
   fixOptimizationPlan: string;
   conflictResolutionPlan: string;
   strategyPlan: string;
   isFixPlanLoading: boolean;
   isFixPlanGenerated: boolean;
-  
+
   // Actions
   setGlobalFixPlan: (plan: string) => void;
   setIsFixPlanLoading: (loading: boolean) => void;
@@ -196,6 +198,7 @@ interface FixPlanState {
 ```
 
 ### Why String Storage?
+
 ✅ **Backward compatible** - Works with both old and new
 ✅ **SSE friendly** - Direct from server stream
 ✅ **Type flexible** - Component handles parsing
@@ -204,6 +207,7 @@ interface FixPlanState {
 ## UI Responsiveness
 
 ### Grid System
+
 ```typescript
 // Adaptive columns based on screen size
 <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -212,6 +216,7 @@ interface FixPlanState {
 ```
 
 ### Scrolling Strategy
+
 ```typescript
 // Nested scrolling for large content
 <CardContent className="h-full overflow-y-scroll">
@@ -224,34 +229,38 @@ interface FixPlanState {
 ## Icon System
 
 ### Phase Icons
-| Phase | Icon | Color |
-|-------|------|-------|
-| Preprocessing | Package | Blue |
-| Parallel Intelligence | Brain | Purple |
-| Batch Processing | Zap | Yellow |
-| Synthesis | Sparkles | Pink |
-| Enrichment | Shield | Green |
+
+| Phase                 | Icon     | Color  |
+| --------------------- | -------- | ------ |
+| Preprocessing         | Package  | Blue   |
+| Parallel Intelligence | Brain    | Purple |
+| Batch Processing      | Zap      | Yellow |
+| Synthesis             | Sparkles | Pink   |
+| Enrichment            | Shield   | Green  |
 
 ### Status Icons
-| Status | Icon | Usage |
-|--------|------|-------|
-| Completed | CheckCircle | ✅ Done |
-| Active | PulsingIcon | 🔄 In Progress |
-| Pending | MutedIcon | ⏸️ Waiting |
-| Error | AlertTriangle | ⚠️ Warning |
+
+| Status    | Icon          | Usage          |
+| --------- | ------------- | -------------- |
+| Completed | CheckCircle   | ✅ Done        |
+| Active    | PulsingIcon   | 🔄 In Progress |
+| Pending   | MutedIcon     | ⏸️ Waiting     |
+| Error     | AlertTriangle | ⚠️ Warning     |
 
 ## Loading States
 
 ### Progress Indicator Phases
+
 ```
 [0-20%]   Preprocessing
-[20-40%]  Parallel Intelligence  
+[20-40%]  Parallel Intelligence
 [40-60%]  Batch Processing
 [60-80%]  Synthesis
 [80-100%] Enrichment
 ```
 
 ### Visual Feedback
+
 1. **Progress Bar** - Fills left to right
 2. **Phase Icons** - Light up sequentially
 3. **Current Step** - Shows text with animated dots
@@ -260,11 +269,12 @@ interface FixPlanState {
 ## Code Highlighting
 
 ### Parsing Strategy
+
 ```typescript
 const parseCodeString = (str?: string) => {
   // Split on <code>...</code> tags
   const parts = str.split(/(<code>.*?<\/code>)/g);
-  
+
   return parts.map(part => {
     if (part.match(/^<code>.*<\/code>$/)) {
       // Extract and style code
@@ -276,6 +286,7 @@ const parseCodeString = (str?: string) => {
 ```
 
 ### Styling
+
 - **Inline code**: `bg-accent-foreground px-1.5 py-0.5 rounded`
 - **Code blocks**: `bg-accent-foreground p-3 rounded overflow-x-auto font-mono`
 - **Commands**: Highlighted with special background
@@ -305,12 +316,14 @@ Day 3+: Monitor & Optimize
 ## Component Reusability
 
 ### Shared Components
+
 - `CollapsibleSection` - Used in Intelligence, Automation, Risk tabs
 - `CodeBlock` - Used for all script displays
 - `SectionSkeleton` - Used across all tabs
 - `parseCodeString` - Used for all text with code tags
 
 ### Benefits
+
 ✅ **DRY principle** - Write once, use everywhere
 ✅ **Consistent UX** - Same behavior across tabs
 ✅ **Easy maintenance** - Single source of truth
@@ -319,6 +332,7 @@ Day 3+: Monitor & Optimize
 ## Summary
 
 The new UI architecture provides:
+
 - ✅ **Seamless backward compatibility**
 - ✅ **Performance-optimized rendering**
 - ✅ **Rich feature visualization**

@@ -16,22 +16,17 @@ const baseUrl =
 
 // Get GitHub PAT from localStorage (client-side only)
 const github_pat =
-  typeof window !== "undefined"
-    ? (localStorage.getItem("github_pat") ?? undefined)
-    : undefined;
+  typeof window !== "undefined" ? (localStorage.getItem("github_pat") ?? undefined) : undefined;
 
 // Default timeout for API calls (20 seconds)
 const DEFAULT_TIMEOUT = 20000;
 
 // Store credentials on backend for session (with encryption)
-export async function setCredentialsOnBackend(
-  apiKey?: string,
-  model?: string,
-): Promise<void> {
+export async function setCredentialsOnBackend(apiKey?: string, model?: string): Promise<void> {
   try {
     const sessionId = getSessionId();
     const url = new URL(`${baseUrl}/setCredentials`);
-    
+
     // Encrypt credentials before sending
     const encryptedKey = apiKey ? await encryptData(apiKey) : undefined;
     const encryptedModel = model ? await encryptData(model) : undefined;
@@ -41,9 +36,9 @@ export async function setCredentialsOnBackend(
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ 
-        sessionId, 
-        apiKey: encryptedKey, 
+      body: JSON.stringify({
+        sessionId,
+        apiKey: encryptedKey,
         model: encryptedModel,
         encrypted: true,
       }),
@@ -52,7 +47,7 @@ export async function setCredentialsOnBackend(
     if (!response.ok) {
       throw new Error("Failed to store credentials");
     }
-    
+
     console.log("🔒 Encrypted credentials stored on backend");
   } catch (error) {
     console.error("Error storing credentials:", error);
@@ -88,7 +83,7 @@ export async function getRepoBranches(
   username: string,
   repo: string,
   page?: number,
-  pageSize?: number
+  pageSize?: number,
 ): Promise<BranchesApiResponse> {
   try {
     if (!page) page = 1;
@@ -121,7 +116,7 @@ export async function getRepoBranches(
 export async function getManifestFileContents(
   username: string,
   repo: string,
-  branch: string
+  branch: string,
 ): Promise<ManifestFileContentsApiResponse> {
   try {
     const url = new URL(`${baseUrl}/manifestData`);
@@ -146,9 +141,7 @@ export async function getManifestFileContents(
     if (error instanceof Error && error.name === "TimeoutError") {
       throw new Error("Request timed out. Please try again.");
     }
-    throw new Error(
-      "Failed to fetch manifest file contents. Please try again later."
-    );
+    throw new Error("Failed to fetch manifest file contents. Please try again later.");
   }
 }
 
@@ -157,7 +150,7 @@ export async function analyseDependencies(
   repo: string,
   branch: string,
   file: string,
-  forceRefresh: boolean = false
+  forceRefresh: boolean = false,
 ): Promise<ManifestFileContentsApiResponse> {
   try {
     const url = file
@@ -190,9 +183,7 @@ export async function analyseDependencies(
   }
 }
 
-export async function uploadFile(
-  file: File
-): Promise<{ response: JSON; newFileName: string }> {
+export async function uploadFile(file: File): Promise<{ response: JSON; newFileName: string }> {
   try {
     const url = new URL(`${baseUrl}/uploadFile`);
 
@@ -259,8 +250,7 @@ export async function getAiVulnerabilitiesSummary(vulnerabilities: {
 
     // Backend now returns stringified JSON, so parse it
     const stringData = await response.json();
-    const data =
-      typeof stringData === "string" ? JSON.parse(stringData) : stringData;
+    const data = typeof stringData === "string" ? JSON.parse(stringData) : stringData;
     console.log("AI Vulnerabilities Summary:", data);
     return data;
   } catch (error) {
@@ -268,9 +258,7 @@ export async function getAiVulnerabilitiesSummary(vulnerabilities: {
     if (error instanceof Error && error.name === "TimeoutError") {
       throw new Error("AI summary generation timed out. Please try again.");
     }
-    throw new Error(
-      "Failed to generate AI vulnerabilities summary. Please try again later."
-    );
+    throw new Error("Failed to generate AI vulnerabilities summary. Please try again later.");
   }
 }
 
@@ -281,7 +269,7 @@ export async function getInlineAiResponse(
     name?: string;
     version?: string;
     vulnerabilities?: Vulnerability[];
-  }
+  },
 ): Promise<string> {
   try {
     const url = new URL(`${baseUrl}/inlineai`);
@@ -311,25 +299,21 @@ export async function getInlineAiResponse(
 
     const data = await response.json();
     const parsedResponse =
-      typeof data.response === "string"
-        ? JSON.parse(data.response)
-        : data.response;
+      typeof data.response === "string" ? JSON.parse(data.response) : data.response;
     return parsedResponse;
   } catch (error) {
     console.error("Error getting inline AI response:", error);
     if (error instanceof Error && error.name === "TimeoutError") {
       throw new Error("AI response timed out. Please try again.");
     }
-    throw new Error(
-      "Failed to get inline AI response. Please try again later."
-    );
+    throw new Error("Failed to get inline AI response. Please try again later.");
   }
 }
 
 export function progressSSE(
   onProgress: (step: string, progress: number) => void,
   onConnection: () => void,
-  onError: (error: string) => void
+  onError: (error: string) => void,
 ): EventSource {
   try {
     const url = new URL(`${baseUrl}/progress`);
@@ -345,9 +329,7 @@ export function progressSSE(
           return;
         }
         if (data.step && typeof data.progress === "number") {
-          const currentStepIndex = Object.keys(PROGRESS_STEPS).indexOf(
-            data.step
-          );
+          const currentStepIndex = Object.keys(PROGRESS_STEPS).indexOf(data.step);
 
           // Only process if step is in correct order or is a valid step
           if (currentStepIndex >= lastStepIndex) {
@@ -355,7 +337,7 @@ export function progressSSE(
             onProgress(PROGRESS_STEPS[data.step], data.progress);
           } else {
             console.warn(
-              `Out of order step received: ${data.step} (index: ${currentStepIndex}, last: ${lastStepIndex})`
+              `Out of order step received: ${data.step} (index: ${currentStepIndex}, last: ${lastStepIndex})`,
             );
           }
         }
@@ -384,19 +366,23 @@ export async function getFixPlanSSE(
   username: string,
   repo: string,
   branch: string,
-  onError: (error: string) => void,
+  onError: (error: string, isCritical?: boolean) => void,
   onComplete: () => void,
   onGlobalFixPlanMessage: (data: GlobalFixPlanSSEMessage) => void,
   onProgress?: (data: {
     step?: string;
     progress?: string | number;
     data?: Record<string, unknown>;
-  }) => void
+  }) => void,
 ): Promise<EventSource> {
   const url = new URL(`${baseUrl}/fixPlan`);
+  const sessionId = getSessionId();
   url.searchParams.append("username", username);
   url.searchParams.append("repo", repo);
   url.searchParams.append("branch", branch);
+  if (sessionId) {
+    url.searchParams.append("sessionId", sessionId);
+  }
 
   const eventSource = new EventSource(url.toString());
 
@@ -414,7 +400,8 @@ export async function getFixPlanSSE(
           onGlobalFixPlanMessage((data.data as GlobalFixPlanSSEMessage) ?? {});
           break;
         case "global_planning_error":
-          onError(data.progress as string);
+          onError(data.error || data.details || data.progress || "Fix plan generation failed", true);
+          eventSource.close();
           break;
         // New 5-phase architecture steps
         case "preprocessing_start":
@@ -453,7 +440,7 @@ export async function getFixPlanSSE(
       }
     } catch (parseError) {
       console.error("Error parsing SSE data:", parseError);
-      onError("Error parsing server response");
+      onError("Error parsing server response", true);
       eventSource.close();
     }
   };
@@ -469,7 +456,7 @@ export async function getFixPlanSSE(
       typeof navigator !== "undefined" && !navigator.onLine
         ? "You appear to be offline. Please check your internet connection."
         : "Server connection error. Please try again.";
-    onError?.(errorMsg);
+    onError?.(errorMsg, true);
     eventSource.close();
   };
 

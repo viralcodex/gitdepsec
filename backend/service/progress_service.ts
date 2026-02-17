@@ -47,7 +47,7 @@ class ProgressService {
       try {
         callback(step, progress);
       } catch (error) {
-        console.error('Error in progress callback:', error);
+        console.error("Error in progress callback:", error);
       }
     });
   }

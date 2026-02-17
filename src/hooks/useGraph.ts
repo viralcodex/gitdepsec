@@ -12,12 +12,8 @@ import {
   Vulnerability,
 } from "@/constants/model";
 import { CACHE_TTL, MANIFEST_FILES } from "@/constants/constants";
-import {
-  store,
-  useErrorState,
-  useGraphState,
-  useRepoState,
-} from "@/store/app-store";
+import { store, useErrorState, useGraphState, useRepoState } from "@/store/app-store";
+import toast from "react-hot-toast";
 
 export const useGraph = (
   username?: string,
@@ -27,13 +23,8 @@ export const useGraph = (
   forceRefresh: boolean = false,
 ) => {
   const { setError, setManifestError } = useErrorState();
-  const {
-    dependencies,
-    setDependencies,
-    setManifestData,
-    setGraphData,
-    setLoading,
-  } = useGraphState();
+  const { dependencies, setDependencies, setManifestData, setGraphData, setLoading } =
+    useGraphState();
   const { setBranches } = useRepoState();
 
   const fetchDependencies = useCallback(
@@ -45,14 +36,13 @@ export const useGraph = (
       forceRefresh: boolean = false,
     ) => {
       try {
-        const manifestData: ManifestFileContentsApiResponse =
-          await analyseDependencies(
-            username!,
-            repo!,
-            branch!,
-            file!,
-            forceRefresh,
-          );
+        const manifestData: ManifestFileContentsApiResponse = await analyseDependencies(
+          username!,
+          repo!,
+          branch!,
+          file!,
+          forceRefresh,
+        );
         // console.log(
         //   "Manifest Data:",
         //   manifestData,
@@ -88,9 +78,7 @@ export const useGraph = (
         setLoading(false);
       } catch {
         // console.error("Error fetching manifest file contents:", err);
-        setError(
-          "Failed to fetch manifest file contents. Please try again later.",
-        );
+        setError("Failed to fetch manifest file contents. Please try again later.");
         setLoading(false);
         return;
       }
@@ -121,9 +109,7 @@ export const useGraph = (
           if (
             (!dep.vulnerabilities || dep.vulnerabilities.length === 0) &&
             !dep.transitiveDependencies?.nodes?.some(
-              (transNode) =>
-                transNode?.vulnerabilities &&
-                transNode?.vulnerabilities.length > 0,
+              (transNode) => transNode?.vulnerabilities && transNode?.vulnerabilities.length > 0,
             )
           ) {
             return;
@@ -158,23 +144,16 @@ export const useGraph = (
           addedNodeIds.add(depNodeId); // <-- Track added node IDs
 
           // Add vulnerable transitive nodes and edges
-          const transDeps: TransitiveDependency =
-            dep.transitiveDependencies || {};
+          const transDeps: TransitiveDependency = dep.transitiveDependencies || {};
           if (transDeps) {
             transDeps.nodes?.forEach((transNode) => {
-              if (
-                !transNode.vulnerabilities ||
-                transNode.vulnerabilities.length === 0
-              ) {
+              if (!transNode.vulnerabilities || transNode.vulnerabilities.length === 0) {
                 return;
               }
               const transNodeId = `${transNode.name}@${transNode.version}`;
               const maxTransCvss = getSeverityScores(transNode.vulnerabilities);
               // console.log("Is there duplicate node", transNodeId, addedNodeIds.has(transNodeId));
-              if (
-                transNode.dependencyType !== Relation.SELF &&
-                !addedNodeIds.has(transNodeId)
-              ) {
+              if (transNode.dependencyType !== Relation.SELF && !addedNodeIds.has(transNodeId)) {
                 nodes.push({
                   id: transNodeId,
                   label: transNode.name,
@@ -190,11 +169,7 @@ export const useGraph = (
           }
           // if (transDeps && Array.isArray(transDeps.nodes)) {
           // Optionally, add edges between transitive nodes if present in backend
-          if (
-            transDeps.edges &&
-            Array.isArray(transDeps.edges) &&
-            transDeps.edges.length > 0
-          ) {
+          if (transDeps.edges && Array.isArray(transDeps.edges) && transDeps.edges.length > 0) {
             transDeps.edges.forEach((edge) => {
               const nodesArr = transDeps.nodes || [];
               const sourceNode = nodesArr[edge.source];
@@ -224,11 +199,7 @@ export const useGraph = (
           } else if (transDeps.nodes && transDeps.nodes.length > 0) {
             // If no edges, attach each transitive node to its parent dependency node
             transDeps.nodes.forEach((transNode) => {
-              if (
-                !transNode.vulnerabilities ||
-                transNode.vulnerabilities.length === 0
-              )
-                return;
+              if (!transNode.vulnerabilities || transNode.vulnerabilities.length === 0) return;
               if (transNode.dependencyType === Relation.SELF) return;
               const transNodeId = `${transNode.name}@${transNode.version}`;
               edges.push({
@@ -251,10 +222,7 @@ export const useGraph = (
 
   const getSeverityScores = (vulnerabilities: Vulnerability[]) => {
     const scores = vulnerabilities
-      .flatMap((v) => [
-        Number(v.severityScore?.cvss_v3),
-        Number(v.severityScore?.cvss_v4),
-      ])
+      .flatMap((v) => [Number(v.severityScore?.cvss_v3), Number(v.severityScore?.cvss_v4)])
       .filter((v) => !isNaN(v));
     const maxCvss = Math.max(...scores, 0);
     return maxCvss;
@@ -279,12 +247,9 @@ export const useGraph = (
 
       if (matchingItem && !forceRefresh) {
         const isCacheStale =
-          matchingItem.cachedAt &&
-          Date.now() - matchingItem.cachedAt > CACHE_TTL;
+          matchingItem.cachedAt && Date.now() - matchingItem.cachedAt > CACHE_TTL;
         if (isCacheStale) {
-          console.log(
-            "Cache found but stale (>3 days), fetching fresh data...",
-          );
+          console.log("Cache found but stale (>3 days), fetching fresh data...");
           return false;
         }
         console.log("Cache hit - using fresh cached data");
@@ -309,6 +274,12 @@ export const useGraph = (
 
   // (MAIN EFFECT) Fetch dependencies when username, repo, or branch changes
   useEffect(() => {
+    // Skip fetching if we don't have required params (unless it's a file upload)
+    if (!file && (!username || !repo || !branch)) {
+      toast.error("Username, repo, and branch are required to analyze.");
+      return;
+    }
+
     if (forceRefresh) {
       console.log("Force refresh active, skipping cache check...");
       setLoading(true);
@@ -323,16 +294,7 @@ export const useGraph = (
     }
     console.log("Cache miss, fetching from backend...");
     fetchDependencies(username, repo, branch, file, forceRefresh);
-  }, [
-    branch,
-    file,
-    repo,
-    username,
-    forceRefresh,
-    fetchDependencies,
-    setLoading,
-    fetchFromCache,
-  ]);
+  }, [branch, file, repo, username, forceRefresh, fetchDependencies, setLoading, fetchFromCache]);
 
   useEffect(() => {
     if (Object.keys(dependencies).length === 0) return;

@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { Progress } from "../ui/progress";
 import useAISummaryProgress from "@/hooks/useAISummaryProgress";
+import { ErrorState } from "../ui/error-state";
 
 interface DependencyAIDetailsProps {
   dependency: Dependency | undefined;
@@ -26,27 +27,19 @@ interface DependencyAIDetailsProps {
 }
 
 const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
-  const {
-    dependency,
-    isMobile,
-    error,
-    isLoading,
-    summary,
-    handleCopy,
-    getSeverityBadge,
-  } = props;
+  const { dependency, isMobile, error, isLoading, summary, handleCopy, getSeverityBadge } = props;
 
   const { progress, finalised, message } = useAISummaryProgress({
     isLoading,
     summary,
   });
 
-  if (
-    !dependency ||
-    !dependency.vulnerabilities ||
-    dependency.vulnerabilities.length === 0
-  ) {
-    return <div className="pt-12 px-4">No dependency details available</div>;
+  if (!dependency || !dependency.vulnerabilities || dependency.vulnerabilities.length === 0) {
+    return (
+      <div className="pt-12 px-4 text-center text-muted-foreground">
+        No dependency details available
+      </div>
+    );
   }
 
   // Summary is already parsed as VulnerabilitySummaryResponse object by the API layer
@@ -62,9 +55,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
   const getIconComponent = (iconName: string) => {
     const IconComponent = iconMap[iconName] || null;
 
-    return IconComponent ? (
-      <IconComponent className="h-8 w-8" size={24} strokeWidth={3} />
-    ) : null;
+    return IconComponent ? <IconComponent className="h-8 w-8" size={24} strokeWidth={3} /> : null;
   };
 
   const getRemediationPriorityBadge = (priority: string) => {
@@ -82,10 +73,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
     if (!timeline || timeline.toLowerCase() === "n/a") {
       return (
         <Badge
-          className={cn(
-            isMobile ? "text-sm" : "text-xs",
-            "bg-gray-500 text-white rounded-sm m-0",
-          )}
+          className={cn(isMobile ? "text-sm" : "text-xs", "bg-gray-500 text-white rounded-sm m-0")}
         >
           N/A
         </Badge>
@@ -93,10 +81,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
     }
     return (
       <Badge
-        className={cn(
-          isMobile ? "text-sm" : "text-xs",
-          "bg-blue-600 text-white rounded-sm m-0",
-        )}
+        className={cn(isMobile ? "text-sm" : "text-xs", "bg-blue-600 text-white rounded-sm m-0")}
       >
         {timeline.toTitleCase()}
       </Badge>
@@ -104,43 +89,39 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
   };
 
   const parseListItems = (actions: string[]) => {
-    if (!actions || actions.length === 0) return "No actions available";
+    if (!actions || actions.length === 0) return <span className="text-muted-foreground italic">No actions available</span>;
     return (
-      <ul className="pl-4 list-disc flex-wrap">
+      <ul className="space-y-2">
         {actions.map((action, idx) => {
-          const processedAction = action.replace(
-            /\*\*(.*?)\*\*/g,
-            "<strong>$1</strong>",
-          );
+          const processedAction = action.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
           const parts = processedAction.split(/(<code>.*?<\/code>)/g);
           return (
-            <li key={idx} className="mb-1">
-              {parts.map((part, i) => {
-                if (part.startsWith("<code>") && part.endsWith("</code>")) {
-                  const code = part.replace(/<\/?code>/g, "");
-                  return (
-                    <span
-                      key={i}
-                      className="w-fit flex flex-row flex-wrap items-center my-1 bg-accent-foreground rounded-sm cursor-pointer"
-                      onClick={handleCopy}
-                    >
-                      <pre className="inline px-2 py-2 text-xs font-mono">
-                        <code className="inline">{code}</code>
-                      </pre>
-                    </span>
-                  );
-                } else {
-                  const cleanedPart = part.replace(/^[.,;:!?]\s*/, "");
-                  return (
-                    <span
-                      key={i}
-                      dangerouslySetInnerHTML={{
-                        __html: cleanedPart,
-                      }}
-                    />
-                  );
-                }
-              })}
+            <li key={idx} className="flex items-start gap-2">
+              <span className="text-primary mt-1.5">•</span>
+              <span className="flex-1">
+                {parts.map((part, i) => {
+                  if (part.startsWith("<code>") && part.endsWith("</code>")) {
+                    const code = part.replace(/<\/?code>/g, "");
+                    return (
+                      <span
+                        key={i}
+                        className="inline-flex items-center my-1 bg-muted/80 border border-border/50 rounded px-2 py-1 cursor-pointer hover:bg-muted transition-colors"
+                        onClick={handleCopy}
+                      >
+                        <code className="text-xs font-mono text-foreground">{code}</code>
+                      </span>
+                    );
+                  } else {
+                    const cleanedPart = part.replace(/^[.,;:!?]\s*/, "");
+                    return (
+                      <span
+                        key={i}
+                        dangerouslySetInnerHTML={{ __html: cleanedPart }}
+                      />
+                    );
+                  }
+                })}
+              </span>
             </li>
           );
         })}
@@ -164,10 +145,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
     if (!vector || vector.toLowerCase() === "n/a") {
       return (
         <Badge
-          className={cn(
-            isMobile ? "text-sm" : "text-xs",
-            "bg-gray-500 text-white rounded-sm m-0",
-          )}
+          className={cn(isMobile ? "text-sm" : "text-xs", "bg-gray-500 text-white rounded-sm m-0")}
         >
           N/A
         </Badge>
@@ -175,10 +153,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
     }
     return (
       <Badge
-        className={cn(
-          isMobile ? "text-sm" : "text-xs",
-          "bg-amber-700 text-white rounded-sm m-0",
-        )}
+        className={cn(isMobile ? "text-sm" : "text-xs", "bg-amber-700 text-white rounded-sm m-0")}
       >
         {"Vector: " + vector.toTitleCase()}
       </Badge>
@@ -186,96 +161,82 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
   };
 
   return (
-    <div className="px-4 h-full w-full">
+    <div className="px-4 py-3 h-full w-full">
       {!finalised ? (
-        <div className="flex flex-col items-center justify-center h-full">
-          <Progress value={progress} className="my-2 max-w-[75%]" />
-          <div className="flex flex-row items-center text-sm">
-            <span>{progress < 90 ? "Generating AI Summary" : message}</span>
-          </div>
+        <div className="flex flex-col items-center justify-center h-full gap-3">
+          <Progress value={progress} className="my-2 max-w-[75%] h-2" />
+          <p className="text-sm text-muted-foreground animate-pulse">
+            {progress < 90 ? "Generating AI Summary..." : message}
+          </p>
         </div>
       ) : error ? (
-        <div className="text-red-600 text-center h-full flex flex-col items-center justify-center gap-4">
-          <AlertTriangle size={96} />
-          {error}
+        <div className="h-full flex items-center justify-center">
+          <ErrorState
+            variant="server"
+            title="Summary Generation Failed"
+            message={error}
+            size={isMobile ? "sm" : "md"}
+          />
         </div>
       ) : (
-        <div>
-          <div className="mb-4">
-            <div className="flex flex-row gap-x-2 mb-2 flex-wrap gap-y-2">
-              {getSeverityBadge(parsedSummary?.risk_score?.toString() ?? "0")}
-              {getRemediationPriorityBadge(
-                parsedSummary?.remediation_priority || "N/A",
-              )}
-              {getTimelineBadge(parsedSummary?.timeline || "N/A")}
-              {getExploitVectorBadge(parsedSummary?.exploit_vector || "N/A")}
-            </div>
-            <div className="mb-4">
-              <p
-                className={cn(
-                  isMobile ? "text-sm" : "text-md",
-                  "font-bold text-input mb-1",
-                )}
-              >
-                Remediation Actions
-              </p>
-              <div className={cn(isMobile ? "text-xs" : "text-sm")}>
-                {parseListItems(parsedSummary?.recommended_actions || [])}
-              </div>
-            </div>
-            <div className="mb-4">
-              <p
-                className={cn(
-                  isMobile ? "text-sm" : "text-md",
-                  "font-bold text-input mb-1",
-                )}
-              >
-                Summary
-              </p>
-              <p className={cn(isMobile ? "text-xs" : "text-sm")}>
-                {parseText(parsedSummary?.summary ?? "")}
-              </p>
-            </div>
-            <div className="mb-4">
-              <p
-                className={cn(
-                  isMobile ? "text-sm" : "text-md",
-                  "font-bold text-input mb-1",
-                )}
-              >
-                Impact
-              </p>
-              <p className={cn(isMobile ? "text-xs" : "text-sm")}>
-                {parseText(parsedSummary?.impact ?? "")}
-              </p>
-            </div>
-            <div className="mb-4">
-              <p
-                className={cn(
-                  isMobile ? "text-sm" : "text-md",
-                  "font-bold text-input mb-1",
-                )}
-              >
-                Affected Components
-              </p>
-              <div className={cn(isMobile ? "text-sm" : "text-xs")}>
-                {parseListItems(parsedSummary?.affected_components ?? [])}
-              </div>
-            </div>
+        <div className="space-y-5">
+          {/* Badges Section */}
+          <div className="flex flex-wrap gap-2">
+            {getSeverityBadge(parsedSummary?.risk_score?.toString() ?? "0")}
+            {getRemediationPriorityBadge(parsedSummary?.remediation_priority || "N/A")}
+            {getTimelineBadge(parsedSummary?.timeline || "N/A")}
+            {getExploitVectorBadge(parsedSummary?.exploit_vector || "N/A")}
           </div>
-          <div className="mb-4">
-            <p
-              className={cn(
-                isMobile ? "text-sm" : "text-md",
-                "font-bold text-input mb-1",
-              )}
-            >
-              Risk Score Justification
+
+          {/* Remediation Actions */}
+          <section className="space-y-2">
+            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
+              Remediation Actions
+            </h4>
+            <div className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground")}>
+              {parseListItems(parsedSummary?.recommended_actions || [])}
+            </div>
+          </section>
+
+          {/* Summary */}
+          <section className="space-y-2">
+            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
+              Summary
+            </h4>
+            <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground leading-relaxed")}>
+              {parseText(parsedSummary?.summary ?? "")}
             </p>
-            <div className={cn(isMobile ? "text-xs" : "text-sm")}>
+          </section>
+
+          {/* Impact */}
+          <section className="space-y-2">
+            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
+              Impact
+            </h4>
+            <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground leading-relaxed")}>
+              {parseText(parsedSummary?.impact ?? "")}
+            </p>
+          </section>
+
+          {/* Affected Components */}
+          <section className="space-y-2">
+            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
+              Affected Components
+            </h4>
+            <div className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground")}>
+              {parseListItems(parsedSummary?.affected_components ?? [])}
+            </div>
+          </section>
+
+          {/* Risk Score Justification */}
+          <section className="space-y-2">
+            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
+              Risk Score Justification
+            </h4>
+            <div className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground")}>
               {parseListItems(parsedSummary?.risk_score_justification ?? [])}
             </div>
-          </div>
+          </section>
         </div>
       )}
     </div>

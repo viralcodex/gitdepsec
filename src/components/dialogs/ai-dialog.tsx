@@ -65,8 +65,8 @@ export function AiDialog({ isOpen, onClose, onSubmit }: AiDialogProps) {
           aria-label="OpenRouter API key configuration"
         >
           <div className="text-sm" role="note">
-            You can provide an OpenRouter API key to generate AI insights and
-            Fix Plans. The key will be stored locally in your browser.
+            You can provide an OpenRouter API key to generate AI insights and Fix Plans. The key
+            will be stored locally in your browser.
             <br />
             <br />
             <span className="font-medium">Get your OpenRouter API key </span>
@@ -82,14 +82,11 @@ export function AiDialog({ isOpen, onClose, onSubmit }: AiDialogProps) {
             .
           </div>
           <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 text-xs">
-            <p className="font-bold text-yellow-800 dark:text-yellow-200 mb-1">
-              Security Notice
-            </p>
+            <p className="font-bold text-yellow-800 dark:text-yellow-200 mb-1">Security Notice</p>
             <p className="text-yellow-700 font-semibold dark:text-yellow-300">
-              Your API key is <b>encrypted before transmission</b> and stored
-              securely on the server for your session. Only a session ID is sent
-              with subsequent requests. But still, <b>security issues</b> can
-              occur and <b>I recommend for production use </b>
+              Your API key is <b>encrypted before transmission</b> and stored securely on the server
+              for your session. Only a session ID is sent with subsequent requests. But still,{" "}
+              <b>security issues</b> can occur and <b>I recommend for production use </b>
               <b>self-hosting</b> with environment variables is best.
             </p>
           </div>
@@ -105,11 +102,10 @@ export function AiDialog({ isOpen, onClose, onSubmit }: AiDialogProps) {
             </summary>
             <div className="animate-accordion-down mt-2 space-y-2 overflow-hidden pl-2">
               <p>
-                All your API keys are stored locally in your browser and not
-                used by me in any manner. However, localStorage is vulnerable to{" "}
-                <b>XSS attacks</b> . If you still don&apos;t feel like sharing
-                your key, you can also <b>self-host</b> this app by following
-                the instructions here...{" "}
+                All your API keys are stored locally in your browser and not used by me in any
+                manner. However, localStorage is vulnerable to <b>XSS attacks</b> . If you still
+                don&apos;t feel like sharing your key, you can also <b>self-host</b> this app by
+                following the instructions here...{" "}
                 <Link
                   href="https://github.com/viralcodex/gitdepsec#readme"
                   className="underline text-primary-foreground dark:text-[hsl(var(--text-color-link))] transition-colors duration-200 hover:text-muted-foreground"
@@ -119,8 +115,7 @@ export function AiDialog({ isOpen, onClose, onSubmit }: AiDialogProps) {
                 .
               </p>
               <p className="text-xs italic text-muted-foreground mt-2">
-                For maximum security, use environment variables on a self-hosted
-                instance.
+                For maximum security, use environment variables on a self-hosted instance.
               </p>
             </div>
           </details>
@@ -144,8 +139,7 @@ export function AiDialog({ isOpen, onClose, onSubmit }: AiDialogProps) {
               aria-label="OpenRouter model name (optional)"
             />
             <p className="text-xs text-muted-foreground">
-              Optional: Specify a model name. Leave empty to use the default
-              model.{" "}
+              Optional: Specify a model name. Leave empty to use the default model.{" "}
               <Link
                 href="https://openrouter.ai/models"
                 className="underline hover:text-primary-foreground"

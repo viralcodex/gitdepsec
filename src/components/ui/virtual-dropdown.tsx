@@ -13,11 +13,7 @@ import {
   CommandInput,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface VirtualDropdownProps {
   branches: string[];
@@ -179,9 +175,7 @@ export function VirtualDropdown({
           <CommandList className="max-h-[340px] overflow-hidden">
             {!filteredBranches.length ? (
               <CommandEmpty>
-                {debouncedSearchValue
-                  ? "No branches found"
-                  : "No branches available"}
+                {debouncedSearchValue ? "No branches found" : "No branches available"}
               </CommandEmpty>
             ) : (
               <CommandGroup className="p-0">

@@ -1,16 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
-import "./globals.css";
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
+import { GeistPixelSquare, GeistPixelLine } from "geist/font/pixel";
 import Header from "@/components/header";
 import { Toaster } from "react-hot-toast";
 import { ThemeProvider } from "@/providers/themeProvider";
 import { NetworkStatusProvider } from "@/providers/networkStatusProvider";
 import { SpeedInsights } from "@vercel/speed-insights/next";
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin", "latin-ext"],
-  display: "swap",
-});
+// @ts-ignore
+import "./globals.css";
+// @ts-ignore
+import "@xyflow/react/dist/style.css";
+
+// All Geist font CSS variables:
+// --font-geist-sans (regular sans-serif)
+// --font-geist-mono (monospace)
+// --font-geist-pixel-square (pixel square)
+// --font-geist-pixel-line (pixel line)
 
 export const viewport: Viewport = {
   width: "device-width",
@@ -18,13 +24,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title:
-    "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
+  title: "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
   description:
     "Visualize, detect and fix dependency vulnerabilities in your codebase with AI-powered insights. Analyze GitHub repositories and manifest files for security risks across npm, pip, Maven, and more. Free open-source dependency scanner.",
   openGraph: {
-    title:
-      "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
+    title: "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
     description:
       "Visualize, detect and fix dependency vulnerabilities in your codebase with AI-powered insights. Analyze GitHub repositories and manifest files for security risks across npm, pip, Maven, and more.",
     url: "https://GitVulSafe.com",
@@ -71,23 +75,27 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Combine all font CSS variables
+  const fontVariables = [
+    GeistSans.variable,
+    GeistMono.variable,
+    GeistPixelSquare.variable,
+    GeistPixelLine.variable,
+  ].join(" ");
+
   return (
-    <html lang="en" className={`${geistSans.variable} `}>
+    <html lang="en" className={fontVariables}>
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
-      <body className="flex h-screen flex-col bg-background bg-repeat bg-[size:300px_300px] bg-[url('/bg.svg')] bg-blend-multiply relative">
+      <body className="flex h-screen flex-col bg-background bg-repeat bg-size-[300px_300px] bg-[url('/bg.svg')] bg-blend-multiply relative font-sans tracking-wide">
         <SpeedInsights />
         <ThemeProvider>
           <NetworkStatusProvider>
             <Header />
-            <main className="flex-grow pt-16">{children}</main>
+            <main className="grow pt-16">{children}</main>
             <Toaster />
           </NetworkStatusProvider>
         </ThemeProvider>

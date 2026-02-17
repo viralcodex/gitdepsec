@@ -4,6 +4,7 @@ import { useSavedHistoryState } from "@/store/app-store";
 import { ArrowRight } from "lucide-react";
 import React from "react";
 import { Card } from "../ui/card";
+import EmptyCard from "../empty-card";
 
 const HistoryPanel = () => {
   const { savedHistoryItems } = useSavedHistoryState();
@@ -55,9 +56,14 @@ const HistoryPanel = () => {
               );
             })
           ) : (
-            <p className="text-accent text-sm w-full p-5">
-              No recent analyses...
-            </p>
+            <EmptyCard
+              size="sm"
+              variant="search"
+              title="No recent analyses"
+              message="Your analysis history will appear here"
+              useCoffeeCup={false}
+              className="border-none bg-transparent"
+            />
           )}
         </ul>
       </div>

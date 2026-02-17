@@ -6,20 +6,24 @@ import { useErrorState } from "@/store/app-store";
 interface UseUrlInputProps {
   username: string;
   repo: string;
-  branch: string;
 }
 
-export const useUrlInput = ({ username, repo, branch }: UseUrlInputProps) => {
-  const [inputUrl, setInputUrl] = useState<string>("");
+export const useUrlInput = ({ username, repo }: UseUrlInputProps) => {
+  // Initialize URL directly from props to avoid delay
+  const initialUrl =
+    username && repo && !username.includes("file_upload")
+      ? `https://github.com/${username}/${repo}`
+      : "";
+  const [inputUrl, setInputUrl] = useState<string>(initialUrl);
   const { setBranchError } = useErrorState();
 
-  // Initialize URL from route parameters when route changes
+  // Update URL when route parameters change
   useEffect(() => {
     if (username && repo && !username.includes("file_upload")) {
       const githubUrl = `https://github.com/${username}/${repo}`;
       setInputUrl(githubUrl);
     }
-  }, [username, repo, branch]);
+  }, [username, repo]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const url = e.target.value.trim();

@@ -11,12 +11,11 @@ import { useRepoState, useErrorState, useFileState } from "@/store/app-store";
 import { store } from "@/store/app-store";
 import { useRepoData } from "@/hooks/useRepoData";
 import useFileUpload from "@/hooks/useFileUpload";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Search, RotateCcw } from "lucide-react";
 import { cn, getRepoKeyFromUrl } from "@/lib/utils";
 
 const MainContent = () => {
-  const { branches, selectedBranch, loadingBranches, loadedRepoKey } =
-    useRepoState();
+  const { branches, selectedBranch, loadingBranches, loadedRepoKey } = useRepoState();
 
   const { branchError, setBranchError } = useErrorState();
   const { inputFile: file, setInputFile: setFile } = useFileUpload();
@@ -75,9 +74,7 @@ const MainContent = () => {
 
     //url analysis
     if (debouncedUrl && !file && loadedRepoKey) {
-      const branchParam = selectedBranch
-        ? `?branch=${encodeURIComponent(selectedBranch)}`
-        : "";
+      const branchParam = selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : "";
       router.push(`/${loadedRepoKey}${branchParam}`);
     }
   };
@@ -92,17 +89,16 @@ const MainContent = () => {
   };
 
   return (
-    <Card className="w-full max-w-3xl border-[3px] border-black bg-gray-300/55 p-6 sm:p-8 shadow-[0px_0px_10px_0px_#AAAAAA] backdrop-blur-[1px]">
-      <form onSubmit={handleSubmit} className="space-y-3">
+    <Card className="w-full max-w-3xl border-[3px] border-black bg-gray-300/55 p-6 sm:p-8 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] backdrop-blur-[2px]">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <section className="flex flex-col space-y-3 sm:flex-row sm:gap-4 gap-3 w-full">
           <div className="flex w-full flex-col flex-1">
             <Input
               onChange={(e) => setInputUrl(e.target.value)}
               value={inputUrl}
               className={cn(
-                `flex-1 w-full rounded-md border-[3px] px-3 py-2.5 sm:px-4 sm:py-4 text-sm font-bold placeholder:text-base placeholder:font-normal sm:text-lg sm:placeholder:text-lg ${
-                  branchError ? "border-red-600" : "border-black"
-                }`,
+                "flex-1 w-full rounded-md border-[3px] px-3 py-2.5 sm:px-4 sm:py-4 text-sm font-bold placeholder:text-base placeholder:font-normal sm:text-lg sm:placeholder:text-lg bg-popover transition-shadow",
+                branchError ? "border-red-600" : "border-black",
               )}
               placeholder="https://github.com/username/repo"
               disabled={file !== null}
@@ -112,9 +108,9 @@ const MainContent = () => {
             {branchError && (
               <p
                 id="url-error"
-                className="text-red-600 text-xs max-w-x px-2 py-1 mt-0.5 font-semibold rounded-md backdrop-blur-lg"
+                className="flex items-center gap-1.5 text-red-600 text-xs px-2 py-1.5 mt-1 font-semibold rounded-md bg-red-50/80"
               >
-                <AlertTriangle className="inline-block mr-1 h-6 w-6" />
+                <AlertTriangle className="h-4 w-4 shrink-0" />
                 {branchError}
               </p>
             )}
@@ -123,27 +119,25 @@ const MainContent = () => {
             <Dropdown shouldShowBranches={shouldShowBranches} className="" />
           </div>
         </section>
-        <section className="flex w-full flex-col items-center justify-center gap-y-2">
-          <div className="flex items-center w-full gap-x-2">
-            <div className="flex-grow h-px bg-white" />
-            <span className="font-bold text-muted-foreground text-sm sm:text-base">
-              or
-            </span>
-            <div className="flex-grow h-px bg-white" />
+
+        <section className="flex w-full flex-col items-center justify-center gap-y-3">
+          <div className="flex items-center w-full gap-x-3">
+            <div className="grow h-px bg-black/20" />
+            <span className="font-bold text-muted-foreground text-md sm:text-lg">or</span>
+            <div className="grow h-px bg-black/20" />
           </div>
-          <div className="flex flex-grow w-full flex-col items-start justify-center my-2">
+          <div className="flex grow w-full flex-col items-start justify-center">
             <label
               htmlFor="manifest-file-input"
               className="block text-md font-bold text-primary-foreground mb-2"
             >
-              <p className="text-sm sm:text-md">
-                Upload a manifest file (max 5MB){" "}
-                <i>(.json, .yaml, .xml, .txt)</i>{" "}
+              <p className="text-md sm:text-lg">
+                Upload a manifest file (max 5MB) <i className="text-muted-foreground">(.json, .yaml, .xml, .txt)</i>
               </p>
             </label>
             <Input
               id="manifest-file-input"
-              className="flex-1 rounded-md border-[3px] border-black px-3 text-base font-bold placeholder:text-base placeholder:font-normal sm:px-4 sm:py-4 cursor-pointer"
+              className="flex-1 rounded-md border-[3px] border-black px-3 text-base font-bold placeholder:text-base placeholder:font-normal sm:px-4 sm:py-4 cursor-pointer bg-popover file:mr-3 file:rounded file:border-0 file:bg-black file:px-3 file:py-1 file:text-white file:font-semibold file:text-sm"
               type="file"
               onChange={(e) => {
                 setFile(e.target.files?.[0] || null);
@@ -154,20 +148,21 @@ const MainContent = () => {
           </div>
         </section>
         <div
-          className="flex w-full items-center justify-center gap-x-4 p-0"
+          className="flex w-full items-center justify-center gap-x-4 pt-2"
           role="group"
           aria-label="Form actions"
         >
           <Button
-            className="sm:p-6 px-4 py-2 cursor-pointer bg-accent text-black border-[3px] border-black text-base transition-transform hover:text-accent-foreground hover:bg-primary-foreground sm:text-lg disabled:cursor-not-allowed"
+            className="sm:p-6 px-5 py-2.5 cursor-pointer bg-white text-black border-[3px] border-black text-base transition-all hover:bg-gray-100 sm:text-lg disabled:cursor-not-allowed disabled:opacity-50 enabled:active:shadow-none"
             type="submit"
             disabled={isDisabled()}
             aria-label="Analyse repository dependencies"
           >
+            <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
             Analyse
           </Button>
           <Button
-            className="sm:p-6 px-4 py-2 cursor-pointer bg-accent-foreground text-accent border-[3px] border-black text-base transition-transform hover:text-accent-foreground hover:bg-primary-foreground sm:text-lg"
+            className="sm:p-6 px-5 py-2.5 cursor-pointer bg-black text-white border-[3px] border-black text-base transition-all hover:bg-accent-foreground sm:text-lg active:shadow-none"
             type="reset"
             onClick={() => {
               store.getState().clearForm();
@@ -176,6 +171,7 @@ const MainContent = () => {
               setBranchError("");
             }}
           >
+            <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
             Clear
           </Button>
         </div>

@@ -1,6 +1,5 @@
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { useShallow } from "zustand/shallow";
 import { AppStore } from "./types";
 import {
   createRepoSlice,
@@ -12,7 +11,12 @@ import {
   createUISlice,
   createSavedHistorySlice,
 } from "./slices";
-import { EMPTY_OBJECT, EMPTY_ECOSYSTEM_PARTIAL, EMPTY_ECOSYSTEM_FIXES, EMPTY_ECOSYSTEM_PROGRESS } from "@/constants/constants";
+import {
+  EMPTY_OBJECT,
+  EMPTY_ECOSYSTEM_PARTIAL,
+  EMPTY_ECOSYSTEM_FIXES,
+  EMPTY_ECOSYSTEM_PROGRESS,
+} from "@/constants/constants";
 export const store = create<AppStore>()(
   devtools(
     persist(
@@ -25,7 +29,7 @@ export const store = create<AppStore>()(
         ...createFixPlanSlice(...a),
         ...createUISlice(...a),
         ...createSavedHistorySlice(...a),
-        
+
         // Global actions
         clearForm: () => {
           const state = store.getState();
@@ -43,6 +47,7 @@ export const store = create<AppStore>()(
         partialize: (state) => ({
           branches: state.branches,
           selectedBranch: state.selectedBranch,
+          defaultBranch: state.defaultBranch,
           loadedRepoKey: state.loadedRepoKey,
           hasMore: state.hasMore,
           totalBranches: state.totalBranches,
@@ -60,15 +65,45 @@ export const store = create<AppStore>()(
   ),
 );
 
-// Selector helper to reduce boilerplate
+/**
+ * Selector helper that memoizes selector results based on state reference equality.
+ *
+ * Prevents infinite re-render loops in Zustand v5 by caching the selector's result
+ * and only recomputing when the store's state reference changes. This is necessary
+ * because selectors that return new object literals on each call would otherwise
+ * cause React to detect changes on every render.
+ *
+ * How it works:
+ * 1. On first call: computes and caches the result
+ * 2. On subsequent calls: returns cached result if state reference unchanged
+ * 3. On state update: Zustand creates new state object, triggers recomputation
+ *
+ * @param selector - Function that extracts data from AppStore state
+ * @returns Memoized hook function that can be used in React components
+ */
 function createSelector<T>(selector: (state: AppStore) => T) {
-  return () => store(useShallow(selector));
+  let lastResult: T | undefined;
+  let lastState: AppStore | undefined;
+
+  return () =>
+    store((state) => {
+      // If state reference hasn't changed, return cached result
+      if (state === lastState && lastResult !== undefined) {
+        return lastResult;
+      }
+
+      // State changed or first call - recompute and cache
+      lastState = state;
+      lastResult = selector(state);
+      return lastResult;
+    });
 }
 
 // Selectors
 export const useRepoState = createSelector((s) => ({
   branches: s.branches,
   selectedBranch: s.selectedBranch,
+  defaultBranch: s.defaultBranch,
   loadingBranches: s.loadingBranches,
   hasMore: s.hasMore,
   totalBranches: s.totalBranches,
@@ -77,6 +112,7 @@ export const useRepoState = createSelector((s) => ({
   loadedRepoKey: s.loadedRepoKey,
   setBranches: s.setBranches,
   setSelectedBranch: s.setSelectedBranch,
+  setDefaultBranch: s.setDefaultBranch,
   setLoadingBranches: s.setLoadingBranches,
   loadNextPage: s.loadNextPage,
   setHasMore: s.setHasMore,
@@ -136,8 +172,7 @@ export const useFixPlanState = createSelector((s) => {
   return {
     globalFixPlan: repoData?.globalFixPlan || "",
     partialFixPlan: s.partialFixPlan || EMPTY_OBJECT,
-    ecosystemPartialFixPlans:
-      repoData?.ecosystemPartialFixPlans || EMPTY_ECOSYSTEM_PARTIAL,
+    ecosystemPartialFixPlans: repoData?.ecosystemPartialFixPlans || EMPTY_ECOSYSTEM_PARTIAL,
     ecosystemFixPlans: repoData?.ecosystemFixPlans || EMPTY_ECOSYSTEM_FIXES,
     hasMultipleEcosystems: repoData?.hasMultipleEcosystems || false,
     selectedEcosystem: s.selectedEcosystem,
@@ -150,7 +185,6 @@ export const useFixPlanState = createSelector((s) => {
     currentFixPlanRepoKey: s.currentFixPlanRepoKey,
     fixPlansByRepo: s.fixPlansByRepo,
 
-    
     setGlobalFixPlan: s.setGlobalFixPlan,
     setEcosystemFixPlan: s.setEcosystemFixPlan,
     setCurrentFixPlanRepoKey: s.setCurrentFixPlanRepoKey,

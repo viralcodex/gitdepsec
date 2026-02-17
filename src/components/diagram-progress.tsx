@@ -55,7 +55,7 @@ const DiagramProgress = ({ width, height }: DiagramProgressProps) => {
 
   return (
     <div
-      className="border-1 border-accent rounded-xl bg-black/50 flex items-center justify-center relative overflow-hidden"
+      className="border border-accent rounded-xl bg-black/50 flex items-center justify-center relative overflow-hidden"
       style={{ width, height }}
       role="region"
       aria-label="Analysis progress"
@@ -66,29 +66,16 @@ const DiagramProgress = ({ width, height }: DiagramProgressProps) => {
         aria-hidden="true"
       />
       <div className="space-y-2 sm:w-[40%] w-[50%] relative z-10">
-        <Progress
-          value={progress}
-          className="w-full border-1 h-4"
-          aria-label="Progress bar"
-        />
-        <div
-          className="text-sm text-white px-1 xl:text-lg"
-          aria-live="polite"
-          aria-atomic="true"
-        >
+        <Progress value={progress} className="w-full border h-4" aria-label="Progress bar" />
+        <div className="text-sm text-white px-1 xl:text-lg" aria-live="polite" aria-atomic="true">
           <div className="flex flex-row items-center text-sm">
-            <span aria-label={`Current step: ${currentStep}`}>
-              {currentStep}
-            </span>
+            <span aria-label={`Current step: ${currentStep}`}>{currentStep}</span>
             <span className="inline-block w-4 text-left" aria-hidden="true">
               {dots}
             </span>
           </div>
           <div className="flex justify-between items-center text-sm">
-            <span
-              className=""
-              aria-label={`Progress: ${progress} percent complete`}
-            >
+            <span className="" aria-label={`Progress: ${progress} percent complete`}>
               {progress}%
             </span>
           </div>

@@ -15,17 +15,12 @@ import {
   EcosystemGraphMap,
   ManifestFileContentsApiResponse,
 } from "@/constants/model";
-import {
-  deepMergeFixPlanData,
-  hasFixPlanChanged,
-  orderFixPlanData,
-} from "@/lib/fixPlanUtils";
+import { deepMergeFixPlanData, hasFixPlanChanged, orderFixPlanData } from "@/lib/fixPlanUtils";
 
-export const createRepoSlice: StateCreator<AppStore, [], [], RepoState> = (
-  set
-) => ({
+export const createRepoSlice: StateCreator<AppStore, [], [], RepoState> = (set) => ({
   branches: [],
   selectedBranch: null,
+  defaultBranch: null,
   loadingBranches: false,
   hasMore: false,
   totalBranches: 0,
@@ -34,6 +29,7 @@ export const createRepoSlice: StateCreator<AppStore, [], [], RepoState> = (
   loadedRepoKey: null,
   setBranches: (branches) => set({ branches }),
   setSelectedBranch: (branch) => set({ selectedBranch: branch }),
+  setDefaultBranch: (branch) => set({ defaultBranch: branch }),
   setLoadingBranches: (loading) => set({ loadingBranches: loading }),
   loadNextPage: () =>
     set((s) => {
@@ -51,6 +47,7 @@ export const createRepoSlice: StateCreator<AppStore, [], [], RepoState> = (
     set({
       branches: [],
       selectedBranch: null,
+      defaultBranch: null,
       loadingBranches: false,
       hasMore: false,
       totalBranches: 0,
@@ -60,9 +57,7 @@ export const createRepoSlice: StateCreator<AppStore, [], [], RepoState> = (
     }),
 });
 
-export const createFileSlice: StateCreator<AppStore, [], [], FileState> = (
-  set
-) => ({
+export const createFileSlice: StateCreator<AppStore, [], [], FileState> = (set) => ({
   newFileName: "",
   uploaded: false,
   setNewFileName: (name) => set({ newFileName: name }),
@@ -71,9 +66,7 @@ export const createFileSlice: StateCreator<AppStore, [], [], FileState> = (
   resetFileState: () => set({ newFileName: "", uploaded: false }),
 });
 
-export const createErrorSlice: StateCreator<AppStore, [], [], ErrorState> = (
-  set
-) => ({
+export const createErrorSlice: StateCreator<AppStore, [], [], ErrorState> = (set) => ({
   error: null,
   manifestError: [],
   branchError: null,
@@ -94,9 +87,7 @@ export const createErrorSlice: StateCreator<AppStore, [], [], ErrorState> = (
     }),
 });
 
-export const createGraphSlice: StateCreator<AppStore, [], [], GraphState> = (
-  set
-) => ({
+export const createGraphSlice: StateCreator<AppStore, [], [], GraphState> = (set) => ({
   dependencies: {} as GroupedDependencies,
   graphData: {} as EcosystemGraphMap,
   manifestData: {} as ManifestFileContentsApiResponse,
@@ -117,26 +108,15 @@ export const createGraphSlice: StateCreator<AppStore, [], [], GraphState> = (
     }),
 });
 
-export const createDiagramSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  DiagramState
-> = (set) => ({
+export const createDiagramSlice: StateCreator<AppStore, [], [], DiagramState> = (set) => ({
   selectedNode: null,
   isDiagramExpanded: false,
   setIsDiagramExpanded: (expanded) => set({ isDiagramExpanded: expanded }),
   setSelectedNode: (node) => set({ selectedNode: node }),
-  resetDiagramState: () =>
-    set({ selectedNode: null, isDiagramExpanded: false }),
+  resetDiagramState: () => set({ selectedNode: null, isDiagramExpanded: false }),
 });
 
-export const createFixPlanSlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  FixPlanState
-> = (set) => ({
+export const createFixPlanSlice: StateCreator<AppStore, [], [], FixPlanState> = (set) => ({
   fixPlansByRepo: {},
   currentFixPlanRepoKey: null,
   partialFixPlan: {},
@@ -147,8 +127,7 @@ export const createFixPlanSlice: StateCreator<
   ecosystemProgress: {},
   selectedEcosystem: null,
 
-  setCurrentFixPlanRepoKey: (repoKey) =>
-    set({ currentFixPlanRepoKey: repoKey }),
+  setCurrentFixPlanRepoKey: (repoKey) => set({ currentFixPlanRepoKey: repoKey }),
 
   setGlobalFixPlan: (plan, repoKey) =>
     set((state) => {
@@ -185,11 +164,9 @@ export const createFixPlanSlice: StateCreator<
               ...ecosystemFixPlans,
               [ecosystem]: plan,
             },
-            ecosystemPartialFixPlans:
-              currentEntry.ecosystemPartialFixPlans || {},
+            ecosystemPartialFixPlans: currentEntry.ecosystemPartialFixPlans || {},
             hasMultipleEcosystems:
-              Object.keys({ ...ecosystemFixPlans, [ecosystem]: plan }).length >
-              1,
+              Object.keys({ ...ecosystemFixPlans, [ecosystem]: plan }).length > 1,
             isFixPlanGenerated: true,
             timestamp: Date.now(),
           },
@@ -206,8 +183,7 @@ export const createFixPlanSlice: StateCreator<
         if (!key) return state;
 
         const currentEntry = state.fixPlansByRepo[key] || {};
-        const ecosystemPartialFixPlans =
-          currentEntry.ecosystemPartialFixPlans || {};
+        const ecosystemPartialFixPlans = currentEntry.ecosystemPartialFixPlans || {};
         const currentPlan = ecosystemPartialFixPlans[ecosystem] || {};
         const merged = deepMergeFixPlanData(currentPlan, tabData);
 
@@ -241,8 +217,7 @@ export const createFixPlanSlice: StateCreator<
       if (!key) return state;
 
       const currentEntry = state.fixPlansByRepo[key] || {};
-      const ecosystemPartialFixPlans =
-        currentEntry.ecosystemPartialFixPlans || {};
+      const ecosystemPartialFixPlans = currentEntry.ecosystemPartialFixPlans || {};
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { [ecosystem]: _, ...rest } = ecosystemPartialFixPlans;
 
@@ -268,7 +243,7 @@ export const createFixPlanSlice: StateCreator<
               },
             },
           }
-        : { currentFixPlanPhase: phase }
+        : { currentFixPlanPhase: phase },
     ),
 
   setCurrentFixPlanStep: (step) => set({ currentFixPlanStep: step }),
@@ -285,7 +260,7 @@ export const createFixPlanSlice: StateCreator<
               },
             },
           }
-        : { fixPlanProgress: progress }
+        : { fixPlanProgress: progress },
     ),
 
   setSelectedEcosystem: (ecosystem) => set({ selectedEcosystem: ecosystem }),
@@ -310,7 +285,7 @@ export const createFixPlanSlice: StateCreator<
         fixPlansByRepo: {
           ...state.fixPlansByRepo,
           [key]: {
-            ...(state.fixPlansByRepo[key] || {}),
+            ...state.fixPlansByRepo[key],
             ecosystemFixPlans: {},
             ecosystemPartialFixPlans: {},
           },
@@ -319,17 +294,14 @@ export const createFixPlanSlice: StateCreator<
     }),
 });
 
-export const createUISlice: StateCreator<AppStore, [], [], UIState> = (
-  set
-) => ({
+export const createUISlice: StateCreator<AppStore, [], [], UIState> = (set) => ({
   fileHeaderOpen: false,
   isFixPlanDialogOpen: false,
   isSavedHistorySidebarOpen: false,
   isEcosystemSidebarOpen: true,
   setFileHeaderOpen: (open) => set({ fileHeaderOpen: open }),
   setFixPlanDialogOpen: (open) => set({ isFixPlanDialogOpen: open }),
-  setSavedHistorySidebarOpen: (open) =>
-    set({ isSavedHistorySidebarOpen: open }),
+  setSavedHistorySidebarOpen: (open) => set({ isSavedHistorySidebarOpen: open }),
   setEcosystemSidebarOpen: (open) => set({ isEcosystemSidebarOpen: open }),
   resetUIState: () =>
     set({
@@ -340,12 +312,9 @@ export const createUISlice: StateCreator<AppStore, [], [], UIState> = (
     }),
 });
 
-export const createSavedHistorySlice: StateCreator<
-  AppStore,
-  [],
-  [],
-  SavedHistoryState
-> = (set) => ({
+export const createSavedHistorySlice: StateCreator<AppStore, [], [], SavedHistoryState> = (
+  set,
+) => ({
   savedHistoryItems: {},
   setSavedHistoryItems: (item) =>
     set((s) => ({

@@ -1,6 +1,6 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { UnifiedFixPlan } from '@/constants/model';
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import { UnifiedFixPlan } from "@/constants/model";
 
 // Extend jsPDF type to include autoTable
 interface jsPDFWithAutoTable extends jsPDF {
@@ -18,7 +18,7 @@ export class FixPlanPDFGenerator {
   private currentY = this.margin;
   private boxWidth = 46;
   private boxHeight = 20;
-  
+
   // Colors
   private readonly primaryColor = "#2563eb"; // blue-600
   private readonly dangerColor = "#dc2626"; // red-600
@@ -27,11 +27,11 @@ export class FixPlanPDFGenerator {
   private readonly textColor = "#374151"; // gray-700
   private readonly darkTextColor = "#1f2937"; // gray-800
   private readonly mutedTextColor = "#6b7280"; // gray-500
-  
+
   // Fonts
   private readonly fontFamily = "helvetica";
   private readonly codeFont = "consolas";
-  
+
   // Font sizes
   private readonly titleSize = 20;
   private readonly subtitleSize = 16;
@@ -79,16 +79,13 @@ export class FixPlanPDFGenerator {
     text: string,
     fontSize: number = this.normalTextSize,
     color: string = this.textColor,
-    isBold: boolean = false
+    isBold: boolean = false,
   ) {
     this.doc.setFontSize(fontSize);
     this.doc.setTextColor(color);
     this.doc.setFont(this.fontFamily, isBold ? "bold" : "normal");
 
-    const lines = this.doc.splitTextToSize(
-      text,
-      this.pageWidth - 2 * this.margin
-    );
+    const lines = this.doc.splitTextToSize(text, this.pageWidth - 2 * this.margin);
     lines.forEach((line: string) => {
       this.checkPageBreak(fontSize / 2);
       this.doc.text(line, this.margin, this.currentY);
@@ -101,10 +98,7 @@ export class FixPlanPDFGenerator {
     this.doc.setTextColor(this.textColor);
     this.doc.setFont(this.fontFamily, isBold ? "bold" : "normal");
 
-    const lines = this.doc.splitTextToSize(
-      text,
-      this.pageWidth - 2 * this.margin - indent - 5
-    );
+    const lines = this.doc.splitTextToSize(text, this.pageWidth - 2 * this.margin - indent - 5);
     lines.forEach((line: string, i: number) => {
       this.checkPageBreak(7);
       if (i === 0) this.doc.text("•", this.margin + indent, this.currentY);
@@ -118,7 +112,7 @@ export class FixPlanPDFGenerator {
     value: string | number,
     color: string = this.primaryColor,
     positionX: number = this.margin,
-    positionY: number = this.currentY
+    positionY: number = this.currentY,
   ) {
     this.checkPageBreak(this.boxHeight + 5);
 
@@ -142,11 +136,7 @@ export class FixPlanPDFGenerator {
     return this.boxWidth + 5;
   }
 
-  private addTable(
-    headers: string[],
-    rows: (string | number)[][],
-    columnWidths?: number[]
-  ) {
+  private addTable(headers: string[], rows: (string | number)[][], columnWidths?: number[]) {
     this.checkPageBreak(20);
 
     autoTable(this.doc, {
@@ -170,14 +160,11 @@ export class FixPlanPDFGenerator {
         fillColor: "#f9fafb",
       },
       columnStyles: columnWidths
-        ? Object.fromEntries(
-            columnWidths.map((width, i) => [i, { cellWidth: width }])
-          )
+        ? Object.fromEntries(columnWidths.map((width, i) => [i, { cellWidth: width }]))
         : {},
     });
 
-    this.currentY =
-      (this.doc as jsPDFWithAutoTable).lastAutoTable?.finalY || this.currentY;
+    this.currentY = (this.doc as jsPDFWithAutoTable).lastAutoTable?.finalY || this.currentY;
     this.currentY += 5;
   }
 
@@ -202,12 +189,9 @@ export class FixPlanPDFGenerator {
     this.doc.setFontSize(this.coverTitleSize);
     this.doc.setTextColor(this.primaryColor);
     this.doc.setFont(this.fontFamily, "bold");
-    this.doc.text(
-      "Security Fix Plan Report",
-      this.pageWidth / 2,
-      this.currentY,
-      { align: "center" }
-    );
+    this.doc.text("Security Fix Plan Report", this.pageWidth / 2, this.currentY, {
+      align: "center",
+    });
 
     this.currentY += 15;
     this.doc.setFontSize(this.subtitleSize);
@@ -223,7 +207,7 @@ export class FixPlanPDFGenerator {
       `Generated on: ${new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`,
       this.pageWidth / 2,
       this.currentY,
-      { align: "center" }
+      { align: "center" },
     );
 
     this.doc.addPage();
@@ -238,7 +222,7 @@ export class FixPlanPDFGenerator {
         summary.total_vulnerabilities,
         this.dangerColor,
         this.margin,
-        this.currentY
+        this.currentY,
       );
     }
     if (summary.fixable_count !== undefined) {
@@ -247,7 +231,7 @@ export class FixPlanPDFGenerator {
         summary.fixable_count,
         this.successColor,
         this.margin + this.boxWidth + 2,
-        this.currentY
+        this.currentY,
       );
     }
     if (summary.risk_score !== undefined) {
@@ -256,7 +240,7 @@ export class FixPlanPDFGenerator {
         summary.risk_score,
         this.warningColor,
         this.margin + this.boxWidth * 2 + 4,
-        this.currentY
+        this.currentY,
       );
     }
     if (summary.estimated_fix_time) {
@@ -265,7 +249,7 @@ export class FixPlanPDFGenerator {
         summary.estimated_fix_time,
         this.primaryColor,
         this.margin + this.boxWidth * 3 + 6,
-        this.currentY
+        this.currentY,
       );
     }
     this.currentY += 30;
@@ -278,10 +262,7 @@ export class FixPlanPDFGenerator {
     this.addSpacer(5);
   }
 
-  public generatePDF(
-    fixPlan: UnifiedFixPlan,
-    repoName: string = "Repository"
-  ): jsPDF {
+  public generatePDF(fixPlan: UnifiedFixPlan, repoName: string = "Repository"): jsPDF {
     this.generateCoverPage(repoName);
 
     // Executive Summary
@@ -314,10 +295,8 @@ export class FixPlanPDFGenerator {
       if (intel.critical_paths?.length) {
         this.addSectionHeader("Critical Dependency Paths");
         this.addBulletList(
-          intel.critical_paths.map(
-            (p) => `${p.path} - Risk: ${p.risk} | ${p.resolution}`
-          ),
-          false
+          intel.critical_paths.map((p) => `${p.path} - Risk: ${p.risk} | ${p.resolution}`),
+          false,
         );
         this.addSpacer(4);
       }
@@ -330,21 +309,15 @@ export class FixPlanPDFGenerator {
           v.fix || "",
           v.impact_multiplier || "",
         ]);
-        this.addTable(
-          ["Package", "Vuln Count", "Fix", "Impact"],
-          rows,
-          [50, 25, 50, 40]
-        );
+        this.addTable(["Package", "Vuln Count", "Fix", "Impact"], rows, [50, 25, 50, 40]);
         this.addSpacer(4);
       }
 
       if (intel.version_conflicts?.length) {
         this.addSectionHeader("Version Conflicts");
         this.addBulletList(
-          intel.version_conflicts.map(
-            (c) => `${c.conflict} - ${c.resolution} (${c.risk_level})`
-          ),
-          false
+          intel.version_conflicts.map((c) => `${c.conflict} - ${c.resolution} (${c.risk_level})`),
+          false,
         );
         this.addSpacer(2);
       }
@@ -352,11 +325,12 @@ export class FixPlanPDFGenerator {
       if (intel.smart_actions?.length) {
         this.addSectionHeader("Smart Actions");
         this.addBulletList(
-          intel.smart_actions.map(
-            (a) =>
-              this.stripMarkdown(`${a.title}: ${a.description} - Impact: ${a.impact} (${a.estimated_time})`)
+          intel.smart_actions.map((a) =>
+            this.stripMarkdown(
+              `${a.title}: ${a.description} - Impact: ${a.impact} (${a.estimated_time})`,
+            ),
           ),
-          false
+          false,
         );
         this.addSpacer(5);
       }
@@ -370,14 +344,8 @@ export class FixPlanPDFGenerator {
 
       fixPlan.priority_phases.forEach((phase) => {
         this.checkPageBreak(30);
-        this.addSectionHeader(
-          `Phase ${phase.phase}: ${phase.name} (${phase.urgency})`
-        );
-        this.addText(
-          `Estimated Time: ${phase.estimated_time || "N/A"}`,
-          9,
-          "#6b7280"
-        );
+        this.addSectionHeader(`Phase ${phase.phase}: ${phase.name} (${phase.urgency})`);
+        this.addText(`Estimated Time: ${phase.estimated_time || "N/A"}`, 9, "#6b7280");
         this.addSpacer(3);
 
         if (phase.fixes?.length) {
@@ -387,11 +355,7 @@ export class FixPlanPDFGenerator {
             String(fix.risk_score || 0),
             fix.breaking_changes ? "Yes" : "No",
           ]);
-          this.addTable(
-            ["Package", "Action", "Risk", "Breaking"],
-            rows,
-            [60, 60, 20, 25]
-          );
+          this.addTable(["Package", "Action", "Risk", "Breaking"], rows, [60, 60, 20, 25]);
           this.addSpacer(5);
         }
 
@@ -438,7 +402,7 @@ export class FixPlanPDFGenerator {
           `Has Breaking Changes: ${bc.has_breaking_changes ? "Yes" : "No"}`,
           10,
           bc.has_breaking_changes ? this.dangerColor : this.successColor,
-          true
+          true,
         );
         if (bc.count) this.addText(`Count: ${bc.count}`);
         if (bc.mitigation_steps?.length) {
@@ -452,10 +416,8 @@ export class FixPlanPDFGenerator {
         this.addSectionHeader("Testing Strategy");
         const t = risk.testing_strategy;
         if (t.unit_tests) this.addText(`Unit Tests: ${t.unit_tests}`, 9);
-        if (t.integration_tests)
-          this.addText(`Integration Tests: ${t.integration_tests}`, 9);
-        if (t.security_validation)
-          this.addText(`Security Validation: ${t.security_validation}`, 9);
+        if (t.integration_tests) this.addText(`Integration Tests: ${t.integration_tests}`, 9);
+        if (t.security_validation) this.addText(`Security Validation: ${t.security_validation}`, 9);
         this.addSpacer(3);
       }
 

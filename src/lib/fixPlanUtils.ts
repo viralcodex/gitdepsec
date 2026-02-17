@@ -9,9 +9,7 @@ import { FIX_PLAN_PROPERTY_ORDER } from "@/constants/constants";
  * @param data - Unordered fix plan data
  * @returns Ordered fix plan data
  */
-export function orderFixPlanData(
-  data: Record<string, unknown>,
-): Record<string, unknown> {
+export function orderFixPlanData(data: Record<string, unknown>): Record<string, unknown> {
   const ordered: Record<string, unknown> = {};
   FIX_PLAN_PROPERTY_ORDER.forEach((key) => {
     if (data[key] !== undefined) {

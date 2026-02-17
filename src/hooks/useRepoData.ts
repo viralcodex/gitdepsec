@@ -9,8 +9,7 @@ import { DEFAULT_BRANCH_NAMES } from "@/constants/constants";
 
 export const useRepoData = (url: string | null) => {
   const pageSize = 100;
-  const { page, loadedRepoKey, setLoadingBranches, resetRepoState } =
-    useRepoState();
+  const { page, loadedRepoKey, setLoadingBranches, resetRepoState } = useRepoState();
 
   const { setBranchError } = useErrorState();
 
@@ -22,17 +21,13 @@ export const useRepoData = (url: string | null) => {
 
       const dateKey = Object.keys(historyItems).find((dateKey) =>
         historyItems[dateKey].some(
-          (item) =>
-            item.username === cachedItem.username &&
-            item.repo === cachedItem.repo,
+          (item) => item.username === cachedItem.username && item.repo === cachedItem.repo,
         ),
       );
 
       if (dateKey) {
         const itemIndex = historyItems[dateKey].findIndex(
-          (item) =>
-            item.username === cachedItem.username &&
-            item.repo === cachedItem.repo,
+          (item) => item.username === cachedItem.username && item.repo === cachedItem.repo,
         );
 
         if (itemIndex !== -1) {
@@ -77,21 +72,16 @@ export const useRepoData = (url: string | null) => {
 
       // Try to find one with a common default branch name first
       const cachedItem =
-        matchingItems.find((item) =>
-          DEFAULT_BRANCH_NAMES.includes(item.branch.toLowerCase()),
-        ) || matchingItems[0]; // Fall back to first match if no default found
+        matchingItems.find((item) => DEFAULT_BRANCH_NAMES.includes(item.branch.toLowerCase())) ||
+        matchingItems[0]; // Fall back to first match if no default found
 
       // Only use cache for page 1 - pagination should always fetch from API
-      if (
-        page === 1 &&
-        cachedItem &&
-        cachedItem.branches &&
-        cachedItem.branches.length > 0
-      ) {
+      if (page === 1 && cachedItem && cachedItem.branches && cachedItem.branches.length > 0) {
         const hasFullPage = cachedItem.branches.length >= pageSize;
         store.setState({
           branches: cachedItem.branches,
           selectedBranch: cachedItem.branch || null,
+          defaultBranch: cachedItem.branch || null,
           loadedRepoKey: graphRepoKey,
           loadingBranches: false,
           branchError: "",
@@ -124,19 +114,14 @@ export const useRepoData = (url: string | null) => {
           branchesResponse.defaultBranch &&
           !branchesResponse.branches?.includes(branchesResponse.defaultBranch)
         ) {
-          branchList = [
-            branchesResponse.defaultBranch,
-            ...(branchesResponse.branches || []),
-          ];
+          branchList = [branchesResponse.defaultBranch, ...(branchesResponse.branches || [])];
         } else {
           branchList = branchesResponse.branches || [];
         }
       } else {
         const currentBranches = store.getState().branches;
         const newBranchesToAdd = branchesResponse.branches || [];
-        const uniqueBranches = Array.from(
-          new Set([...currentBranches, ...newBranchesToAdd]),
-        );
+        const uniqueBranches = Array.from(new Set([...currentBranches, ...newBranchesToAdd]));
         branchList = uniqueBranches;
       }
 
@@ -144,6 +129,7 @@ export const useRepoData = (url: string | null) => {
         branches: branchList,
         ...(page === 1 && {
           selectedBranch: branchesResponse.defaultBranch ?? null,
+          defaultBranch: branchesResponse.defaultBranch ?? null,
           loadedRepoKey: graphRepoKey,
         }),
         hasMore: branchesResponse.hasMore || false,
@@ -153,14 +139,7 @@ export const useRepoData = (url: string | null) => {
       });
       updateCacheBranches(cachedItem, branchList);
     },
-    [
-      url,
-      setBranchError,
-      setLoadingBranches,
-      page,
-      resetRepoState,
-      updateCacheBranches,
-    ],
+    [url, setBranchError, setLoadingBranches, page, resetRepoState, updateCacheBranches],
   );
 
   useEffect(() => {
@@ -175,12 +154,15 @@ export const useRepoData = (url: string | null) => {
       return;
     }
 
+    const { defaultBranch } = store.getState();
+
     let debounceTimeout: NodeJS.Timeout;
     // Case 1: Different repo - always fetch branches (from cache or API)
-    if (loadedRepoKey !== repoKey) {
+    // Case 2: Same repo but missing defaultBranch - need to fetch
+    if (loadedRepoKey !== repoKey || (loadedRepoKey === repoKey && !defaultBranch)) {
       debounceTimeout = setTimeout(() => fetchBranches(repoKey), 400);
     }
-    // Case 2: Same repo - only fetch if loading next page
+    // Case 3: Same repo - only fetch if loading next page
     if (loadedRepoKey === repoKey && page > 1) {
       fetchBranches(repoKey);
     }

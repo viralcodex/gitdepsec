@@ -1,10 +1,6 @@
 {
   "type": "object",
-  "required": [
-    "overall_assessment",
-    "breaking_changes_summary",
-    "testing_strategy"
-  ],
+  "required": ["overall_assessment", "breaking_changes_summary", "testing_strategy"],
   "properties": {
     "overall_assessment": { "type": "string" },
     "breaking_changes_summary": {

@@ -11,16 +11,16 @@ const nextConfig: NextConfig = {
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
     loader: "default",
   },
-  
+
   experimental: {
     optimizePackageImports: [
-      'lucide-react',
-      'd3',
-      'recharts',
-      '@radix-ui/react-dialog',
-      '@radix-ui/react-popover',
-      '@radix-ui/react-tabs',
-      '@radix-ui/react-tooltip',
+      "lucide-react",
+      "d3",
+      "recharts",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-popover",
+      "@radix-ui/react-tabs",
+      "@radix-ui/react-tooltip",
     ],
     cssChunking: true,
     scrollRestoration: true,

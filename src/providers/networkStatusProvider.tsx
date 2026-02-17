@@ -27,9 +27,7 @@ export const useNetwork = () => {
 
 export const NetworkStatusProvider = ({ children }: NetworkProviderProps) => {
   const { isOnline, wasOffline } = useNetworkStatus();
-  const [connectionQuality, setConnectionQuality] = useState<
-    "good" | "poor" | "offline"
-  >("good");
+  const [connectionQuality, setConnectionQuality] = useState<"good" | "poor" | "offline">("good");
 
   useEffect(() => {
     if (!isOnline) {
@@ -100,9 +98,7 @@ export const NetworkStatusProvider = ({ children }: NetworkProviderProps) => {
   }, [wasOffline, isOnline]);
 
   return (
-    <NetworkContext.Provider
-      value={{ isOnline, wasOffline, connectionQuality }}
-    >
+    <NetworkContext.Provider value={{ isOnline, wasOffline, connectionQuality }}>
       {children}
     </NetworkContext.Provider>
   );

@@ -1,25 +1,19 @@
-import { eq, and } from 'drizzle-orm';
+import { eq, and } from "drizzle-orm";
 
-import { DependencyApiResponse } from '../constants/model';
-import { db } from '../db/db';
+import { DependencyApiResponse } from "../constants/model";
+import { db } from "../db/db";
 
-import { dependencies, uploadedManifests } from './schema';
+import { dependencies, uploadedManifests } from "./schema";
 
 export function getCachedBranches(username: string, repo: string) {
   return db
     .select({ branches: dependencies.branches, branch: dependencies.branch })
     .from(dependencies)
-    .where(
-      and(eq(dependencies.username, username), eq(dependencies.repo, repo)),
-    )
+    .where(and(eq(dependencies.username, username), eq(dependencies.repo, repo)))
     .limit(1);
 }
 
-export function getCachedAnalysis(
-  username: string,
-  repo: string,
-  branch: string,
-) {
+export function getCachedAnalysis(username: string, repo: string, branch: string) {
   return db
     .select()
     .from(dependencies)
@@ -57,11 +51,7 @@ export function upsertAnalysis({
     });
 }
 
-export function deleteCachedAnalysis(
-  username: string,
-  repo: string,
-  branch: string,
-) {
+export function deleteCachedAnalysis(username: string, repo: string, branch: string) {
   return db
     .delete(dependencies)
     .where(
