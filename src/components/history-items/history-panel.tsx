@@ -31,7 +31,7 @@ const HistoryPanel = () => {
     >
       <div>
         <header className="flex flex-row justify-between items-center w-full">
-          <p className="font-bold sm:text-lg text-md">Continue Analysis:</p>
+          <p className="font-ui-heading font-bold sm:text-lg text-md">Continue Analysis:</p>
           {/* <p className="text-xs text-secondary hover:text-accent hover:underline cursor-pointer">
             View All
           </p> */}
@@ -43,11 +43,11 @@ const HistoryPanel = () => {
               return (
                 <li
                   key={index}
-                  className="font-semibold text-sm sm:text-md"
+                  className="text-sm sm:text-md"
                   onClick={() => navigateToHistory(item)}
                 >
                   <button className="flex flex-row w-full px-2 py-1 rounded-sm items-center justify-between hover:bg-accent-foreground cursor-pointer">
-                    <p>
+                    <p className="font-ui-mono">
                       {item.username}/{item.repo} · {item.branch}
                     </p>
                     <ArrowRight className="h-4 w-4 text-secondary" />

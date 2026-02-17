@@ -45,7 +45,7 @@ export class AIUtils {
         responseFormat: {
           type: "json_schema",
           jsonSchema: {
-            name: options.schemaName ?? "response",
+            name: options.schemaName ?? "response_schema",
             strict: true,
             schema: jsonSchema,
           },

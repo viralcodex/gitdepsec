@@ -307,7 +307,7 @@ export const getSessionId = () => {
 
   let sessionId = sessionStorage.getItem("api_session_id");
   if (!sessionId) {
-    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
     sessionStorage.setItem("api_session_id", sessionId);
   }
   return sessionId;

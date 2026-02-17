@@ -69,7 +69,7 @@ const FixPlanCard = (props: FixPlanCardProps) => {
       <Card className="bg-background border-none text-card w-full h-full flex flex-col gap-0 rounded-b-md">
         <CardHeader className="sm:px-6 px-2 py-2 gap-0 bg-muted rounded-t-md border-b-2 border-muted-foreground/50">
           <div className="flex flex-row items-center justify-between w-full">
-            <div className="flex flex-row items-center gap-x-2 font-bold">
+            <div className="flex flex-row items-center gap-x-2">
               <Image
                 priority
                 src="/genaibutton.svg"
@@ -77,7 +77,7 @@ const FixPlanCard = (props: FixPlanCardProps) => {
                 width={36}
                 height={36}
               />{" "}
-              AI Fix Plan
+              <span className="font-ui-pixel">AI Fix Plan</span>
             </div>
             <div className="flex flex-row justify-between space-x-2 sm:space-x-4 lg:space-x-8 xl:space-x-12">
               <Tooltip>
@@ -149,7 +149,7 @@ const FixPlanCard = (props: FixPlanCardProps) => {
                     <TabsTrigger
                       key={ecosystem}
                       value={ecosystem}
-                      className="font-bold tracking-wide cursor-pointer rounded-t-none"
+                      className="font-ui-heading font-bold tracking-wide cursor-pointer rounded-t-none"
                     >
                       {ecosystem.toUpperCase()}
                     </TabsTrigger>

@@ -50,12 +50,12 @@ const HeaderControls = ({
                   width={28}
                   height={28}
                 />
-                <p className="sm:text-md text-sm text-accent">Generate Fix Plan</p>
+                <p className="font-ui-pixel sm:text-md text-sm text-accent">Generate Fix Plan</p>
               </div>
             </button>
           </TooltipTrigger>
           <TooltipContent className="bg-background/90 text-accent text-xs px-2 py-1 rounded-md transition-all ease-in duration-300">
-            <p className="font-semibold">
+            <p className="font-ui-strong">
               Fix plan may take several seconds depending on the size of project.
             </p>
           </TooltipContent>

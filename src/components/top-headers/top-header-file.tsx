@@ -68,7 +68,7 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
           <HeaderToggle from="file" setIsFileHeaderOpen={setFileHeaderOpen} />
           <div className="flex flex-col items-center justify-center sm:w-[54.5%] h-14 rounded-md border-1 px-4 py-2">
             <Input
-              className="flex flex-col items-center justify-center border-none cursor-pointer text-sm"
+              className="font-ui-mono flex flex-col items-center justify-center border-none cursor-pointer text-sm"
               type="file"
               onChange={(e) => {
                 setInputFile(e.target.files?.[0] || null);
@@ -77,11 +77,11 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
               aria-label="Upload manifest file for analysis"
             />
           </div>
-          <div className="border-1 rounded-md text-accent text-md flex flex-col items-center justify-center sm:w-[42%] w-full p-2">
+          <div className="font-ui-mono border-1 rounded-md text-accent text-md flex flex-col items-center justify-center sm:w-[42%] w-full p-2">
             <span className="">{parseFileName(newFileName)}</span>
           </div>
           <Button
-            className="sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer"
+            className="font-ui-heading sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm font-semibold cursor-pointer"
             type="submit"
             disabled={loading || !uploaded || !inputFile}
           >

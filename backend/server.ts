@@ -357,7 +357,6 @@ app.post("/analyseFile", analysisRateLimiter, (req: Request, res: Response) => {
     const cachedFileDetails = await getCachedFileDetails(file);
     try {
       const analysisResults = await analysisService.analyseFile(cachedFileDetails);
-
       res.json(analysisResults);
     } catch (error) {
       console.error("Error analysing file:", error);
@@ -378,10 +377,9 @@ app.post("/aiVulnSummary", aiRateLimiter, (req: Request, res: Response) => {
     console.log("Received aiVulnSummary request for:", vulnerabilities.name, "@", vulnerabilities.version);
     try {
       // Get credentials from session store
-      const { apiKey, model } = getSessionCredentials(sessionId);
-      console.log("Using credentials - apiKey:", apiKey ? "provided" : "default", "model:", model || "default");
+      const { apiKey, model } = getSessionCredentials(sessionId);      
       const service = getAiService(aiService, model, apiKey);
-      // Pass only the vulnerabilities array to the service
+
       console.log("Calling generateVulnerabilitySummary...");
       const summary = await service.generateVulnerabilitySummary(vulnerabilities.vulnerabilities);
       console.log("Got summary response, sending to client...");

@@ -108,7 +108,7 @@ const MainContent = () => {
             {branchError && (
               <p
                 id="url-error"
-                className="flex items-center gap-1.5 text-red-600 text-xs px-2 py-1.5 mt-1 font-semibold rounded-md bg-red-50/80"
+                className="font-ui-strong flex items-center gap-1.5 text-red-600 text-xs px-2 py-1.5 mt-1 rounded-md bg-red-50/80"
               >
                 <AlertTriangle className="h-4 w-4 shrink-0" />
                 {branchError}
@@ -123,13 +123,13 @@ const MainContent = () => {
         <section className="flex w-full flex-col items-center justify-center gap-y-3">
           <div className="flex items-center w-full gap-x-3">
             <div className="grow h-px bg-black/20" />
-            <span className="font-bold text-muted-foreground text-md sm:text-lg">or</span>
+            <span className="font-ui-heading font-bold text-muted-foreground text-md sm:text-lg">or</span>
             <div className="grow h-px bg-black/20" />
           </div>
           <div className="flex grow w-full flex-col items-start justify-center">
             <label
               htmlFor="manifest-file-input"
-              className="block text-md font-bold text-primary-foreground mb-2"
+              className="font-ui-heading block text-md font-bold text-primary-foreground mb-2"
             >
               <p className="text-md sm:text-lg">
                 Upload a manifest file (max 5MB) <i className="text-muted-foreground">(.json, .yaml, .xml, .txt)</i>
@@ -137,7 +137,7 @@ const MainContent = () => {
             </label>
             <Input
               id="manifest-file-input"
-              className="flex-1 rounded-md border-[3px] border-black px-3 text-base font-bold placeholder:text-base placeholder:font-normal sm:px-4 sm:py-4 cursor-pointer bg-popover file:mr-3 file:rounded file:border-0 file:bg-black file:px-3 file:py-1 file:text-white file:font-semibold file:text-sm"
+              className="font-ui-mono flex-1 rounded-md border-[3px] border-black px-3 text-base font-semibold placeholder:text-base placeholder:font-normal sm:px-4 sm:py-4 cursor-pointer bg-popover file:mr-3 file:rounded file:border-0 file:bg-black file:px-3 file:py-1 file:text-white file:font-semibold file:text-sm"
               type="file"
               onChange={(e) => {
                 setFile(e.target.files?.[0] || null);
@@ -153,7 +153,7 @@ const MainContent = () => {
           aria-label="Form actions"
         >
           <Button
-            className="sm:p-6 px-5 py-2.5 cursor-pointer bg-white text-black border-[3px] border-black text-base transition-all hover:bg-gray-100 sm:text-lg disabled:cursor-not-allowed disabled:opacity-50 enabled:active:shadow-none"
+            className="font-ui-heading sm:p-6 px-5 py-2.5 cursor-pointer bg-white text-black border-[3px] border-black text-base font-semibold transition-all hover:bg-gray-100 sm:text-lg disabled:cursor-not-allowed disabled:opacity-50 enabled:active:shadow-none"
             type="submit"
             disabled={isDisabled()}
             aria-label="Analyse repository dependencies"
@@ -162,7 +162,7 @@ const MainContent = () => {
             Analyse
           </Button>
           <Button
-            className="sm:p-6 px-5 py-2.5 cursor-pointer bg-black text-white border-[3px] border-black text-base transition-all hover:bg-accent-foreground sm:text-lg active:shadow-none"
+            className="font-ui-heading sm:p-6 px-5 py-2.5 cursor-pointer bg-black text-white border-[3px] border-black text-base font-semibold transition-all hover:bg-accent-foreground sm:text-lg active:shadow-none"
             type="reset"
             onClick={() => {
               store.getState().clearForm();

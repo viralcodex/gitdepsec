@@ -36,7 +36,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
 
   if (!dependency || !dependency.vulnerabilities || dependency.vulnerabilities.length === 0) {
     return (
-      <div className="pt-12 px-4 text-center text-muted-foreground">
+      <div className="pt-12 px-4 text-center text-white/90">
         No dependency details available
       </div>
     );
@@ -89,7 +89,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
   };
 
   const parseListItems = (actions: string[]) => {
-    if (!actions || actions.length === 0) return <span className="text-muted-foreground italic">No actions available</span>;
+    if (!actions || actions.length === 0) return <span className="text-white/90 italic">No actions available</span>;
     return (
       <ul className="space-y-2">
         {actions.map((action, idx) => {
@@ -97,8 +97,8 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
           const parts = processedAction.split(/(<code>.*?<\/code>)/g);
           return (
             <li key={idx} className="flex items-start gap-2">
-              <span className="text-primary mt-1.5">•</span>
-              <span className="flex-1">
+              <span className="text-white">•</span>
+              <span className="flex-1 text-white">
                 {parts.map((part, i) => {
                   if (part.startsWith("<code>") && part.endsWith("</code>")) {
                     const code = part.replace(/<\/?code>/g, "");
@@ -108,7 +108,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
                         className="inline-flex items-center my-1 bg-muted/80 border border-border/50 rounded px-2 py-1 cursor-pointer hover:bg-muted transition-colors"
                         onClick={handleCopy}
                       >
-                        <code className="text-xs font-mono text-foreground">{code}</code>
+                        <code className="text-xs font-mono text-white">{code}</code>
                       </span>
                     );
                   } else {
@@ -116,6 +116,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
                     return (
                       <span
                         key={i}
+                        className="text-white/95"
                         dangerouslySetInnerHTML={{ __html: cleanedPart }}
                       />
                     );
@@ -134,6 +135,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
     // Replace **bold** with <strong>bold</strong>
     return (
       <span
+        className="text-white/95"
         dangerouslySetInnerHTML={{
           __html: text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>"),
         }}
@@ -165,7 +167,7 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
       {!finalised ? (
         <div className="flex flex-col items-center justify-center h-full gap-3">
           <Progress value={progress} className="my-2 max-w-[75%] h-2" />
-          <p className="text-sm text-muted-foreground animate-pulse">
+          <p className="text-sm text-white/95 animate-pulse">
             {progress < 90 ? "Generating AI Summary..." : message}
           </p>
         </div>
@@ -187,53 +189,49 @@ const DependencyAIDetails = (props: DependencyAIDetailsProps) => {
             {getTimelineBadge(parsedSummary?.timeline || "N/A")}
             {getExploitVectorBadge(parsedSummary?.exploit_vector || "N/A")}
           </div>
-
           {/* Remediation Actions */}
           <section className="space-y-2">
-            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
-              Remediation Actions
-            </h4>
-            <div className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground")}>
+            <h2 className={cn(isMobile ? "text-base" : "text-lg", "font-bold text-white/90 tracking-wide uppercase")}>
+              <span className="text-emerald-400">→</span> Remediation Actions
+            </h2>
+            <div className={cn(isMobile ? "text-xs" : "text-sm", "text-white/95")}>
               {parseListItems(parsedSummary?.recommended_actions || [])}
             </div>
           </section>
-
           {/* Summary */}
-          <section className="space-y-2">
-            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
-              Summary
-            </h4>
-            <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground leading-relaxed")}>
+          <section className="space-y-2 mt-5">
+            <h2 className={cn(isMobile ? "text-base" : "text-lg", "font-bold text-white/90 tracking-wide uppercase")}>
+              <span className="text-blue-400">→</span> Summary
+            </h2>
+            <p className={cn(isMobile ? "text-xs" : "text-sm", "text-white/95 leading-relaxed")}>
               {parseText(parsedSummary?.summary ?? "")}
             </p>
           </section>
-
-          {/* Impact */}
-          <section className="space-y-2">
-            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
-              Impact
-            </h4>
-            <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground leading-relaxed")}>
+          <section className="space-y-2 mt-5">
+            <h2 className={cn(isMobile ? "text-base" : "text-lg", "font-bold text-white/90 tracking-wide uppercase")}>
+              <span className="text-amber-400">→</span> Impact
+            </h2>
+            <p className={cn(isMobile ? "text-xs" : "text-sm", "text-white/95 leading-relaxed")}>
               {parseText(parsedSummary?.impact ?? "")}
             </p>
           </section>
 
           {/* Affected Components */}
-          <section className="space-y-2">
-            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
-              Affected Components
-            </h4>
-            <div className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground")}>
+          <section className="space-y-2 mt-5">
+            <h2 className={cn(isMobile ? "text-base" : "text-lg", "font-bold text-white/90 tracking-wide uppercase")}>
+              <span className="text-rose-400">→</span> Affected Components
+            </h2>
+            <div className={cn(isMobile ? "text-xs" : "text-sm", "text-white/95")}>
               {parseListItems(parsedSummary?.affected_components ?? [])}
             </div>
           </section>
 
           {/* Risk Score Justification */}
-          <section className="space-y-2">
-            <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground")}>
-              Risk Score Justification
-            </h4>
-            <div className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground")}>
+          <section className="space-y-2 mt-5">
+            <h2 className={cn(isMobile ? "text-base" : "text-lg", "font-bold text-white/90 tracking-wide uppercase")}>
+              <span className="text-violet-400">→</span> Risk Score Justification
+            </h2>
+            <div className={cn(isMobile ? "text-xs" : "text-sm", "text-white/95")}>
               {parseListItems(parsedSummary?.risk_score_justification ?? [])}
             </div>
           </section>
