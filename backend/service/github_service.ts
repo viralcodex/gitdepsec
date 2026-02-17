@@ -1,21 +1,21 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from "axios";
 
-import { GITHUB_API_BASE_URL } from '../constants/constants';
-import { Branch } from '../constants/model';
+import { GITHUB_API_BASE_URL } from "../constants/constants";
+import { Branch } from "../constants/model";
 
 class GithubService {
   private githubClient: AxiosInstance;
 
-  constructor(githubPAT: string = '') {
+  constructor(githubPAT: string = "") {
     this.githubClient = axios.create({
       baseURL: GITHUB_API_BASE_URL,
       headers: githubPAT
         ? {
             Authorization: `Bearer ${githubPAT}`,
-            Accept: 'application/vnd.github.v3+json',
+            Accept: "application/vnd.github.v3+json",
           }
         : {
-            Accept: 'application/vnd.github.v3+json',
+            Accept: "application/vnd.github.v3+json",
           },
     });
   } /**
@@ -26,13 +26,11 @@ class GithubService {
    */
   async getDefaultBranch(username: string, repo: string): Promise<string> {
     try {
-      const response = await this.githubClient.get(
-        `/repos/${username}/${repo}`,
-      );
+      const response = await this.githubClient.get(`/repos/${username}/${repo}`);
       return response.data.default_branch;
     } catch (error) {
-      console.error('Error fetching default branch:', error);
-      throw new Error('Failed to fetch default branch from GitHub');
+      console.error("Error fetching default branch:", error);
+      throw new Error("Failed to fetch default branch from GitHub");
     }
   }
 
@@ -57,10 +55,9 @@ class GithubService {
   }> {
     try {
       // Fetch only the requested page from GitHub API
-      const response = await this.githubClient.get(
-        `/repos/${username}/${repo}/branches`,
-        { params: { per_page: perPage, page } },
-      );
+      const response = await this.githubClient.get(`/repos/${username}/${repo}/branches`, {
+        params: { per_page: perPage, page },
+      });
 
       const branches = response.data.map((branch: Branch) => branch.name);
 
@@ -70,7 +67,7 @@ class GithubService {
       let hasMore = false;
       let totalPages = page;
 
-      const linkHeader = response.headers['link'];
+      const linkHeader = response.headers["link"];
       if (linkHeader) {
         hasMore = linkHeader.includes('rel="next"');
         const lastMatch = linkHeader.match(/&page=(\d+)>; rel="last"/);
@@ -93,8 +90,8 @@ class GithubService {
         total: estimatedTotal,
       };
     } catch (error) {
-      console.error('Error fetching branches:', error);
-      throw new Error('Failed to fetch branches from GitHub');
+      console.error("Error fetching branches:", error);
+      throw new Error("Failed to fetch branches from GitHub");
     }
   }
 

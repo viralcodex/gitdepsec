@@ -47,10 +47,9 @@ export function GithubDialog({ isOpen, onClose, onSubmit }: GithubDialogProps) {
           aria-label="GitHub Personal Access Token configuration"
         >
           <div className="text-sm" role="note" id="pat-description">
-            To enable private repositories and increased request limits (5000
-            req/hour), you&apos;ll need to provide a GitHub Personal Access
-            Token with repo scope. This token is only used for making API calls
-            to Github API and it is stored locally in your browser.
+            To enable private repositories and increased request limits (5000 req/hour), you&apos;ll
+            need to provide a GitHub Personal Access Token with repo scope. This token is only used
+            for making API calls to Github API and it is stored locally in your browser.
           </div>
           <details
             className="group text-sm [&>summary:focus-visible]:outline-none"
@@ -64,10 +63,9 @@ export function GithubDialog({ isOpen, onClose, onSubmit }: GithubDialogProps) {
             </summary>
             <div className="animate-accordion-down mt-2 space-y-2 overflow-hidden pl-2">
               <p>
-                The Github PAT you provide is stored locally in your browser and
-                not used by me in any manner. If you still don&apos;t feel like
-                sharing your token, You can also self-host this app by following
-                the instructions here...{" "}
+                The Github PAT you provide is stored locally in your browser and not used by me in
+                any manner. If you still don&apos;t feel like sharing your token, You can also
+                self-host this app by following the instructions here...{" "}
                 <Link
                   href="https://github.com/viralcodex/gitdepsec#readme"
                   className="underline text-primary-foreground dark:text-[hsl(var(--text-color-link))] transition-colors duration-200 hover:text-muted-foreground"

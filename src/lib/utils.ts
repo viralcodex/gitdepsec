@@ -1,4 +1,4 @@
-import { Dependency, UnifiedFixPlan } from "@/constants/model";
+import { Dependency, ParsedRisk, UnifiedFixPlan } from "@/constants/model";
 import { MANIFEST_FILES } from "@/constants/constants";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
@@ -21,12 +21,8 @@ export const getNewFileName = (originalName: string): string => {
  * @param setError - Optional function to set error messages
  * @returns An object containing sanitizedUsername and sanitizedRepo if valid, otherwise undefined
  */
-export const verifyUrl = (
-  repoUrl: string,
-  setError?: (error: string) => void,
-) => {
-  const githubUrlPattern =
-    /^https?:\/\/github\.com\/([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_\.]+)\/?$/;
+export const verifyUrl = (repoUrl: string, setError?: (error: string) => void) => {
+  const githubUrlPattern = /^https?:\/\/github\.com\/([a-zA-Z0-9-_]+)\/([a-zA-Z0-9-_.]+)\/?$/;
   const match = githubUrlPattern.exec(repoUrl.trim());
 
   if (!match) {
@@ -98,15 +94,12 @@ export const verifyFile = (
 export const parseFileName = (file: string) => {
   if (!file) return "No file selected";
   const fileName = file.split("_")[0] + file.slice(file.indexOf("."));
-  const ecosystem = Object.keys(MANIFEST_FILES).find(
-    (f) => MANIFEST_FILES[f].file === fileName,
-  );
+  const ecosystem = Object.keys(MANIFEST_FILES).find((f) => MANIFEST_FILES[f].file === fileName);
   return `${ecosystem} : ${fileName}`;
 };
 
 export const getSeverityConfig = (score?: string) => {
-  if (!score)
-    return { text: "N/A", className: "bg-gray-500 text-white rounded-sm m-0" };
+  if (!score) return { text: "N/A", className: "bg-gray-500 text-white rounded-sm m-0" };
   const numericScore = parseFloat(score);
 
   if (numericScore >= 9.0)
@@ -210,67 +203,96 @@ export const getRemediationPriorityConfig = (priority: string) => {
   }
 };
 
+export const parseRisk = (risk?: string): ParsedRisk => {
+  if (!risk) {
+    return {
+      severity: "LOW",
+      cvss: "0.0",
+      exploitAvailable: false,
+    };
+  }
+
+  const severityMatch = risk.match(/^(CRITICAL|HIGH|MEDIUM|LOW):/i);
+  const cvssMatch = risk.match(/CVSS\s+([\d.]+)/i);
+  const exploitAvailable = risk.toLowerCase().includes("exploit available");
+
+  return {
+    severity: (severityMatch?.[1]?.toUpperCase() as ParsedRisk["severity"]) || "LOW",
+    cvss: cvssMatch?.[1] || "0.0",
+    exploitAvailable,
+  };
+};
+
+export const getVulnerabilityUrl = (id: string): string => {
+  if (id.startsWith("GHSA-")) {
+    return `https://github.com/advisories/${id}`;
+  }
+
+  if (/^(cve|CVE)-[0-9]{4}-[0-9]{4,}$/.test(id)) {
+    return `https://nvd.nist.gov/vuln/detail/${id}`;
+  }
+
+  return `https://nvd.nist.gov/vuln/detail/${id}`;
+};
+
 export const depVulnCount = (deps: Dependency): boolean => {
   return deps.vulnerabilities && deps.vulnerabilities.length ? true : false;
 };
 
 String.prototype.toTitleCase = function (): string {
-  return this.replace(
-    /\w\S*/g,
-    (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase(),
-  );
+  return this.replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.slice(1).toLowerCase());
 };
 
 const cleanMarkdownJson = (data: string): string => {
-  return data.replace(/```json\s*/g, '').replace(/\s*```/g, '');
+  return data.replace(/```json\s*/g, "").replace(/\s*```/g, "");
 };
 
 const parseFixPlanData = (data: string): UnifiedFixPlan => {
-  let cleaned = data.includes('```json') ? cleanMarkdownJson(data) : data;
+  let cleaned = data.includes("```json") ? cleanMarkdownJson(data) : data;
   let parsed = JSON.parse(cleaned);
-  
+
   // Handle double-encoded JSON
-  if (typeof parsed === 'string') {
-    cleaned = parsed.includes('```json') ? cleanMarkdownJson(parsed) : parsed;
+  if (typeof parsed === "string") {
+    cleaned = parsed.includes("```json") ? cleanMarkdownJson(parsed) : parsed;
     parsed = JSON.parse(cleaned);
   }
-  
+
   return parsed as UnifiedFixPlan;
 };
 
 export const downloadFixPlanPDF = async (
   fixPlanData: string | null,
-  repoName: string = 'Repository'
+  repoName: string = "Repository",
 ) => {
   if (!fixPlanData) {
-    throw new Error('No fix plan data available');
+    throw new Error("No fix plan data available");
   }
 
   try {
-    const parsedFixPlan = typeof fixPlanData === 'string' 
-      ? parseFixPlanData(fixPlanData)
-      : fixPlanData as UnifiedFixPlan;
+    const parsedFixPlan =
+      typeof fixPlanData === "string"
+        ? parseFixPlanData(fixPlanData)
+        : (fixPlanData as UnifiedFixPlan);
 
     const generator = new FixPlanPDFGenerator();
     const pdf = generator.generatePDF(parsedFixPlan, repoName);
-    
-    const fileName = `fix-plan-${repoName.replace(/[^a-z0-9]/gi, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`;
+
+    const fileName = `fix-plan-${repoName.replace(/[^a-z0-9]/gi, "-").toLowerCase()}-${new Date().toISOString().split("T")[0]}.pdf`;
     pdf.save(fileName);
   } catch (error) {
-    console.error('Error generating PDF:', error);
-    throw new Error('Failed to generate PDF report');
+    console.error("Error generating PDF:", error);
+    throw new Error("Failed to generate PDF report");
   }
 };
-
 
 // Helper to get OpenRouter credentials from localStorage
 // Only sends credentials if user has provided their own key
 export const getOpenRouterCredentials = () => {
   if (typeof window === "undefined") return { key: undefined, model: undefined };
-  
+
   const key = localStorage.getItem("openrouter_key");
   const model = localStorage.getItem("openrouter_model");
-  
+
   // Only return credentials if user has explicitly set them
   // Backend will use env vars if these are undefined
   return {
@@ -282,7 +304,7 @@ export const getOpenRouterCredentials = () => {
 // Helper to get or generate session ID
 export const getSessionId = () => {
   if (typeof window === "undefined") return undefined;
-  
+
   let sessionId = sessionStorage.getItem("api_session_id");
   if (!sessionId) {
     sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -293,26 +315,24 @@ export const getSessionId = () => {
 
 // Encryption utilities for secure credential transmission
 const ENCRYPTION_KEY =
-  process.env.NEXT_PUBLIC_ENCRYPTION_KEY ??
-  "gitdepsec-2026-secure-key-v1-fallback";
+  process.env.NEXT_PUBLIC_ENCRYPTION_KEY ?? "gitdepsec-2026-secure-key-v1-fallback";
 
 export async function encryptData(data: string): Promise<string> {
   if (typeof window === "undefined") return data;
-  
+
   try {
     // XOR encryption with base64 encoding
     const encrypted = Array.from(data)
-      .map((char, i) => 
+      .map((char, i) =>
         String.fromCharCode(
-          char.charCodeAt(0) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length)
-        )
+          char.charCodeAt(0) ^ ENCRYPTION_KEY.charCodeAt(i % ENCRYPTION_KEY.length),
+        ),
       )
       .join("");
-    
+
     return btoa(encrypted); // Base64 encode
   } catch (error) {
     console.error("Encryption failed:", error);
     return data; // Fallback
   }
 }
-

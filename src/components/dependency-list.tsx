@@ -1,17 +1,7 @@
 import { useEffect, useState, useRef } from "react";
-import {
-  GitGraphIcon,
-  LucideLoader2,
-  LucideMinus,
-  LucidePlus,
-} from "lucide-react";
+import { GitGraphIcon, LucideLoader2, LucideMinus, LucidePlus } from "lucide-react";
 
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarHeader,
-  SidebarRail,
-} from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarHeader, SidebarRail } from "@/components/ui/sidebar";
 import {
   Command,
   CommandInput,
@@ -28,11 +18,7 @@ interface AppSidebarProps extends React.ComponentProps<typeof Sidebar> {
   error?: string;
 }
 
-export function AppSidebar({
-  dependencies,
-  isLoading,
-  ...props
-}: AppSidebarProps) {
+export function AppSidebar({ dependencies, isLoading, ...props }: AppSidebarProps) {
   const [openGroups, setOpenGroups] = useState<{ [tech: string]: boolean }>({});
   const [search, setSearch] = useState("");
   const prevOpenGroups = useRef<{ [tech: string]: boolean }>({});
@@ -66,12 +52,7 @@ export function AppSidebar({
   const isSearching = !!search;
 
   return (
-    <Sidebar
-      {...props}
-      className=""
-      role="complementary"
-      aria-label="Dependencies sidebar"
-    >
+    <Sidebar {...props} className="" role="complementary" aria-label="Dependencies sidebar">
       <SidebarHeader>
         <div className="flex flex-row items-center justify-items-start gap-x-3 text-foreground p-2">
           <div
@@ -94,13 +75,8 @@ export function AppSidebar({
             onValueChange={setSearch}
             aria-label="Search dependencies"
           />
-          <CommandList
-            className="scrollbar-background-bg scrollbar-background-thumb"
-            role="list"
-          >
-            {!isLoading &&
-            dependencies &&
-            Object.keys(dependencies).length > 0 ? (
+          <CommandList className="scrollbar-background-bg scrollbar-background-thumb" role="list">
+            {!isLoading && dependencies && Object.keys(dependencies).length > 0 ? (
               Object.entries(dependencies).map(([tech, deps]) => (
                 <CommandGroup
                   key={tech}
@@ -121,11 +97,7 @@ export function AppSidebar({
                     aria-label={`${isSearching || openGroups[tech] ? "Collapse" : "Expand"} ${tech} dependencies`}
                   >
                     <span className="mr-2 text-lg" aria-hidden="true">
-                      {isSearching || openGroups[tech] ? (
-                        <LucideMinus />
-                      ) : (
-                        <LucidePlus />
-                      )}
+                      {isSearching || openGroups[tech] ? <LucideMinus /> : <LucidePlus />}
                     </span>
                     {tech}
                   </button>
@@ -137,9 +109,7 @@ export function AppSidebar({
                         aria-label={`${dep.name} version ${dep.version}`}
                       >
                         <span>{dep.name}</span>
-                        <span className="ml-auto text-xs pr-2">
-                          {dep.version}
-                        </span>
+                        <span className="ml-auto text-xs pr-2">{dep.version}</span>
                       </CommandItem>
                     ))}
                 </CommandGroup>
@@ -151,11 +121,7 @@ export function AppSidebar({
                 aria-live="polite"
               >
                 <CommandEmpty>
-                  <LucideLoader2
-                    className="animate-spin"
-                    strokeWidth={3}
-                    aria-hidden="true"
-                  />
+                  <LucideLoader2 className="animate-spin" strokeWidth={3} aria-hidden="true" />
                 </CommandEmpty>
                 <CommandEmpty aria-label="Loading dependencies">
                   Loading Dependencies...

@@ -18,6 +18,10 @@
       "estimated_time": {
         "type": "string",
         "description": "Time estimate (e.g., '15-20 minutes')"
+      },
+      "command": {
+        "type": "string",
+        "description": "Optional: Specific command in <code></code> to execute this action (e.g., '<code>npm install langchain@latest</code>')"
       }
     },
     "required": ["title", "description", "impact", "estimated_time"],

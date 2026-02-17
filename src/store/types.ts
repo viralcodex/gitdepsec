@@ -9,6 +9,7 @@ import {
 export interface RepoState {
   branches: string[];
   selectedBranch: string | null;
+  defaultBranch: string | null;
   loadingBranches: boolean;
   hasMore: boolean;
   totalBranches: number;
@@ -17,6 +18,7 @@ export interface RepoState {
   loadedRepoKey: string | null;
   setBranches: (branches: string[]) => void;
   setSelectedBranch: (branch: string | null) => void;
+  setDefaultBranch: (branch: string | null) => void;
   setLoadingBranches: (loading: boolean) => void;
   loadNextPage: () => void;
   setHasMore: (hasMore: boolean) => void;
@@ -92,16 +94,9 @@ export interface FixPlanState {
   selectedEcosystem: string | null;
   setGlobalFixPlan: (plan: string, repoKey?: string) => void;
   // New: Set fix plan for specific ecosystem
-  setEcosystemFixPlan: (
-    ecosystem: string,
-    plan: string,
-    repoKey?: string,
-  ) => void;
+  setEcosystemFixPlan: (ecosystem: string, plan: string, repoKey?: string) => void;
   setCurrentFixPlanRepoKey: (repoKey: string | null) => void;
-  updatePartialFixPlan: (
-    tabData: Partial<Record<string, unknown>>,
-    ecosystem?: string,
-  ) => void;
+  updatePartialFixPlan: (tabData: Partial<Record<string, unknown>>, ecosystem?: string) => void;
   clearPartialFixPlan: (ecosystem?: string) => void;
   setIsFixPlanLoading: (loading: boolean) => void;
   setCurrentFixPlanPhase: (phase: string | null, ecosystem?: string) => void;
@@ -132,7 +127,8 @@ export interface SavedHistoryState {
 }
 
 export interface AppStore
-  extends RepoState,
+  extends
+    RepoState,
     FileState,
     ErrorState,
     GraphState,

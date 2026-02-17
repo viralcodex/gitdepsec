@@ -1,7 +1,7 @@
-import { Cvss3P0, Cvss4P0 } from 'ae-cvss-calculator';
-import axios from 'axios';
-import yaml from 'js-yaml';
-import { parseStringPromise } from 'xml2js';
+import { Cvss3P0, Cvss4P0 } from "ae-cvss-calculator";
+import axios from "axios";
+import yaml from "js-yaml";
+import { parseStringPromise } from "xml2js";
 
 import {
   DEPS_DEV_BASE_URL,
@@ -14,7 +14,7 @@ import {
   DEFAULT_VULN_BATCH_SIZE,
   DEFAULT_VULN_CONCURRENCY,
   PROGRESS_STEPS,
-} from '../constants/constants';
+} from "../constants/constants";
 import {
   Dependency,
   ManifestFileContents,
@@ -33,10 +33,10 @@ import {
   DependencyApiResponse,
   FileDetails,
   OSVQuery,
-} from '../constants/model';
+} from "../constants/model";
 
-import GithubService from './github_service';
-import ProgressService from './progress_service';
+import GithubService from "./github_service";
+import ProgressService from "./progress_service";
 
 class AnalysisService {
   private globalDependencyMap;
@@ -53,10 +53,7 @@ class AnalysisService {
   };
   private githubService: GithubService;
 
-  constructor(
-    githubPAT: string = '',
-    progressService: ProgressService | null = null,
-  ) {
+  constructor(githubPAT: string = "", progressService: ProgressService | null = null) {
     this.stepErrors = new Map<string, string[]>();
     this.globalDependencyMap = new Map<string, Dependency>();
     this.dependencyFileMapping = new Map<string, string[]>();
@@ -69,7 +66,7 @@ class AnalysisService {
       transitiveBatchSize: 15,
     });
     this.progressService = progressService ?? new ProgressService();
-    this.githubService = new GithubService(githubPAT ?? '');
+    this.githubService = new GithubService(githubPAT ?? "");
   }
 
   /**
@@ -123,9 +120,7 @@ class AnalysisService {
       const concurrentBatches = batches.slice(i, i + concurrency);
 
       const batchPromises = concurrentBatches.map(async (batch) => {
-        const batchResults = await Promise.all(
-          batch.map((item) => processor(item)),
-        );
+        const batchResults = await Promise.all(batch.map((item) => processor(item)));
         return batchResults;
       });
 
@@ -157,7 +152,7 @@ class AnalysisService {
   async getAllManifestData(
     username: string,
     repo: string,
-    branch = 'main',
+    branch = "main",
   ): Promise<ManifestFileContents> {
     try {
       //get file tree for the specified branch
@@ -171,16 +166,14 @@ class AnalysisService {
       //find the manifest files in the tree
       const manifestFilesList: ManifestFile[] = tree.filter(
         (file: ManifestFile) =>
-          file.type === 'blob' &&
-          Object.values(manifestFiles).includes(
-            file.path.split('/').pop() ?? '',
-          ),
+          file.type === "blob" &&
+          Object.values(manifestFiles).includes(file.path.split("/").pop() ?? ""),
       );
 
       // console.log("Manifest files found:", manifestFilesList);
 
       if (manifestFilesList.length === 0) {
-        throw new Error('No manifest files found in the repository');
+        throw new Error("No manifest files found in the repository");
       }
 
       //group files by their names into ecosystem categories
@@ -188,8 +181,7 @@ class AnalysisService {
 
       for (const file of manifestFilesList) {
         const ecosystem = Object.keys(manifestFiles).find(
-          (ecosystem) =>
-            manifestFiles[ecosystem] === file.path.split('/').pop(),
+          (ecosystem) => manifestFiles[ecosystem] === file.path.split("/").pop(),
         );
         if (ecosystem) {
           if (!groupedManifestFiles[ecosystem]) {
@@ -211,8 +203,8 @@ class AnalysisService {
       //return the content of the manifest files grouped by ecosystem
       return manifestFilesContent;
     } catch (error) {
-      console.error('Error fetching file data:', error);
-      throw new Error('Failed to fetch file data from GitHub');
+      console.error("Error fetching file data:", error);
+      throw new Error("Failed to fetch file data from GitHub");
     }
   }
 
@@ -244,14 +236,14 @@ class AnalysisService {
               if (content) {
                 return {
                   path: file.path,
-                  content: Buffer.from(content, 'base64').toString('utf8'),
+                  content: Buffer.from(content, "base64").toString("utf8"),
                 };
               } else {
                 throw new Error(`File ${file.path} has no content`);
               }
             } catch (error) {
               console.error(`Error fetching file ${file.path}:`, error);
-              this.addStepError('File Content Retrieval', error);
+              this.addStepError("File Content Retrieval", error);
               return null;
             }
           }),
@@ -288,9 +280,7 @@ class AnalysisService {
         if (errors.length === 1) {
           consolidatedErrors.push(`${step}: ${errors[0]}`);
         } else {
-          consolidatedErrors.push(
-            `${step}: ${errors.length} issues encountered (${errors[0]})`,
-          );
+          consolidatedErrors.push(`${step}: ${errors.length} issues encountered (${errors[0]})`);
         }
       }
     });
@@ -303,10 +293,7 @@ class AnalysisService {
    * @param dependency - The dependency to add
    * @param filePath - The file path where this dependency was found
    */
-  private addDependencyToGlobalMap(
-    dependency: Dependency,
-    filePath: string,
-  ): void {
+  private addDependencyToGlobalMap(dependency: Dependency, filePath: string): void {
     const depKey = `${dependency.name}@${dependency.version}@${dependency.ecosystem}`;
 
     // Add to global dependency map if not already present
@@ -329,9 +316,7 @@ class AnalysisService {
    * @param processedDependencies - Dependencies with their analysis results
    * @returns DependencyGroups organized by file path
    */
-  private mapDependenciesToFiles(
-    processedDependencies: Map<string, Dependency>,
-  ): DependencyGroups {
+  private mapDependenciesToFiles(processedDependencies: Map<string, Dependency>): DependencyGroups {
     const result: DependencyGroups = {};
 
     processedDependencies.forEach((dependency, depKey) => {
@@ -369,7 +354,7 @@ class AnalysisService {
     apiCall: () => Promise<T>,
     maxRetries: number = 3,
     baseDelay: number = 500,
-    operation: string = 'API call',
+    operation: string = "API call",
   ): Promise<T> {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
@@ -403,7 +388,7 @@ class AnalysisService {
         await new Promise((resolve) => setTimeout(resolve, totalDelay));
       }
     }
-    throw new Error('Max retries exceeded');
+    throw new Error("Max retries exceeded");
   }
 
   /**
@@ -423,12 +408,12 @@ class AnalysisService {
     if (error instanceof Error) {
       const message = error.message.toLowerCase();
       return (
-        message.includes('not found') ||
-        message.includes('unauthorized') ||
-        message.includes('forbidden') ||
-        message.includes('bad request') ||
-        message.includes('invalid') ||
-        message.includes('malformed')
+        message.includes("not found") ||
+        message.includes("unauthorized") ||
+        message.includes("forbidden") ||
+        message.includes("bad request") ||
+        message.includes("invalid") ||
+        message.includes("malformed")
       );
     }
 
@@ -453,20 +438,19 @@ class AnalysisService {
 
     this.progressService.progressUpdater(PROGRESS_STEPS[0], 0); // Progress #1
 
-    const manifestFiles =
-      fileContents ?? (await this.getAllManifestData(username, repo, branch));
+    const manifestFiles = fileContents ?? (await this.getAllManifestData(username, repo, branch));
 
     this.progressService.progressUpdater(PROGRESS_STEPS[0], 100); // Progress #2
 
     this.progressService.progressUpdater(PROGRESS_STEPS[1], 0); // Progress #3
 
     await Promise.all([
-      this.processNpmFiles(manifestFiles['npm'] ?? []),
-      Promise.resolve(this.processPhpFiles(manifestFiles['php'] ?? [])),
-      this.processPythonFiles(manifestFiles['PiPY'] ?? []),
-      Promise.resolve(this.processDartFiles(manifestFiles['Pub'] ?? [])),
-      this.processMavenFiles(manifestFiles['Maven'] ?? []),
-      Promise.resolve(this.processRubyFiles(manifestFiles['RubyGems'] ?? [])),
+      this.processNpmFiles(manifestFiles["npm"] ?? []),
+      Promise.resolve(this.processPhpFiles(manifestFiles["php"] ?? [])),
+      this.processPythonFiles(manifestFiles["PiPY"] ?? []),
+      Promise.resolve(this.processDartFiles(manifestFiles["Pub"] ?? [])),
+      this.processMavenFiles(manifestFiles["Maven"] ?? []),
+      Promise.resolve(this.processRubyFiles(manifestFiles["RubyGems"] ?? [])),
     ]);
 
     // Convert global dependency map to processed dependencies
@@ -484,9 +468,7 @@ class AnalysisService {
   /**
    * Process NPM package.json files
    */
-  private async processNpmFiles(
-    files: Array<{ path: string; content: string }>,
-  ): Promise<void> {
+  private async processNpmFiles(files: Array<{ path: string; content: string }>): Promise<void> {
     await Promise.all(
       files.map(async (fileContent) => {
         try {
@@ -495,7 +477,7 @@ class AnalysisService {
           const processDeps = async (deps: Record<string, string>) => {
             for (const [name, version] of Object.entries(deps)) {
               let finalVersion = version;
-              if (version === '*' || version === 'latest' || !version) {
+              if (version === "*" || version === "latest" || !version) {
                 finalVersion = await this.fetchLatestVersionFromNpm(name);
               }
               const dependency: Dependency = {
@@ -507,14 +489,12 @@ class AnalysisService {
             }
           };
 
-          if (packageJson.dependencies)
-            await processDeps(packageJson.dependencies);
-          if (packageJson.devDependencies)
-            await processDeps(packageJson.devDependencies);
+          if (packageJson.dependencies) await processDeps(packageJson.dependencies);
+          if (packageJson.devDependencies) await processDeps(packageJson.devDependencies);
         } catch (error) {
-          console.error('Error parsing package.json:', error);
-          this.addStepError('File Parsing', error);
-          throw new Error('Failed to parse package.json file');
+          console.error("Error parsing package.json:", error);
+          this.addStepError("File Parsing", error);
+          throw new Error("Failed to parse package.json file");
         }
       }),
     );
@@ -523,9 +503,7 @@ class AnalysisService {
   /**
    * Process PHP composer.json files
    */
-  private processPhpFiles(
-    files: Array<{ path: string; content: string }>,
-  ): void {
+  private processPhpFiles(files: Array<{ path: string; content: string }>): void {
     files.forEach((fileContent) => {
       try {
         const composerJson = JSON.parse(fileContent.content);
@@ -542,12 +520,11 @@ class AnalysisService {
         };
 
         if (composerJson.require) processDeps(composerJson.require);
-        if (composerJson['require-dev'])
-          processDeps(composerJson['require-dev']);
+        if (composerJson["require-dev"]) processDeps(composerJson["require-dev"]);
       } catch (error) {
-        console.error('Error parsing composer.json:', error);
-        this.addStepError('File Parsing', error);
-        throw new Error('Failed to parse composer.json file');
+        console.error("Error parsing composer.json:", error);
+        this.addStepError("File Parsing", error);
+        throw new Error("Failed to parse composer.json file");
       }
     });
   }
@@ -555,17 +532,15 @@ class AnalysisService {
   /**
    * Process Python requirements.txt files
    */
-  private async processPythonFiles(
-    files: Array<GithubFileContent>,
-  ): Promise<void> {
+  private async processPythonFiles(files: Array<GithubFileContent>): Promise<void> {
     for (const fileContent of files) {
       const lines = fileContent.content
-        .split('\n')
-        .filter((line) => line.trim() && !line.trim().startsWith('#'));
+        .split("\n")
+        .filter((line) => line.trim() && !line.trim().startsWith("#"));
 
       for (const line of lines) {
-        const [name, version] = line.split('==');
-        let ver = 'unknown';
+        const [name, version] = line.split("==");
+        let ver = "unknown";
 
         if (name && !version) {
           try {
@@ -577,11 +552,8 @@ class AnalysisService {
             );
             ver = response.data.info.version;
           } catch (error) {
-            console.error(
-              `Error fetching latest version for ${name.trim()}:`,
-              error,
-            );
-            this.addStepError('Version Lookup', error);
+            console.error(`Error fetching latest version for ${name.trim()}:`, error);
+            this.addStepError("Version Lookup", error);
           }
         } else if (name && version) {
           ver = this.normalizeVersion(version);
@@ -600,9 +572,7 @@ class AnalysisService {
   /**
    * Process Dart pubspec.yaml files
    */
-  private processDartFiles(
-    files: Array<{ path: string; content: string }>,
-  ): void {
+  private processDartFiles(files: Array<{ path: string; content: string }>): void {
     files.forEach((fileContent) => {
       try {
         const pubspecYaml = yaml.load(fileContent.content) as {
@@ -622,12 +592,11 @@ class AnalysisService {
         };
 
         if (pubspecYaml.dependencies) processDeps(pubspecYaml.dependencies);
-        if (pubspecYaml.dev_dependencies)
-          processDeps(pubspecYaml.dev_dependencies);
+        if (pubspecYaml.dev_dependencies) processDeps(pubspecYaml.dev_dependencies);
       } catch (error) {
-        console.error('Error parsing pubspec.yaml:', error);
-        this.addStepError('File Parsing', error);
-        throw new Error('Failed to parse pubspec.yaml file');
+        console.error("Error parsing pubspec.yaml:", error);
+        this.addStepError("File Parsing", error);
+        throw new Error("Failed to parse pubspec.yaml file");
       }
     });
   }
@@ -635,9 +604,7 @@ class AnalysisService {
   /**
    * Process Java Maven pom.xml files
    */
-  private async processMavenFiles(
-    files: Array<{ path: string; content: string }>,
-  ): Promise<void> {
+  private async processMavenFiles(files: Array<{ path: string; content: string }>): Promise<void> {
     for (const fileContent of files) {
       try {
         const result = await parseStringPromise(fileContent.content);
@@ -647,31 +614,30 @@ class AnalysisService {
         if (propertiesArray) {
           for (const key in propertiesArray) {
             if (Object.prototype.hasOwnProperty.call(propertiesArray, key)) {
-              propertiesMap[key] = propertiesArray[key]?.[0] ?? '';
+              propertiesMap[key] = propertiesArray[key]?.[0] ?? "";
             }
           }
         }
 
-        const dependencies =
-          result?.project?.dependencies?.[0]?.dependency ?? [];
+        const dependencies = result?.project?.dependencies?.[0]?.dependency ?? [];
 
         dependencies.forEach((dep: MavenDependency) => {
-          let version = dep.version?.[0] ?? 'unknown';
-          if (version.startsWith('${') && version.endsWith('}')) {
+          let version = dep.version?.[0] ?? "unknown";
+          if (version.startsWith("${") && version.endsWith("}")) {
             const propName = version.slice(2, -1);
-            version = propertiesMap[propName] ?? 'unknown';
+            version = propertiesMap[propName] ?? "unknown";
           }
           const dependency: Dependency = {
-            name: dep.artifactId?.[0] ?? '',
+            name: dep.artifactId?.[0] ?? "",
             version: this.normalizeVersion(version),
             ecosystem: Ecosystem.MAVEN,
           };
           this.addDependencyToGlobalMap(dependency, fileContent.path);
         });
       } catch (error) {
-        console.error('Error parsing pom.xml:', error);
-        this.addStepError('File Parsing', error);
-        throw new Error('Failed to parse pom.xml file');
+        console.error("Error parsing pom.xml:", error);
+        this.addStepError("File Parsing", error);
+        throw new Error("Failed to parse pom.xml file");
       }
     }
   }
@@ -679,19 +645,17 @@ class AnalysisService {
   /**
    * Process Ruby Gemfiles
    */
-  private processRubyFiles(
-    files: Array<{ path: string; content: string }>,
-  ): void {
+  private processRubyFiles(files: Array<{ path: string; content: string }>): void {
     files.forEach((fileContent) => {
       const lines = fileContent.content
-        .split('\n')
-        .filter((line) => line.trim().startsWith('gem '));
+        .split("\n")
+        .filter((line) => line.trim().startsWith("gem "));
 
       lines.forEach((line) => {
         const match = line.match(/gem ['"]([^'"]+)['"](, *['"]([^'"]+)['"])?/);
         if (match) {
           const name = match[1];
-          const version = match[3] ?? 'unknown';
+          const version = match[3] ?? "unknown";
           const dependency: Dependency = {
             name,
             version: this.normalizeVersion(version),
@@ -708,9 +672,7 @@ class AnalysisService {
    * @param dependencies - DependencyGroups after vulnerability enrichment
    * @returns DependencyGroups with only vulnerable transitive nodes/edges
    */
-  filterVulnerableTransitives(
-    dependencies: DependencyGroups,
-  ): DependencyGroups {
+  filterVulnerableTransitives(dependencies: DependencyGroups): DependencyGroups {
     Object.values(dependencies)
       .flat()
       .forEach((dep) => {
@@ -719,7 +681,7 @@ class AnalysisService {
           const vulnerableNodes = dep.transitiveDependencies.nodes.filter(
             (node) =>
               (node.vulnerabilities && node.vulnerabilities.length > 0) ||
-              node.dependencyType === 'SELF',
+              node.dependencyType === "SELF",
           );
           // Build mapping from old index to new index
           const oldToNewIndex: Record<number, number> = {};
@@ -794,16 +756,12 @@ class AnalysisService {
    * @param dependencies - list of dependencies to get transitive dependencies for
    * @returns Dependency[] - list of dependencies with transitive dependencies attached to them
    */
-  async getTransitiveDependencies(
-    dependencies: DependencyGroups,
-  ): Promise<DependencyGroups> {
+  async getTransitiveDependencies(dependencies: DependencyGroups): Promise<DependencyGroups> {
     // Flatten all dependencies for batch processing
     const allDeps: Dependency[] = Object.values(dependencies).flat();
-    const validDeps = allDeps.filter((dep) => dep.version !== 'unknown');
+    const validDeps = allDeps.filter((dep) => dep.version !== "unknown");
 
-    console.log(
-      `Fetching transitive dependencies for ${validDeps.length} dependencies...`,
-    );
+    console.log(`Fetching transitive dependencies for ${validDeps.length} dependencies...`);
     this.progressService.progressUpdater(PROGRESS_STEPS[2], 0); // Progress #5
 
     // Process transitive dependencies in parallel batches
@@ -813,8 +771,8 @@ class AnalysisService {
       this.performanceConfig.transitiveConcurrency,
       async (dep: Dependency): Promise<TransitiveDependencyResult> => {
         try {
-          if (dep.version === 'unknown') {
-            throw new Error('Unknown version, skipping');
+          if (dep.version === "unknown") {
+            throw new Error("Unknown version, skipping");
           }
           const transitiveUrl = `${DEPS_DEV_BASE_URL}/${dep.ecosystem}/packages/${encodeURIComponent(dep.name)}/versions/${encodeURIComponent(this.normalizeVersion(dep.version))}:dependencies`;
 
@@ -861,7 +819,7 @@ class AnalysisService {
             `Failed to fetch transitive dependencies for ${dep.name}@${dep.version}:`,
             error instanceof Error ? error.message : error,
           );
-          this.addStepError('Transitive Dependencies Fetch', error);
+          this.addStepError("Transitive Dependencies Fetch", error);
         }
 
         return {
@@ -880,8 +838,7 @@ class AnalysisService {
 
     transitiveDepsResults.forEach((result) => {
       if (result.success) {
-        result.dependency.transitiveDependencies =
-          result.transitiveDependencies;
+        result.dependency.transitiveDependencies = result.transitiveDependencies;
       } else {
         erroredDeps.push({
           name: result.dependency.name,
@@ -894,10 +851,10 @@ class AnalysisService {
     if (erroredDeps.length > 0) {
       console.log(
         `Failed to fetch transitive dependencies for ${erroredDeps.length} packages:`,
-        erroredDeps.map((d) => `${d.name}@${d.version}`).join(', '),
+        erroredDeps.map((d) => `${d.name}@${d.version}`).join(", "),
       );
       this.addStepError(
-        'Transitive Dependencies Fetch',
+        "Transitive Dependencies Fetch",
         `Failed to fetch transitive dependencies for ${erroredDeps.length} packages:`,
       );
     }
@@ -935,21 +892,13 @@ class AnalysisService {
     });
 
     try {
-      console.log(
-        `Processing ${allForVuln.length} dependencies in parallel batches...`,
-      );
+      console.log(`Processing ${allForVuln.length} dependencies in parallel batches...`);
       this.progressService.progressUpdater(PROGRESS_STEPS[3], 0); // Progress #8
 
       // Process vulnerabilities for dependencies using parallel batches
       const batches: Dependency[][] = [];
-      for (
-        let i = 0;
-        i < allForVuln.length;
-        i += this.performanceConfig.vulnBatchSize
-      ) {
-        batches.push(
-          allForVuln.slice(i, i + this.performanceConfig.vulnBatchSize),
-        );
+      for (let i = 0; i < allForVuln.length; i += this.performanceConfig.vulnBatchSize) {
+        batches.push(allForVuln.slice(i, i + this.performanceConfig.vulnBatchSize));
       }
 
       // Process batches sequentially with controlled concurrency
@@ -959,15 +908,8 @@ class AnalysisService {
         pageToken: string;
       }[] = [];
 
-      for (
-        let i = 0;
-        i < batches.length;
-        i += this.performanceConfig.vulnConcurrency
-      ) {
-        const concurrentBatches = batches.slice(
-          i,
-          i + this.performanceConfig.vulnConcurrency,
-        );
+      for (let i = 0; i < batches.length; i += this.performanceConfig.vulnConcurrency) {
+        const concurrentBatches = batches.slice(i, i + this.performanceConfig.vulnConcurrency);
 
         const batchPromises = concurrentBatches.map(async (batch) => {
           const queries = batch.map((dep) => ({
@@ -1005,7 +947,7 @@ class AnalysisService {
             return null;
           } catch (error) {
             console.error(`Error processing batch:`, error);
-            this.addStepError('Vulnerability Scanning', error);
+            this.addStepError("Vulnerability Scanning", error);
             return null;
           }
         });
@@ -1031,9 +973,7 @@ class AnalysisService {
 
       // Handle pagination for all collected paginated queries
       while (globalPaginatedQueries.length > 0) {
-        console.log(
-          `Processing ${globalPaginatedQueries.length} paginated queries...`,
-        );
+        console.log(`Processing ${globalPaginatedQueries.length} paginated queries...`);
 
         const nextQueries = globalPaginatedQueries.map((pq) => ({
           ...pq.query,
@@ -1070,9 +1010,7 @@ class AnalysisService {
       }
 
       // Fetch vulnerability details for all unique vulnerability IDs
-      console.log(
-        `Fetching details for ${vulnsIDs.size} unique vulnerabilities...`,
-      );
+      console.log(`Fetching details for ${vulnsIDs.size} unique vulnerabilities...`);
 
       this.progressService.progressUpdater(PROGRESS_STEPS[4], 0); // Progress #11
 
@@ -1083,18 +1021,14 @@ class AnalysisService {
         async (vulnId: string) => {
           try {
             const response = await this.retryApiCall(
-              () =>
-                axios.get<Vulnerability>(`${OSV_DEV_VULN_DET_URL}${vulnId}`),
+              () => axios.get<Vulnerability>(`${OSV_DEV_VULN_DET_URL}${vulnId}`),
               4, // Reduced retries for vulnerability details
               800,
             );
             return response.data;
           } catch (error) {
-            console.warn(
-              `Failed to fetch vulnerability details for ${vulnId}:`,
-              error,
-            );
-            this.addStepError('Vulnerability Details Fetch', error);
+            console.warn(`Failed to fetch vulnerability details for ${vulnId}:`, error);
+            this.addStepError("Vulnerability Details Fetch", error);
             return null;
           }
         },
@@ -1104,9 +1038,7 @@ class AnalysisService {
       this.progressService.progressUpdater(PROGRESS_STEPS[4], 100); // Progress #13
 
       // Filter out failed requests
-      const validVulnDetails = vulnDetailsResults.filter(
-        (vuln) => vuln !== null,
-      );
+      const validVulnDetails = vulnDetailsResults.filter((vuln) => vuln !== null);
 
       // Update vulnerability details in dependencies
       validVulnDetails.forEach((vuln) => {
@@ -1115,13 +1047,10 @@ class AnalysisService {
         );
         matchingDeps.forEach((dep) => {
           dep.vulnerabilities = dep.vulnerabilities ?? [];
-          const existingIndex = dep.vulnerabilities.findIndex(
-            (v) => v.id === vuln.id,
-          );
+          const existingIndex = dep.vulnerabilities.findIndex((v) => v.id === vuln.id);
           const fixAvailable =
-            vuln?.affected?.[0]?.ranges?.[0]?.events?.filter(
-              (e: { fixed?: string }) => e.fixed,
-            )[0]?.fixed ?? '';
+            vuln?.affected?.[0]?.ranges?.[0]?.events?.filter((e: { fixed?: string }) => e.fixed)[0]
+              ?.fixed ?? "";
           const fullVuln: Vulnerability = {
             id: vuln.id,
             summary: vuln.summary,
@@ -1141,9 +1070,9 @@ class AnalysisService {
       });
       this.progressService.progressUpdater(PROGRESS_STEPS[4], 100); // Progress #14
     } catch (err) {
-      console.error('Error fetching vulnerabilities:', err);
-      this.addStepError('Vulnerability Enrichment', err);
-      throw new Error('Failed to fetch vulnerabilities from osv.dev');
+      console.error("Error fetching vulnerabilities:", err);
+      this.addStepError("Vulnerability Enrichment", err);
+      throw new Error("Failed to fetch vulnerabilities from osv.dev");
     }
     // Filter transitive dependencies to only keep vulnerable nodes/edges
     const vulnerableDeps = this.filterVulnerableTransitives(dependencies);
@@ -1178,17 +1107,13 @@ class AnalysisService {
       if (!dependencies || Object.keys(dependencies).length === 0) {
         return {
           dependencies: {},
-          error: [
-            ...this.consolidateStepErrors(),
-            'No dependencies found in the repository',
-          ],
+          error: [...this.consolidateStepErrors(), "No dependencies found in the repository"],
         };
       }
 
       let dependenciesWithChildren = dependencies;
       try {
-        dependenciesWithChildren =
-          await this.getTransitiveDependencies(dependencies);
+        dependenciesWithChildren = await this.getTransitiveDependencies(dependencies);
 
         // console.log(
         //   'Dependencies with transitive dependencies:',
@@ -1196,23 +1121,22 @@ class AnalysisService {
         // );
       } catch (error) {
         console.warn(
-          'Failed to get transitive dependencies, proceeding with main dependencies only:',
+          "Failed to get transitive dependencies, proceeding with main dependencies only:",
           error,
         );
-        this.addStepError('Transitive Dependencies Analysis', error);
+        this.addStepError("Transitive Dependencies Analysis", error);
       }
 
       let analysedDependencies: DependencyGroups = dependenciesWithChildren;
       try {
-        analysedDependencies = await this.enrichDependenciesWithVulnerabilities(
-          dependenciesWithChildren,
-        );
+        analysedDependencies =
+          await this.enrichDependenciesWithVulnerabilities(dependenciesWithChildren);
       } catch (error) {
         console.warn(
-          'Failed to enrich vulnerabilities, returning dependencies without vulnerability data:',
+          "Failed to enrich vulnerabilities, returning dependencies without vulnerability data:",
           error,
         );
-        this.addStepError('Vulnerability Analysis', error);
+        this.addStepError("Vulnerability Analysis", error);
       }
 
       const consolidatedErrors = this.consolidateStepErrors();
@@ -1226,7 +1150,7 @@ class AnalysisService {
         error: consolidatedErrors.length > 0 ? consolidatedErrors : undefined,
       };
     } catch (error) {
-      this.addStepError('Overall Analysis', error);
+      this.addStepError("Overall Analysis", error);
 
       // Complete progress even on error
       this.progressService.progressUpdater(PROGRESS_STEPS[5], 100); // Progress #16 - Complete with error
@@ -1248,8 +1172,7 @@ class AnalysisService {
     this.resetGlobalState();
 
     const { filename, content } = fileDetails;
-    const parsedFileName =
-      filename.split('_')[0] + '.' + filename.split('.')[1];
+    const parsedFileName = filename.split("_")[0] + "." + filename.split(".")[1];
     const ecosystem = Object.keys(manifestFiles).find(
       (ecosystem) => manifestFiles[ecosystem] === parsedFileName,
     );
@@ -1259,7 +1182,7 @@ class AnalysisService {
     if (!ecosystem) {
       return {
         dependencies: {},
-        error: ['Unsupported file type'],
+        error: ["Unsupported file type"],
       };
     }
 
@@ -1270,12 +1193,7 @@ class AnalysisService {
       [ecosystem]: [{ path: parsedFileName, content }],
     };
 
-    const analysedDependencies = await this.analyseDependencies(
-      '',
-      '',
-      '',
-      groupedFileContent,
-    );
+    const analysedDependencies = await this.analyseDependencies("", "", "", groupedFileContent);
 
     // console.log("File Analyzed dependencies:", analysedDependencies);
 
@@ -1287,56 +1205,47 @@ class AnalysisService {
    * Handles Git hashes, invalid formats, and normalizes to "major.minor.patch" format.
    */
   normalizeVersion(version: string | undefined | null): string {
-    if (!version || typeof version !== 'string') return 'unknown';
+    if (!version || typeof version !== "string") return "unknown";
 
     const trimmed = version.trim();
 
     // Handle special cases first
-    if (trimmed === 'unknown' || trimmed === '') return 'unknown';
+    if (trimmed === "unknown" || trimmed === "") return "unknown";
 
     // Check for Git commit hashes (40 character hex strings)
     if (/^[a-f0-9]{40}$/i.test(trimmed)) {
-      return 'unknown';
+      return "unknown";
     }
 
     // Check for Git hashes with dots (corrupted version format)
     if (/^[a-f0-9]{20,}\./i.test(trimmed)) {
-      return 'unknown';
+      return "unknown";
     }
 
     // Check for other Git-like hashes (7+ character hex strings without dots)
     if (/^[a-f0-9]{7,}$/i.test(trimmed)) {
-      return 'unknown';
+      return "unknown";
     }
 
     // Remove leading non-numeric characters
-    const cleaned = trimmed.replace(/^[^\d]*/, '');
-    if (!cleaned) return 'unknown';
+    const cleaned = trimmed.replace(/^[^\d]*/, "");
+    if (!cleaned) return "unknown";
 
     // Split at first '-' or '+' (not at a dot)
     const [core, ...extraParts] = cleaned.split(/(?=[-+])/);
-    const extra = extraParts.length ? extraParts.join('') : '';
+    const extra = extraParts.length ? extraParts.join("") : "";
 
     // Split core into segments
-    const segments = core.split('.');
+    const segments = core.split(".");
 
     // Validate that we have reasonable version segments
-    const major =
-      segments[0] && segments[0] !== 'x' && segments[0] !== '*'
-        ? segments[0]
-        : '0';
-    const minor =
-      segments[1] && segments[1] !== 'x' && segments[1] !== '*'
-        ? segments[1]
-        : '0';
-    const patch =
-      segments[2] && segments[2] !== 'x' && segments[2] !== '*'
-        ? segments[2]
-        : '0';
+    const major = segments[0] && segments[0] !== "x" && segments[0] !== "*" ? segments[0] : "0";
+    const minor = segments[1] && segments[1] !== "x" && segments[1] !== "*" ? segments[1] : "0";
+    const patch = segments[2] && segments[2] !== "x" && segments[2] !== "*" ? segments[2] : "0";
 
     // Check if major version is suspiciously long (likely a hash)
     if (major.length > 10) {
-      return 'unknown';
+      return "unknown";
     }
 
     return `${major}.${minor}.${patch}${extra}`;
@@ -1353,14 +1262,11 @@ class AnalysisService {
         1000,
         `NPM version lookup for ${packageName}`,
       );
-      return response.data['dist-tags']?.latest ?? 'unknown';
+      return response.data["dist-tags"]?.latest ?? "unknown";
     } catch (error) {
-      console.error(
-        `Failed to fetch latest version for ${packageName}:`,
-        error,
-      );
-      this.addStepError('Version Lookup', error);
-      return 'unknown';
+      console.error(`Failed to fetch latest version for ${packageName}:`, error);
+      this.addStepError("Version Lookup", error);
+      return "unknown";
     }
   }
 
@@ -1368,18 +1274,17 @@ class AnalysisService {
     cvss_v3: string;
     cvss_v4: string;
   } {
-    if (!severity || severity.length === 0)
-      return { cvss_v3: 'unknown', cvss_v4: 'unknown' };
+    if (!severity || severity.length === 0) return { cvss_v3: "unknown", cvss_v4: "unknown" };
 
     const cvss3 = new Cvss3P0();
     const cvss4 = new Cvss4P0();
 
     try {
       severity.forEach((s) => {
-        if (s.type.toLowerCase() === 'cvss_v3') {
+        if (s.type.toLowerCase() === "cvss_v3") {
           cvss3.applyVector(s.score);
         }
-        if (s.type.toLowerCase() === 'cvss_v4') {
+        if (s.type.toLowerCase() === "cvss_v4") {
           cvss4.applyVector(s.score);
         }
       });
@@ -1389,24 +1294,24 @@ class AnalysisService {
         cvss_v4: cvss4.calculateScores().overall.toString(),
       };
     } catch (error) {
-      console.error('Error parsing CVSS vector:', error);
-      return { cvss_v3: 'unknown', cvss_v4: 'unknown' };
+      console.error("Error parsing CVSS vector:", error);
+      return { cvss_v3: "unknown", cvss_v4: "unknown" };
     }
   }
 
   mapEcosystem(system: string): Ecosystem {
     switch (system.toUpperCase()) {
-      case 'NPM':
+      case "NPM":
         return Ecosystem.NPM;
-      case 'PHP':
+      case "PHP":
         return Ecosystem.COMPOSER;
-      case 'PYPI':
+      case "PYPI":
         return Ecosystem.PYPI;
-      case 'PUB':
+      case "PUB":
         return Ecosystem.PUB;
-      case 'MAVEN':
+      case "MAVEN":
         return Ecosystem.MAVEN;
-      case 'RUBYGEMS':
+      case "RUBYGEMS":
         return Ecosystem.RUBYGEMS;
       default:
         return Ecosystem.NULL;

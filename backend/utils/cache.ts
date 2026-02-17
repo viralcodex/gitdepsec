@@ -1,13 +1,13 @@
-import { Response } from 'express';
+import { Response } from "express";
 
-import { CachedAnalysis, DependencyApiResponse } from '../constants/model';
+import { CachedAnalysis, DependencyApiResponse } from "../constants/model";
 import {
   upsertAnalysis as upsertCache,
   deleteCachedAnalysis as deleteCache,
   getFileDetails as getFileCache,
   getCachedAnalysis,
   insertFile,
-} from '../db/actions';
+} from "../db/actions";
 
 export const cachedAnalysis = async (
   username: string,
@@ -24,7 +24,7 @@ export const cachedAnalysis = async (
       return res.json(cachedData[0].data);
     }
   } catch (dbError) {
-    console.error('Database error checking cache:', dbError);
+    console.error("Database error checking cache:", dbError);
   }
 };
 
@@ -50,11 +50,7 @@ export const upsertAnalysis = async ({
   });
 };
 
-export const deleteCachedAnalysis = async (
-  username: string,
-  repo: string,
-  branch: string,
-) => {
+export const deleteCachedAnalysis = async (username: string, repo: string, branch: string) => {
   await deleteCache(username, repo, branch);
 };
 
@@ -62,9 +58,6 @@ export const getCachedFileDetails = (fileId: string) => {
   return getFileCache(fileId);
 };
 
-export const insertFileCache = async (fileData: {
-  name: string;
-  content: string;
-}) => {
+export const insertFileCache = async (fileData: { name: string; content: string }) => {
   await insertFile(fileData);
 };

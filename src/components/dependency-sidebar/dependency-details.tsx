@@ -1,16 +1,10 @@
-import {
-  Dependency,
-  ShowMoreDescProps,
-  ShowMoreRefsProps,
-  Vulnerability,
-} from "@/constants/model";
+import { Dependency, ShowMoreDescProps, ShowMoreRefsProps, Vulnerability } from "@/constants/model";
 import React, { useState } from "react";
-import toast from "react-hot-toast";
 import removeMarkdown from "remove-markdown";
 import { Badge } from "../ui/badge";
-import { Copy } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn, getVulnerabilityUrl } from "@/lib/utils";
 
 interface ProcessedVulnerability extends Vulnerability {
   groupedRefs: { [type: string]: string[] };
@@ -26,72 +20,48 @@ interface DependencyDetailsProps {
 }
 
 const DependencyDetails = (props: DependencyDetailsProps) => {
-  const {
-    processedVulns,
-    allDetails,
-    transitiveNodeDetails,
-    isMobile,
-    getSeverityBadge,
-  } = props;
+  const { processedVulns, allDetails, transitiveNodeDetails, isMobile, getSeverityBadge } = props;
 
   const [showMoreRefs, setShowMoreRefs] = useState<ShowMoreRefsProps>({});
   const [showMoreDesc, setShowMoreDesc] = useState<ShowMoreDescProps>({});
 
   return (
-    <div className="px-4 ">
+    <div className="px-4 py-3">
       {processedVulns && processedVulns.length > 0 ? (
-        <div className={"space-y-2"}>
+        <div className="space-y-4">
           {processedVulns?.map((vuln, index) => (
-            <div key={index} className="border-b border-accent">
-              <p
-                className={cn(
-                  isMobile ? "text-sm" : "text-md",
-                  "text-accent font-bold",
-                )}
-              >
+            <div key={index} className="pb-4 border-b border-border/40 last:border-b-0">
+              {/* Vulnerability Title */}
+              <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground leading-snug mb-2")}>
                 {vuln.summary
                   ? removeMarkdown(vuln.summary.toTitleCase(), {
-                      replaceLinksWithURL: true,
-                      useImgAltText: true,
-                      gfm: true,
-                    })
+                    replaceLinksWithURL: true,
+                    useImgAltText: true,
+                    gfm: true,
+                  })
                   : "No summary available"}
+              </h4>
+
+              {/* File Path */}
+              <p className="text-xs text-muted-foreground mb-3">
+                {allDetails?.filePath ? allDetails?.filePath : transitiveNodeDetails?.filePath}
               </p>
-              <p className="text-xs font-medium pb-2">
-                <span className="text-xs italic text-muted-foreground">
-                  {allDetails?.filePath
-                    ? allDetails?.filePath
-                    : transitiveNodeDetails?.filePath}
-                </span>
-              </p>
-              <p>
+
+              {/* Fix Available Badge */}
+              <div className="mb-3">
                 {vuln.fixAvailable ? (
-                  <Badge
-                    className={cn(
-                      isMobile ? "text-xs" : "text-sm",
-                      "bg-green-600 text-white rounded-sm -m-0.5 mb-2",
-                    )}
-                  >
+                  <Badge className={cn(isMobile ? "text-xs" : "text-xs", "bg-emerald-600/90 text-white")}>
                     Fix Available from v{vuln.fixAvailable}
                   </Badge>
                 ) : (
-                  <Badge
-                    className={cn(
-                      isMobile ? "text-xs" : "text-sm",
-                      "bg-red-500 text-white rounded-sm -m-0.5 mb-2",
-                    )}
-                  >
+                  <Badge className={cn(isMobile ? "text-xs" : "text-xs", "bg-red-600/90 text-white")}>
                     No Fix Available
                   </Badge>
                 )}
-              </p>
-              <div className="">
-                <p
-                  className={cn(
-                    isMobile ? "text-xs" : "text-sm",
-                    "text-input pb-2",
-                  )}
-                >
+              </div>
+              {/* Details */}
+              <div className="space-y-4">
+                <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground leading-relaxed")}>
                   {vuln.details ? (
                     vuln.details.length > 200 ? (
                       showMoreDesc[index] ? (
@@ -101,9 +71,8 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                             useImgAltText: true,
                             gfm: true,
                           })}
-                          <br />
-                          <span
-                            className="text-accent cursor-pointer font-semibold"
+                          <button
+                            className="ml-1 text-primary hover:underline font-medium"
                             onClick={() =>
                               setShowMoreDesc((prev) => ({
                                 ...prev,
@@ -112,7 +81,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                             }
                           >
                             Show less
-                          </span>
+                          </button>
                         </>
                       ) : (
                         <>
@@ -122,8 +91,8 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                             gfm: true,
                           }).slice(0, 200)}
                           ...
-                          <span
-                            className="text-accent cursor-pointer font-semibold"
+                          <button
+                            className="ml-1 text-primary hover:underline font-medium"
                             onClick={() =>
                               setShowMoreDesc((prev) => ({
                                 ...prev,
@@ -131,9 +100,8 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                               }))
                             }
                           >
-                            {" "}
                             Show more
-                          </span>
+                          </button>
                         </>
                       )
                     ) : (
@@ -144,124 +112,87 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                       })
                     )
                   ) : (
-                    "No details available"
+                    <span className="italic">No details available</span>
                   )}
                 </p>
+                {/* Vulnerability ID */}
                 {vuln.id && (
-                  <div>
-                    <p
-                      className={cn(
-                        isMobile ? "text-sm" : "text-md",
-                        "font-bold text-input pb-2",
-                      )}
-                    >
-                      Vulnerability ID:
+                  <div className="space-y-1">
+                    <p className={cn(isMobile ? "text-sm" : "text-sm", "font-semibold text-foreground")}>
+                      Vulnerability ID
                     </p>
-                    <div className="flex flex-row items-center gap-x-2">
-                      <p className={cn(isMobile ? "text-xs" : "text-sm")}>
-                        {vuln.id}
+                    <a
+                      className="inline-flex items-center gap-1.5 text-primary hover:underline text-sm"
+                      href={getVulnerabilityUrl(vuln.id)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {vuln.id}
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  </div>
+                )}
+                {/* Severity Scores */}
+                {vuln.severityScore && (
+                  <div className="space-y-2">
+                    <p className={cn(isMobile ? "text-sm" : "text-sm", "font-semibold text-foreground")}>
+                      Severity
+                    </p>
+                    <div className="flex flex-col gap-1.5">
+                      <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground flex items-center gap-2")}>
+                        CVSS V3: {getSeverityBadge(vuln.severityScore.cvss_v3 ?? "unknown")}
                       </p>
-                      <p>
-                        <Copy
-                          className="cursor-pointer"
-                          size={16}
-                          onClick={() => {
-                            navigator.clipboard.writeText(vuln.id);
-                            toast.success(
-                              "Vulnerability ID copied to clipboard",
-                            );
-                          }}
-                        />
+                      <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground flex items-center gap-2")}>
+                        CVSS V4: {getSeverityBadge(vuln.severityScore.cvss_v4 ?? "unknown")}
                       </p>
                     </div>
                   </div>
                 )}
-                {vuln.severityScore && (
-                  <div className="text-muted-foreground py-2">
-                    <p
-                      className={cn(
-                        isMobile ? "text-sm" : "text-md",
-                        "font-semibold text-accent",
-                      )}
-                    >
-                      Severity
-                    </p>
-                    <p
-                      className={cn(
-                        isMobile ? "text-xs" : "text-sm",
-                        "font-medium mb-1",
-                      )}
-                    >
-                      CVSS V3 Score: {"   "}
-                      {getSeverityBadge(
-                        vuln.severityScore.cvss_v3 ?? "unknown",
-                      )}
-                    </p>
-                    <p
-                      className={cn(
-                        isMobile ? "text-xs" : "text-sm",
-                        "font-medium",
-                      )}
-                    >
-                      CVSS V4 Score: {"   "}
-                      {getSeverityBadge(
-                        vuln.severityScore.cvss_v4 ?? "unknown",
-                      )}
-                    </p>
-                  </div>
-                )}
+                {/* References */}
                 {vuln.references && vuln.references.length > 0 && (
-                  <div className="text-muted-foreground">
-                    <p
-                      className={cn(
-                        isMobile ? "text-sm" : "text-md",
-                        "font-semibold text-accent",
-                      )}
-                    >
-                      References:
+                  <div className="space-y-2">
+                    <p className={cn(isMobile ? "text-sm" : "text-sm", "font-semibold text-foreground")}>
+                      References
                     </p>
-                    {Object.entries(vuln.groupedRefs).map(([type, urls]) => (
-                      <div key={type} className="mb-2">
-                        <div>
-                          <p className="font-semibold text-sm text-input">
-                            {type.slice(0, 1) + type.slice(1).toLowerCase()}:
+                    <div className="space-y-3">
+                      {Object.entries(vuln.groupedRefs).map(([type, urls]) => (
+                        <div key={type}>
+                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                            {type.slice(0, 1) + type.slice(1).toLowerCase()}
                           </p>
-                          {(showMoreRefs[type] ? urls : urls.slice(0, 3)).map(
-                            (url, refIndex) => (
-                              <div
-                                key={refIndex}
-                                className="whitespace-normal break-all text-xs mb-1"
-                              >
+                          <div className="space-y-1">
+                            {(showMoreRefs[type] ? urls : urls.slice(0, 3)).map((url, refIndex) => (
+                              <div key={refIndex} className="break-all">
                                 <Link
                                   href={url}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className={cn(
-                                    isMobile ? "text-xs" : "text-sm",
-                                    "text-muted-foreground hover:underline",
+                                    isMobile ? "text-xs" : "text-xs",
+                                    "text-primary/80 hover:text-primary hover:underline transition-colors",
                                   )}
                                 >
                                   {url}
                                 </Link>
                               </div>
-                            ),
+                            ))}
+                          </div>
+                          {urls.length > 3 && (
+                            <button
+                              onClick={() =>
+                                setShowMoreRefs((prev) => ({
+                                  ...prev,
+                                  [type]: !prev[type],
+                                }))
+                              }
+                              className="text-xs text-primary hover:underline mt-1"
+                            >
+                              {showMoreRefs[type] ? "Show less" : `Show ${urls.length - 3} more...`}
+                            </button>
                           )}
                         </div>
-                        {urls.length > 3 && (
-                          <span
-                            onClick={() =>
-                              setShowMoreRefs((prev) => ({
-                                ...prev,
-                                [type]: !prev[type],
-                              }))
-                            }
-                            className="cursor-pointer text-sm text-accent hover:underline"
-                          >
-                            {showMoreRefs[type] ? "Show less" : "Show more..."}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -269,7 +200,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground text-center py-8">
           No vulnerabilities found for this dependency.
         </p>
       )}

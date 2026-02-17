@@ -1,15 +1,11 @@
 import { useCallback, useEffect, useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
-import {
-  Dependency,
-  GraphNode,
-  Vulnerability,
-  VulnerabilitySummaryResponse,
-} from "@/constants/model";
+import { Dependency, GraphNode, Vulnerability, VulnerabilitySummaryResponse } from "@/constants/model";
 import removeMarkdown from "remove-markdown";
 import { Check, Copy, RefreshCcw, X } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { Badge } from "../ui/badge";
+import { Button } from "../ui/button";
 import { cn, getSeverityConfig } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -17,7 +13,6 @@ import DependencyDetails from "@/components/dependency-sidebar/dependency-detail
 import DependencyAIDetails from "./dependency-ai-details";
 import { getAiVulnerabilitiesSummary } from "@/lib/api";
 import Image from "next/image";
-// import { useTextSelection } from "@/providers/textSelectionProvider";
 import { useGraphState } from "@/store/app-store";
 
 interface DependencyDetailsProps {
@@ -26,18 +21,12 @@ interface DependencyDetailsProps {
   onClose?: () => void;
 }
 
-const DependencyDetailsCard = (props: DependencyDetailsProps) => {
-  const { node, onClose, isMobile } = props;
-
+const DependencyDetailsCard = ({ node, onClose, isMobile }: DependencyDetailsProps) => {
   const { dependencies } = useGraphState();
-
-  // const { setSelectedDependency } = useTextSelection();
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  const [summary, setSummary] = useState<VulnerabilitySummaryResponse | null>(
-    null,
-  );
+  const [summary, setSummary] = useState<VulnerabilitySummaryResponse | null>(null);
   const [tabValue, setTabValue] = useState<string>("Vuln_details");
 
   let transitiveNodeDetails: Dependency | undefined;
@@ -56,36 +45,15 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
         ),
       );
     if (matchedTransitiveNode) {
-      transitiveNodeDetails =
-        matchedTransitiveNode.transitiveDependencies?.nodes?.find(
-          (transDep) => `${transDep.name}@${transDep.version}` === node.id,
-        );
+      transitiveNodeDetails = matchedTransitiveNode.transitiveDependencies?.nodes?.find(
+        (transDep) => `${transDep.name}@${transDep.version}` === node.id,
+      );
     }
   }
 
-  // console.log(
-  //   "Extra Node Details:",
-  //   directDep,
-  //   extraTransitiveNodeDetails,
-  //   matchedTransitiveNode
-  // );
+  const allDetails = transitiveNodeDetails ?? matchedTransitiveNode ?? directDep;
 
-  const allDetails =
-    transitiveNodeDetails ?? matchedTransitiveNode ?? directDep;
-
-  // console.log("All Details:", allDetails);
-
-  // // Set the selected dependency in context whenever allDetails changes
-  // useEffect(() => {
-  //   if (allDetails) {
-  //     setSelectedDependency(allDetails);
-  //   }
-  //   return () => {
-  //     setSelectedDependency(undefined); // Clean up when component unmounts
-  //   };
-  // }, [allDetails, setSelectedDependency]);
-
-  //group references by type
+  // Group references by type
   const processedVulns = allDetails?.vulnerabilities?.map((vuln) => {
     const groupedRefs: { [type: string]: string[] } = {};
     if (vuln.references && vuln.references.length > 0) {
@@ -102,12 +70,10 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
     `Dependency: ${node.label} (${node.version || "unknown"})`,
     ...(processedVulns ?? []).map((vuln, idx) => {
       let vulnText = `\nVulnerability ${idx + 1}:`;
-      vulnText += `\nSummary: ${
-        vuln.summary ? removeMarkdown(vuln.summary) : "No summary available"
-      }`;
-      vulnText += `\nDetails: ${
-        vuln.details ? removeMarkdown(vuln.details) : "No details available"
-      }`;
+      vulnText += `\nSummary: ${vuln.summary ? removeMarkdown(vuln.summary) : "No summary available"
+        }`;
+      vulnText += `\nDetails: ${vuln.details ? removeMarkdown(vuln.details) : "No details available"
+        }`;
       if (vuln.severityScore) {
         vulnText += `\nSeverity:`;
         vulnText += `\n  CVSS V3 Score: ${vuln.severityScore.cvss_v3 || "N/A"}`;
@@ -140,11 +106,7 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
   }, [isCopied]);
 
   const fetchSummary = useCallback(async () => {
-    if (
-      !allDetails ||
-      !allDetails.vulnerabilities ||
-      allDetails.vulnerabilities.length === 0
-    ) {
+    if (!allDetails || !allDetails.vulnerabilities || allDetails.vulnerabilities.length === 0) {
       setError("No vulnerabilities available for this dependency");
       return;
     }
@@ -153,26 +115,21 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
     const vulnerabilities = {
       name: allDetails?.name,
       version: allDetails?.version,
-      vulnerabilities: allDetails?.vulnerabilities?.map(
-        (vuln: Vulnerability) => {
-          return {
-            ...vuln,
-            affected: vuln.affected?.map((affected) => ({
-              ...affected,
-              versions: [],
-            })),
-          };
-        },
-      ),
+      vulnerabilities: allDetails?.vulnerabilities?.map((vuln: Vulnerability) => {
+        return {
+          ...vuln,
+          affected: vuln.affected?.map((affected) => ({
+            ...affected,
+            versions: [],
+          })),
+        };
+      }),
     };
     try {
       const response = await getAiVulnerabilitiesSummary(vulnerabilities);
       setSummary(response);
-      console.log("AI Summary Response:", response);
-      //remove old cache and set new cache
-      sessionStorage.removeItem(
-        `ai-summary-${allDetails.name}@${allDetails.version}`,
-      );
+      // Update cache
+      sessionStorage.removeItem(`ai-summary-${allDetails.name}@${allDetails.version}`);
       sessionStorage.setItem(
         `ai-summary-${allDetails.name}@${allDetails.version}`,
         JSON.stringify(response),
@@ -238,87 +195,93 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
   return (
     <div
       className={cn(
-        "absolute right-0 flex flex-col",
-        isMobile
-          ? "w-full p-1 h-[calc(100vh-4rem)] pr-1"
-          : "w-[35%] p-1 h-[calc(100vh-4rem)] pr-1",
-        "z-105 p-1 pr-1",
+        "absolute right-0 flex flex-col z-105 p-1",
+        isMobile ? "w-full h-[calc(100vh-4rem)]" : "w-[35%] h-[calc(100vh-4rem)]",
       )}
     >
       <Card
         className={cn(
-          "bg-background border-none text-accent p-0 gap-0 relative rounded-lg",
-          isMobile ? "h-[92vh]" : "h-[100%]",
+          "bg-background/95 backdrop-blur-sm border border-border/50 text-accent p-0 gap-0 relative rounded-xl shadow-xl",
+          isMobile ? "h-[92vh]" : "h-full",
         )}
       >
         <CardHeader
           className={cn(
             getSeverityColor(node.severity!),
-            "font-bold px-4 py-3 rounded-t-lg border-b-1",
+            "px-4 py-4 rounded-t-lg",
           )}
         >
-          <div className="flex flex-row items-center justify-between">
-            <div className="flex flex-col items-start w-[50%]">
-              <p>{node.label.toTitleCase()} </p>
-              <p className="text-xs text-accent">{node.version}</p>
+          <div className="flex items-center justify-between">
+            <div className="flex flex-col items-start flex-1 min-w-0 gap-0.5">
+              <p className="font-bold text-white tracking-tight truncate">
+                {node.label.toTitleCase()}
+              </p>
+              <p className="text-sm sm:text-md text-white/70 font-medium">{node.version}</p>
             </div>
-            <div className="flex flex-row gap-2 w-[50%] justify-end">
-              {isCopied ? (
-                <Check className="cursor-pointer" color="white" />
-              ) : (
-                <Copy
-                  className="cursor-pointer"
-                  onClick={handleCopy}
-                  color="white"
-                />
-              )}
-              <X className="cursor-pointer" onClick={onClose} color="white" />
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleCopy}
+                className="size-9 hover:bg-white/20"
+              >
+                {isCopied ? (
+                  <Check className="size-7! text-white" />
+                ) : (
+                  <Copy className="size-7! text-white" />
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onClose}
+                className="size-10! hover:bg-white/20"
+              >
+                <X className="size-7! text-white" />
+              </Button>
             </div>
           </div>
         </CardHeader>
-        <CardContent className="py-0 gap-0 whitespace-normal break-words overflow-y-auto w-full h-full">
-          <Tabs
-            defaultValue="Vuln_details"
-            className="w-auto h-full flex flex-col"
-          >
-            <div className="flex flex-row items-center justify-between">
-              <TabsList className="rounded-t-none sticky top-0 z-10 mx-2 flex flex-row gap-2">
+        <CardContent className="py-0 gap-0 whitespace-normal wrap-break-word overflow-y-auto w-full h-full">
+          <Tabs defaultValue="Vuln_details" className="w-auto h-full flex flex-col">
+            <div className="flex items-center justify-between border-b border-border/40 bg-muted/30">
+              <TabsList className="h-11 bg-transparent rounded-none p-0 gap-0">
                 <TabsTrigger
                   value="Vuln_details"
                   onClick={() => setTabValue("Vuln_details")}
-                  className="rounded-t-none cursor-pointer w-fit"
+                  className="h-11 rounded-none cursor-pointer border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 font-medium"
                 >
                   Details
                 </TabsTrigger>
                 <TabsTrigger
                   value="AI_vuln_details"
                   onClick={() => setTabValue("AI_vuln_details")}
-                  className="rounded-t-none cursor-pointer flex items-center px-5 font-semibold"
+                  className="rounded-t-none cursor-pointer flex items-center px-5 font-semibold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
                 >
                   <Image
                     priority
-                    src={"/genai.svg"}
+                    src="/genai.svg"
                     alt="AI Icon"
-                    width={24}
-                    height={24}
-                    className=""
+                    width={20}
+                    height={20}
                   />
                   AI Fix Plan
                 </TabsTrigger>
               </TabsList>
               {tabValue === "AI_vuln_details" && (
-                <div className="flex flex-row justify-end mt-1 mr-4">
-                  <Tooltip>
-                    <TooltipTrigger asChild className="">
-                      <RefreshCcw
-                        size={24}
-                        className="cursor-pointer bg-background rounded-sm"
-                        onClick={refreshSummary}
-                      />
-                    </TooltipTrigger>
-                    <TooltipContent>Refresh AI Response</TooltipContent>
-                  </Tooltip>
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={refreshSummary}
+                      className="mr-3"
+                    >
+                      <RefreshCcw className="size-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Refresh AI Response</TooltipContent>
+                </Tooltip>
               )}
             </div>
             <div className="flex-1 flex flex-col overflow-y-auto scrollbar-background-bg scrollbar-background-thumb">
@@ -350,14 +313,9 @@ const DependencyDetailsCard = (props: DependencyDetailsProps) => {
             </div>
           </Tabs>
         </CardContent>
-        <CardFooter className="p-2">
-          <p
-            className={cn(
-              isMobile ? "text-sm" : "text-xs",
-              "italic text-foreground px-2",
-            )}
-          >
-            *AI results can be inaccurate. Always verify before taking action.
+        <CardFooter className="p-3 border-t border-border/40 bg-muted/20">
+          <p className={cn(isMobile ? "text-xs" : "text-[11px]", "text-muted-foreground text-center w-full leading-relaxed")}>
+            AI results can be inaccurate. Always verify before taking action.
           </p>
         </CardFooter>
       </Card>

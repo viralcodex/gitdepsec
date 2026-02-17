@@ -24,16 +24,16 @@ export interface ManifestFileContents {
 }
 
 export enum Ecosystem {
-  NPM = 'npm',
-  PYPI = 'PyPI',
-  MAVEN = 'Maven',
-  GRADLE = 'Gradle',
-  GO = 'Go',
-  CARGO = 'Cargo',
-  RUBYGEMS = 'Rubygems',
-  COMPOSER = 'Composer',
-  PUB = 'Pub',
-  NULL = 'null',
+  NPM = "npm",
+  PYPI = "PyPI",
+  MAVEN = "Maven",
+  GRADLE = "Gradle",
+  GO = "Go",
+  CARGO = "Cargo",
+  RUBYGEMS = "Rubygems",
+  COMPOSER = "Composer",
+  PUB = "Pub",
+  NULL = "null",
 }
 
 export interface TransitiveDependency {
@@ -49,7 +49,7 @@ export interface Dependency {
   name: string;
   version: string;
   vulnerabilities?: Vulnerability[];
-  dependencyType?: 'DIRECT' | 'INDIRECT' | 'SELF';
+  dependencyType?: "DIRECT" | "INDIRECT" | "SELF";
   transitiveDependencies?: TransitiveDependency;
   ecosystem: Ecosystem;
 }
@@ -67,7 +67,7 @@ export interface DepsDevNode {
     version: string;
   };
   bundled: false;
-  relation: 'DIRECT' | 'INDIRECT' | 'SELF';
+  relation: "DIRECT" | "INDIRECT" | "SELF";
   errors: [];
 }
 
@@ -153,15 +153,15 @@ export interface FileDetails {
 }
 
 export const manifestFiles: { [ecosystem: string]: string } = {
-  npm: 'package.json',
-  PiPY: 'requirements.txt',
-  RubyGems: 'Gemfile',
-  Maven: 'pom.xml',
-  gradle: 'build.gradle',
-  rust: 'Cargo.toml',
-  php: 'composer.json',
-  Pub: 'pubspec.yaml',
-  elixir: 'mix.exs',
+  npm: "package.json",
+  PiPY: "requirements.txt",
+  RubyGems: "Gemfile",
+  Maven: "pom.xml",
+  gradle: "build.gradle",
+  rust: "Cargo.toml",
+  php: "composer.json",
+  Pub: "pubspec.yaml",
+  elixir: "mix.exs",
 };
 
 // Extend Request interface to include multer file
@@ -207,7 +207,7 @@ export interface GlobalAgentState {
 
 export interface FlattenedDependency extends Dependency {
   filePath: string;
-  dependencyLevel: 'direct' | 'transitive';
+  dependencyLevel: "direct" | "transitive";
   parentDependency: string | null;
   dependencyChain: string;
   dependencyDepth: number;
@@ -218,9 +218,9 @@ export interface PrioritizedVulnerability extends Vulnerability {
   packageName: string;
   packageVersion: string;
   filePath: string;
-  dependencyLevel: 'direct' | 'transitive';
+  dependencyLevel: "direct" | "transitive";
   priorityScore: number;
-  riskLevel: 'critical' | 'high' | 'medium' | 'low';
+  riskLevel: "critical" | "high" | "medium" | "low";
 }
 
 export interface TransitiveInsight {
@@ -229,8 +229,8 @@ export interface TransitiveInsight {
   usedBy: string[];
   impactMultiplier: number;
   fixAvailable: boolean;
-  impactDescription: string;
   quickWinPotential: boolean;
+  vulnerabilityIds: string[];
 }
 
 export interface ConflictDetection {
@@ -238,12 +238,12 @@ export interface ConflictDetection {
   conflictType: string;
   requiredVersions: string[];
   affectedParents: string[];
-  riskLevel: 'critical' | 'high' | 'medium' | 'low';
+  riskLevel: "critical" | "high" | "medium" | "low";
   suggestedResolution: string;
 }
 
 export interface QuickWin {
-  type: 'direct_upgrade' | 'transitive_multiplier';
+  type: "direct_upgrade" | "transitive_multiplier";
   package: string;
   targetVersion?: string;
   impact: string;

@@ -1,14 +1,25 @@
+"use client";
+
 import { useEffect, useRef, useCallback } from "react";
-import { Card, CardContent, CardHeader } from "../ui/card";
-import { ArrowRight, RefreshCcw, Trash2 } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  GitBranch,
+  History,
+  RefreshCcw,
+  Trash2,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import toast from "react-hot-toast";
-import { Tooltip, TooltipContent } from "../ui/tooltip";
-import { TooltipTrigger } from "../ui/tooltip";
+import { Button } from "../ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { useSavedHistoryState, useUIState } from "@/store/app-store";
 import { HistoryItem } from "@/constants/model";
 import { useHistoryNavigation } from "@/hooks/useHistoryNavigation";
-import Image from "next/image";
+import EmptyCard from "../empty-card";
 
 interface SavedHistoryProps {
   addButtonRef: React.RefObject<HTMLDivElement | null>;
@@ -17,54 +28,39 @@ interface SavedHistoryProps {
 const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
   const { savedHistoryItems, setSavedHistoryItems, resetSavedHistoryState } =
     useSavedHistoryState();
-  const { isSavedHistorySidebarOpen, setSavedHistorySidebarOpen } =
-    useUIState();
+  const { isSavedHistorySidebarOpen, setSavedHistorySidebarOpen } = useUIState();
   const { navigateToHistory } = useHistoryNavigation();
-  const histCardRef = useRef<HTMLDivElement>(null);
-  const toggleBarRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const toggleRef = useRef<HTMLButtonElement>(null);
 
-  const closeHistoryCard = useCallback(() => {
-    if (histCardRef.current) {
-      histCardRef.current.style.transform = "translateX(calc(-95%))";
-      histCardRef.current.style.transition = "transform 0.25s ease-in-out";
-      histCardRef.current.style.opacity = "0.5";
-      setSavedHistorySidebarOpen(false);
-    }
+  const closeSidebar = useCallback(() => {
+    setSavedHistorySidebarOpen(false);
   }, [setSavedHistorySidebarOpen]);
 
-  const openHistoryCard = useCallback(() => {
-    if (histCardRef.current) {
-      histCardRef.current.style.transform = "translateX(0)";
-      histCardRef.current.style.transition = "transform 0.25s ease-in-out";
-      setTimeout(() => {
-        if (histCardRef.current) {
-          histCardRef.current.style.opacity = "1";
-        }
-      }, 250);
-      setSavedHistorySidebarOpen(true);
-    }
+  const openSidebar = useCallback(() => {
+    setSavedHistorySidebarOpen(true);
   }, [setSavedHistorySidebarOpen]);
 
-  const toggleHistoryCard = useCallback(() => {
+  const toggleSidebar = useCallback(() => {
     if (isSavedHistorySidebarOpen) {
-      closeHistoryCard();
+      closeSidebar();
     } else {
-      openHistoryCard();
+      openSidebar();
     }
-  }, [isSavedHistorySidebarOpen, closeHistoryCard, openHistoryCard]);
+  }, [isSavedHistorySidebarOpen, closeSidebar, openSidebar]);
 
   useEffect(() => {
     const handleClickOutside = (event: Event) => {
       if (
         isSavedHistorySidebarOpen &&
-        histCardRef.current &&
-        !histCardRef.current.contains(event.target as Node) &&
-        toggleBarRef.current &&
-        !toggleBarRef.current.contains(event.target as Node) &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(event.target as Node) &&
+        toggleRef.current &&
+        !toggleRef.current.contains(event.target as Node) &&
         addButtonRef.current &&
         !addButtonRef.current.contains(event.target as Node)
       ) {
-        closeHistoryCard();
+        closeSidebar();
       }
     };
     if (isSavedHistorySidebarOpen) {
@@ -73,9 +69,8 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [isSavedHistorySidebarOpen, closeHistoryCard, addButtonRef]);
+  }, [isSavedHistorySidebarOpen, closeSidebar, addButtonRef]);
 
-  //have to read from local storage again to get latest data
   const refreshHistory = () => {
     const persistedData = localStorage.getItem("gitdepsec_storage");
     if (persistedData) {
@@ -98,110 +93,203 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
 
   const parseAndNavigate = (hist: HistoryItem) => {
     navigateToHistory(hist);
-    closeHistoryCard();
+    closeSidebar();
   };
 
-  const deletehistory = () => {
+  const deleteHistory = () => {
     resetSavedHistoryState();
     toast.success("All history deleted!");
   };
 
+  const hasHistory = savedHistoryItems && Object.keys(savedHistoryItems).length > 0;
+
   return (
-    <Card
-      ref={histCardRef}
-      id="history-card"
-      style={{ transform: "translateX(calc(-95%))", opacity: "0.3" }}
-      className="bg-background gap-0 w-[80%] h-130 rounded-xl sm:h-155 sm:w-80 fixed top-95 sm:top-50 left-0 z-101 overflow-auto scrollbar-background-thumb scrollbar-background-bg hover:opacity-100"
-    >
-      <div
-        ref={toggleBarRef}
-        id="togglebar"
+    <>
+      {/* Sidebar Panel */}
+      <Card
+        ref={sidebarRef}
         className={cn(
-          "absolute bg-accent-foreground w-4 h-[100%] rounded-r-xl right-0 opacity-20 hover:opacity-100 cursor-pointer border-none",
+          "fixed top-0 left-0 z-101 h-full w-80",
+          "bg-background/95 backdrop-blur-xl",
+          "border-r border-border/50",
+          "shadow-2xl shadow-black/20",
+          "flex flex-col rounded-none",
+          "transition-transform duration-300 ease-out gap-0",
+          isSavedHistorySidebarOpen ? "translate-x-0" : "-translate-x-full",
         )}
-        onClick={toggleHistoryCard}
-      />
-      <CardHeader className="p-4">
-        <div className="flex flex-row justify-between items-center cursor-pointer">
-          <span className="text-foreground text-xl font-semibold">
-            {"Saved history"}
-          </span>
-          <section
-            aria-label="History actions"
-            className="flex flex-row gap-x-4"
-          >
-            <Tooltip aria-label="refresh history">
-              <TooltipTrigger asChild id="refresh-history">
-                <RefreshCcw className="text-accent" onClick={refreshHistory} />
-              </TooltipTrigger>
-              <TooltipContent>Refresh History</TooltipContent>
-            </Tooltip>
-            <Tooltip aria-label="delete history">
-              <TooltipTrigger asChild id="delete-history">
-                <Trash2 className="text-accent" onClick={deletehistory} />
-              </TooltipTrigger>
-              <TooltipContent>Delete all History</TooltipContent>
-            </Tooltip>
-          </section>
-        </div>
-      </CardHeader>
-      <hr className="" />
-      <CardContent className="p-2 py-4">
-        {savedHistoryItems && Object.keys(savedHistoryItems).length > 0 ? (
-          Object.entries(savedHistoryItems)
-            .sort(
-              ([dateA], [dateB]) =>
-                new Date(dateB).getTime() - new Date(dateA).getTime(),
-            )
-            .map(([date, items]) => {
-              return (
-                <div key={date} className="px-3">
-                  <h4
-                    aria-label={`Saved history for ${date}`}
-                    className="text-md font-bold text-primary-foreground pb-2"
+      >
+        {/* Header */}
+        <CardHeader className="p-4 border-b">
+          {/* Subtle gradient accent */}
+          <div className="absolute inset-0 bg-linear-to-r from-primary/5 via-transparent to-transparent pointer-events-none" />
+
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary/10 border border-primary/20">
+                <History className="w-6 h-6 text-[#f2d46b]" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold tracking-tight text-[#f2d46b]">
+                  History
+                </h2>
+                <p className="text-xs text-muted-foreground">
+                  Your saved analyses
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={refreshHistory}
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full hover:bg-accent-foreground"
+                    aria-label="Refresh history"
                   >
-                    {date}
-                  </h4>
-                  <hr />
-                  <ul className="my-2">
-                    {items.map((hist, index) => (
-                      <li
-                        key={index}
-                        className="py-2 px-2 rounded-md cursor-pointer hover:bg-gray-400/40"
-                        onClick={() => parseAndNavigate(hist)}
-                      >
-                        <p className="font-semibold text-sm text-secondary flex flex-row justify-between items-center">
-                          <span>
-                            {hist.username}/{hist.repo} · {hist.branch}
-                          </span>
-                          <ArrowRight className="ml-1 h-4 w-4 text-secondary" />
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              );
-            })
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center w-full p-8 h-[100%] gap-3">
-            <p className="text-muted-foreground text-md">
-              No saved history yet...
-            </p>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Click</span>
-              <Image
-                src="/addhistory.png"
-                alt="Add History"
-                width={24}
-                height={24}
-                className="inline-block"
-              />
-              <span>to save</span>
+                    <RefreshCcw className="size-5! text-muted-foreground group-hover:text-foreground transition-colors" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Refresh</TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    onClick={deleteHistory}
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full hover:bg-destructive/50"
+                    aria-label="Clear history"
+                  >
+                    <Trash2 className="size-5! text-muted-foreground group-hover:text-destructive transition-colors" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent side="bottom">Clear all</TooltipContent>
+              </Tooltip>
             </div>
           </div>
+        </CardHeader>
+
+        {/* Content */}
+        <CardContent className="flex-1 overflow-y-auto scrollbar-background-thumb scrollbar-background-bg px-0">
+          {hasHistory ? (
+            <div className="pb-4">
+              {Object.entries(savedHistoryItems)
+                .sort(([dateA], [dateB]) => new Date(dateB).getTime() - new Date(dateA).getTime())
+                .map(([date, items], groupIndex) => (
+                  <div key={date} className="mb-6 last:mb-0">
+                    {/* Date Header */}
+                    <div className="sticky top-0 z-10 px-5 py-3 bg-background/90 backdrop-blur-sm border-y border-border/60">
+                      <div className="flex items-center gap-3">
+                        <Clock className="size-5 text-muted-foreground" />
+                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">
+                          {date}
+                        </span>
+                        <span className="ml-auto text-[10px] text-muted-foreground bg-transparent border border-border/60 px-2 py-0.5 rounded-full">
+                          {items.length}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* History Items */}
+                    <ul className="px-3 pt-3 space-y-1">
+                      {items.map((hist, index) => (
+                        <li
+                          key={index}
+                          onClick={() => parseAndNavigate(hist)}
+                          className={cn(
+                            "group relative px-2 py-2 rounded-lg cursor-pointer",
+                            "hover:bg-muted/60 active:bg-muted/80",
+                            "transition-all duration-200",
+                            "border border-transparent hover:border-border/50",
+                          )}
+                          style={{
+                            animationDelay: `${(groupIndex * items.length + index) * 50}ms`,
+                          }}
+                        >
+                          {/* Left accent bar on hover */}
+                          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-0 bg-primary rounded-full transition-all duration-200 group-hover:h-8" />
+
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-[#f2d46b] truncate">
+                                {hist.username}/{hist.repo}
+                              </p>
+                              <div className="flex items-center gap-1.5 mt-1">
+                                <GitBranch className="size-5 text-muted-foreground" />
+                                <span className="text-xs text-muted-foreground truncate">
+                                  {hist.branch}
+                                </span>
+                              </div>
+                            </div>
+
+                            <ArrowRight className="size-6 text-muted-foreground opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+            </div>
+          ) : (
+            <div className="h-full flex items-center justify-center p-4">
+              <EmptyCard
+                size="sm"
+                variant="default"
+                title="No saved history"
+                message="Save your analyses to quickly access them later"
+                useCoffeeCup={false}
+                className="border-none bg-transparent h-auto"
+              />
+            </div>
+          )}
+        </CardContent>
+
+        {/* Footer */}
+        <CardFooter className="p-4 bg-muted/10">
+          <p className="text-[10px] text-muted-foreground/60 text-center w-full">
+            History is stored locally in your browser
+          </p>
+        </CardFooter>
+      </Card>
+
+      {/* Toggle Button */}
+      <Button
+        variant="outline"
+        ref={toggleRef}
+        onClick={toggleSidebar}
+        className={cn(
+          "fixed top-1/2 -translate-y-1/2 z-102",
+          "w-6 h-16 rounded-r-lg rounded-l-none",
+          "bg-background/90 backdrop-blur-sm",
+          "border-l-0 border-border/50",
+          "shadow-lg shadow-black/10",
+          "flex items-center justify-center",
+          "hover:bg-muted/80 hover:w-7",
+          "transition-all duration-300 ease-out",
+          "group",
+          isSavedHistorySidebarOpen ? "left-80" : "left-0",
         )}
-      </CardContent>
-    </Card>
+        aria-label={isSavedHistorySidebarOpen ? "Close history" : "Open history"}
+      >
+        {isSavedHistorySidebarOpen ? (
+          <ChevronLeft className="size-6 text-muted-foreground group-hover:text-foreground transition-colors" />
+        ) : (
+          <ChevronRight className="size-6 text-muted-foreground group-hover:text-foreground transition-colors" />
+        )}
+      </Button>
+
+      {/* Overlay for mobile */}
+      {isSavedHistorySidebarOpen && (
+        <div
+          className="fixed inset-0 z-100 bg-black/20 backdrop-blur-sm sm:hidden rounded-tl-none rounded-bl-none"
+          onClick={closeSidebar}
+          aria-hidden="true"
+        />
+      )}
+    </>
   );
 };
 

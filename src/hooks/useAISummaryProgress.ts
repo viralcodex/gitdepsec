@@ -38,20 +38,14 @@ export const useAISummaryProgress = (props: UseAISummaryProgressProps) => {
 
       const updateProgress = () => {
         setProgress((prevProgress) => {
-          if (prevProgress <= 30)
-            return Math.min(prevProgress + getRandomValueInRange(15, 20), 90);
-          if (prevProgress <= 60)
-            return Math.min(prevProgress + getRandomValueInRange(5, 10), 90);
-          if (prevProgress < 90)
-            return Math.min(prevProgress + getRandomValueInRange(3, 7), 90);
+          if (prevProgress <= 30) return Math.min(prevProgress + getRandomValueInRange(15, 20), 90);
+          if (prevProgress <= 60) return Math.min(prevProgress + getRandomValueInRange(5, 10), 90);
+          if (prevProgress < 90) return Math.min(prevProgress + getRandomValueInRange(3, 7), 90);
           return prevProgress;
         });
       };
 
-      const interval = setInterval(
-        updateProgress,
-        getRandomValueInRange(1000, 2000),
-      );
+      const interval = setInterval(updateProgress, getRandomValueInRange(1000, 2000));
 
       return () => {
         clearInterval(interval);
@@ -100,12 +94,7 @@ export const useAISummaryProgress = (props: UseAISummaryProgressProps) => {
 
   //cycle messages after reaching 90% progress (when generation taking longer than 2 second)
   useEffect(() => {
-    if (
-      progress >= 90 &&
-      !finalised &&
-      timeElapsed >= 2000 &&
-      !cyclingStarted.current
-    ) {
+    if (progress >= 90 && !finalised && timeElapsed >= 2000 && !cyclingStarted.current) {
       cyclingStarted.current = true;
       setMessage(PROGRESS_MESSAGES[count.current % PROGRESS_MESSAGES.length]);
       count.current++;
@@ -120,15 +109,7 @@ export const useAISummaryProgress = (props: UseAISummaryProgressProps) => {
         intervalRef.current = undefined;
       }
     };
-  }, [
-    progress,
-    timeElapsed,
-    finalised,
-    setMessage,
-    cyclingStarted,
-    count,
-    intervalRef,
-  ]);
+  }, [progress, timeElapsed, finalised, setMessage, cyclingStarted, count, intervalRef]);
 
   return {
     progress,

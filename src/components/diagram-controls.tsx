@@ -1,11 +1,5 @@
 import { Tooltip, TooltipTrigger, TooltipContent } from "./ui/tooltip";
-import {
-  PlusIcon,
-  MinusIcon,
-  RefreshCw,
-  Minimize,
-  Maximize,
-} from "lucide-react";
+import { PlusIcon, MinusIcon, RefreshCw, Minimize, Maximize } from "lucide-react";
 import React from "react";
 import { Button } from "./ui/button";
 
@@ -86,9 +80,7 @@ const DiagramControls = (props: DiagramControlsProps) => {
                   setIsDiagramExpanded(!isDiagramExpanded);
                 }
               }}
-              aria-label={
-                isDiagramExpanded ? "Collapse diagram" : "Expand diagram"
-              }
+              aria-label={isDiagramExpanded ? "Collapse diagram" : "Expand diagram"}
               aria-expanded={isDiagramExpanded}
             >
               {isDiagramExpanded ? (
@@ -98,9 +90,7 @@ const DiagramControls = (props: DiagramControlsProps) => {
               )}
             </Button>
           </TooltipTrigger>
-          <TooltipContent>
-            {isDiagramExpanded ? "Collapse" : "Expand"}
-          </TooltipContent>
+          <TooltipContent>{isDiagramExpanded ? "Collapse" : "Expand"}</TooltipContent>
         </Tooltip>
       </div>
     </nav>

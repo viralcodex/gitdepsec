@@ -11,11 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useErrorState, useRepoState } from "@/store/app-store";
 
 interface DropdownProps {
@@ -37,14 +33,8 @@ export function Dropdown({
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [shouldOpen, setShouldOpen] = useState(false);
-  const {
-    branches,
-    selectedBranch,
-    loadingBranches,
-    hasMore,
-    loadNextPage,
-    setSelectedBranch,
-  } = useRepoState();
+  const { branches, selectedBranch, loadingBranches, hasMore, loadNextPage, setSelectedBranch } =
+    useRepoState();
   const { setError } = useErrorState();
 
   // Effect to determine if the dropdown should open
@@ -91,26 +81,17 @@ export function Dropdown({
     <Popover open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button
-          aria-label={
-            isBranchDropdown
-              ? "Select Branch Dropdown"
-              : "Select Ecosystem Dropdown"
-          }
+          aria-label={isBranchDropdown ? "Select Branch Dropdown" : "Select Ecosystem Dropdown"}
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          disabled={
-            isBranchDropdown ? loadingBranches || !shouldOpen : !shouldOpen
-          }
+          disabled={isBranchDropdown ? loadingBranches || !shouldOpen : !shouldOpen}
           className={cn(
             "sm:h-[56px] text-md w-full text-input justify-between overflow-y-hidden overflow-x-scroll scrollbar-background-hidden border-[3px] border-black px-3 sm:px-4 transition-transform hover:text-secondary-foreground hover:bg-gray-300 max-sm:w-full group",
-            isBranchDropdown &&
-              (!branches || branches.length === 0 || !shouldShowBranches)
+            isBranchDropdown && (!branches || branches.length === 0 || !shouldShowBranches)
               ? "opacity-60 cursor-not-allowed"
               : "",
-            !isBranchDropdown && !ecosystems.length
-              ? "opacity-60 cursor-not-allowed"
-              : "",
+            !isBranchDropdown && !ecosystems.length ? "opacity-60 cursor-not-allowed" : "",
             className,
           )}
         >
@@ -124,15 +105,11 @@ export function Dropdown({
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        className={cn("p-0 border-black border-[3px]", className)}
-      >
+      <PopoverContent className={cn("p-0 border-black border-[3px]", className)}>
         <Command className="max-h-[400px] rounded-md">
           {!ecosystems && (
             <CommandInput
-              placeholder={
-                isBranchDropdown ? "Search Branch..." : "Search Ecosystem..."
-              }
+              placeholder={isBranchDropdown ? "Search Branch..." : "Search Ecosystem..."}
               className="h-9"
             />
           )}
@@ -160,9 +137,7 @@ export function Dropdown({
                       <Check
                         className={cn(
                           "ml-auto",
-                          selectedBranch === branch
-                            ? "opacity-100"
-                            : "opacity-0",
+                          selectedBranch === branch ? "opacity-100" : "opacity-0",
                         )}
                       />
                     </CommandItem>
@@ -196,9 +171,7 @@ export function Dropdown({
                     <Check
                       className={cn(
                         "ml-auto",
-                        selectedEcosystem === ecosystem
-                          ? "opacity-100"
-                          : "opacity-0",
+                        selectedEcosystem === ecosystem ? "opacity-100" : "opacity-0",
                       )}
                     />
                   </CommandItem>

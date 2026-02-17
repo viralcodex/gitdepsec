@@ -23,9 +23,7 @@ const useFileData = (file: File) => {
     const fileName = file.name;
     if (
       !fileName ||
-      !Object.keys(MANIFEST_FILES).some(
-        (f) => MANIFEST_FILES[f].file === fileName,
-      )
+      !Object.keys(MANIFEST_FILES).some((f) => MANIFEST_FILES[f].file === fileName)
     ) {
       setFileError("Invalid manifest file type");
       return;

@@ -1,29 +1,29 @@
-import cors from 'cors';
-import express, { Request, Response } from 'express';
-import helmet from 'helmet';
-import morgan from 'morgan';
-import multer from 'multer';
+import cors from "cors";
+import express, { Request, Response } from "express";
+import helmet from "helmet";
+import morgan from "morgan";
+import multer from "multer";
 
-import { config, isProduction, origin } from './config/env';
-import AgentsService from './service/agents_service';
-import AiService from './service/ai_service';
-import AnalysisService from './service/analysis_service';
-import GithubService from './service/github_service';
-import ProgressService from './service/progress_service';
+import { config, isProduction, origin } from "./config/env";
+import AgentsService from "./service/agents_service";
+import AiService from "./service/ai_service";
+import AnalysisService from "./service/analysis_service";
+import GithubService from "./service/github_service";
+import ProgressService from "./service/progress_service";
 import {
   cachedAnalysis,
   deleteCachedAnalysis,
   getCachedFileDetails,
   insertFileCache,
   upsertAnalysis,
-} from './utils/cache';
+} from "./utils/cache";
 import {
   analysisRateLimiter,
   aiRateLimiter,
   generalRateLimiter,
   inlineAiRateLimiter,
   fixPlanRateLimiter,
-} from './utils/rate_limits';
+} from "./utils/rate_limits";
 import {
   decryptCredentials,
   getAiService,
@@ -31,11 +31,8 @@ import {
   sanitize,
   sanitizeFileName,
   userCredentialsStore,
-} from './utils/utils';
-import {
-  validateAndReturnAnalysisCache,
-  validateFile,
-} from './utils/validations';
+} from "./utils/utils";
+import { validateAndReturnAnalysisCache, validateFile } from "./utils/validations";
 
 const app = express();
 const PORT = config.port || 8080;
@@ -62,7 +59,7 @@ if (isProduction) {
           defaultSrc: ["'self'"],
           styleSrc: ["'self'", "'unsafe-inline'"],
           scriptSrc: ["'self'"],
-          imgSrc: ["'self'", 'data:', 'https:'],
+          imgSrc: ["'self'", "data:", "https:"],
         },
       },
       hsts: {
@@ -84,46 +81,41 @@ if (isProduction) {
 app.use(
   cors({
     origin: origin,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-OpenRouter-Key',
-      'X-OpenRouter-Model',
-    ],
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-OpenRouter-Key", "X-OpenRouter-Model"],
   }),
 );
 
 if (isProduction) {
   app.use(
-    morgan('combined', {
+    morgan("combined", {
       skip: (_, res: Response) => res.statusCode < 400,
     }),
   );
 } else {
-  app.use(morgan('dev'));
+  app.use(morgan("dev"));
 }
 
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
 if (isProduction) {
-  app.set('trust proxy', 1);
+  app.set("trust proxy", 1);
 }
 
 app.use(generalRateLimiter);
 
-app.get('/', (req, res) => {
+app.get("/", (req, res) => {
   res.json({
-    response: 'GitVulSafe backend is running!',
+    response: "GitVulSafe backend is running!",
     environment: config.nodeEnv,
     timestamp: new Date().toISOString(),
   });
 });
 
-app.get('/health', (req: Request, res: Response) => {
+app.get("/health", (req: Request, res: Response) => {
   res.json({
-    status: 'ok',
+    status: "ok",
     environment: config.nodeEnv,
     uptime: process.uptime(),
     timestamp: new Date().toISOString(),
@@ -132,12 +124,12 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // Endpoint to set user credentials for session
-app.post('/setCredentials', (req: Request, res: Response) => {
+app.post("/setCredentials", (req: Request, res: Response) => {
   try {
     const { sessionId, apiKey, model, encrypted } = req.body;
 
     if (!sessionId) {
-      return res.status(400).json({ error: 'Session ID is required' });
+      return res.status(400).json({ error: "Session ID is required" });
     }
 
     // Decrypt credentials if they were encrypted
@@ -158,39 +150,39 @@ app.post('/setCredentials', (req: Request, res: Response) => {
     });
 
     console.log(`Stored encrypted credentials for session: ${sessionId}`);
-    res.json({ success: true, message: 'Credentials stored successfully' });
+    res.json({ success: true, message: "Credentials stored successfully" });
   } catch (error) {
-    console.error('Error storing credentials:', error);
-    res.status(500).json({ error: 'Failed to store credentials' });
+    console.error("Error storing credentials:", error);
+    res.status(500).json({ error: "Failed to store credentials" });
   }
 });
 
 // Endpoint to clear user credentials for session
-app.post('/clearCredentials', (req: Request, res: Response) => {
+app.post("/clearCredentials", (req: Request, res: Response) => {
   try {
     const { sessionId } = req.body;
 
     if (!sessionId) {
-      return res.status(400).json({ error: 'Session ID is required' });
+      return res.status(400).json({ error: "Session ID is required" });
     }
 
     userCredentialsStore.delete(sessionId);
     console.log(`Cleared credentials for session: ${sessionId}`);
-    res.json({ success: true, message: 'Credentials cleared successfully' });
+    res.json({ success: true, message: "Credentials cleared successfully" });
   } catch (error) {
-    console.error('Error clearing credentials:', error);
-    res.status(500).json({ error: 'Failed to clear credentials' });
+    console.error("Error clearing credentials:", error);
+    res.status(500).json({ error: "Failed to clear credentials" });
   }
 });
 
-app.post('/branches', (req: Request, res: Response) => {
+app.post("/branches", (req: Request, res: Response) => {
   (async () => {
     const { username, repo, github_pat, page, pageSize } = req.body;
 
     // Enhanced input validation
     if (!username || !repo) {
       return res.status(400).json({
-        error: 'Username and repo are required',
+        error: "Username and repo are required",
         timestamp: new Date().toISOString(),
       });
     }
@@ -199,7 +191,7 @@ app.post('/branches', (req: Request, res: Response) => {
     const sanitizedUsername = String(sanitizedData.username);
     const sanitizedRepo = String(sanitizedData.repo);
 
-    console.log('Received branches request:', {
+    console.log("Received branches request:", {
       username: sanitizedUsername,
       repo: sanitizedRepo,
       hasToken: !!github_pat,
@@ -220,262 +212,242 @@ app.post('/branches', (req: Request, res: Response) => {
         total: data.total,
       });
     } catch (error) {
-      console.error('Error fetching branches:', error);
+      console.error("Error fetching branches:", error);
 
       // Enhanced error logging for production
       if (isProduction) {
-        console.error('Branches API Error:', {
+        console.error("Branches API Error:", {
           timestamp: new Date().toISOString(),
-          endpoint: '/branches',
+          endpoint: "/branches",
           username,
           repo,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : "Unknown error",
         });
       }
 
-      res.status(500).json({ error: 'Failed to fetch branches' });
+      res.status(500).json({ error: "Failed to fetch branches" });
     }
   })().catch((err) => {
-    console.error('Unhandled error in /branches:', err);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Unhandled error in /branches:", err);
+    res.status(500).json({ error: "Internal server error" });
   });
 });
 
-app.post(
-  '/analyseDependencies',
-  analysisRateLimiter,
-  (req: Request, res: Response) => {
-    (async () => {
-      const { username, repo, branch, github_pat, forceRefresh } = req.body;
+app.post("/analyseDependencies", analysisRateLimiter, (req: Request, res: Response) => {
+  (async () => {
+    const { username, repo, branch, github_pat, forceRefresh } = req.body;
 
-      // Input validation
-      if (!username || !repo || !branch) {
-        return res
-          .status(400)
-          .json({ error: 'Username, repo, and branch are required' });
-      }
+    // Input validation
+    if (!username || !repo || !branch) {
+      return res.status(400).json({ error: "Username, repo, and branch are required" });
+    }
 
-      if (forceRefresh !== undefined && typeof forceRefresh !== 'boolean') {
-        return res.status(400).json({
-          error: 'Invalid forceRefresh parameter. Expected boolean.',
+    if (forceRefresh !== undefined && typeof forceRefresh !== "boolean") {
+      return res.status(400).json({
+        error: "Invalid forceRefresh parameter. Expected boolean.",
+      });
+    }
+
+    console.log("Received analyseDependencies request:", {
+      username,
+      repo,
+      branch,
+      forceRefresh: !!forceRefresh,
+    });
+
+    if (!forceRefresh) {
+      const response = await cachedAnalysis(username, repo, branch, res);
+      if (response) {
+        console.log("Returning cached analysis for:", {
+          username,
+          repo,
+          branch,
         });
+        return response;
       }
-
-      console.log('Received analyseDependencies request:', {
+    } else {
+      // Log force refresh requests for monitoring
+      console.log("Force refresh requested - bypassing cache:", {
         username,
         repo,
         branch,
-        forceRefresh: !!forceRefresh,
-      });
-
-      if (!forceRefresh) {
-        const response = await cachedAnalysis(username, repo, branch, res);
-        if (response) {
-          console.log('Returning cached analysis for:', {
-            username,
-            repo,
-            branch,
-          });
-          return response;
-        }
-      } else {
-        // Log force refresh requests for monitoring
-        console.log('Force refresh requested - bypassing cache:', {
-          username,
-          repo,
-          branch,
-          timestamp: new Date().toISOString(),
-        });
-        await deleteCachedAnalysis(username, repo, branch);
-      }
-
-      const analysisService = getAnalysisService(github_pat);
-
-      try {
-        const analysisResults = await analysisService.analyseDependencies(
-          username,
-          repo,
-          branch,
-        );
-        // console.log("Analysis Results:", analysisResults);
-
-        // Try to get branches for this repo/branch from cache, else fetch from GitHub
-
-        const branchData = await githubService.getBranches(username, repo);
-        await upsertAnalysis({
-          username,
-          repo,
-          branch,
-          data: analysisResults,
-          branches: branchData.branches,
-        });
-        res.json(analysisResults);
-      } catch (error) {
-        console.error('Error analysing dependencies:', error);
-        await deleteCachedAnalysis(username, repo, branch);
-        res.status(500).json({ error: 'Failed to analyse dependencies' });
-      }
-    })().catch((err) => {
-      console.error('Unhandled error in /analyseDependencies:', err);
-      res.status(500).json({ error: 'Internal server error' });
-    });
-  },
-);
-
-app.post(
-  '/uploadFile',
-  upload.single('file'),
-  (req: Request, res: Response) => {
-    (async () => {
-      const file = req.file;
-      console.log('Received file upload request:', file?.originalname);
-
-      if (!file) {
-        return res.status(400).json({
-          error: 'No file uploaded',
-          timestamp: new Date().toISOString(),
-        });
-      }
-
-      validateFile(file, res); // Enhanced validation
-      console.log('File uploaded:', file.originalname);
-
-      await insertFileCache({
-        name: sanitizeFileName(file.originalname),
-        content: file.buffer.toString('utf-8'),
-      });
-
-      res.json({
-        message: 'File uploaded successfully',
-        filename: file.originalname,
-      });
-    })().catch((error) => {
-      console.error('Error uploading file:', error);
-
-      if (isProduction) {
-        console.error('File upload error:', {
-          timestamp: new Date().toISOString(),
-          endpoint: '/uploadFile',
-          error: error instanceof Error ? error.message : 'Unknown error',
-        });
-      }
-
-      res.status(500).json({
-        error: 'Failed to upload file',
         timestamp: new Date().toISOString(),
       });
-    });
-  },
-);
+      await deleteCachedAnalysis(username, repo, branch);
+    }
 
-app.post('/analyseFile', analysisRateLimiter, (req: Request, res: Response) => {
+    const analysisService = getAnalysisService(github_pat);
+
+    try {
+      const analysisResults = await analysisService.analyseDependencies(username, repo, branch);
+      // console.log("Analysis Results:", analysisResults);
+
+      // Try to get branches for this repo/branch from cache, else fetch from GitHub
+
+      const branchData = await githubService.getBranches(username, repo);
+      await upsertAnalysis({
+        username,
+        repo,
+        branch,
+        data: analysisResults,
+        branches: branchData.branches,
+      });
+      res.json(analysisResults);
+    } catch (error) {
+      console.error("Error analysing dependencies:", error);
+      await deleteCachedAnalysis(username, repo, branch);
+      res.status(500).json({ error: "Failed to analyse dependencies" });
+    }
+  })().catch((err) => {
+    console.error("Unhandled error in /analyseDependencies:", err);
+    res.status(500).json({ error: "Internal server error" });
+  });
+});
+
+app.post("/uploadFile", upload.single("file"), (req: Request, res: Response) => {
+  (async () => {
+    const file = req.file;
+    console.log("Received file upload request:", file?.originalname);
+
+    if (!file) {
+      return res.status(400).json({
+        error: "No file uploaded",
+        timestamp: new Date().toISOString(),
+      });
+    }
+
+    validateFile(file, res); // Enhanced validation
+    console.log("File uploaded:", file.originalname);
+
+    await insertFileCache({
+      name: sanitizeFileName(file.originalname),
+      content: file.buffer.toString("utf-8"),
+    });
+
+    res.json({
+      message: "File uploaded successfully",
+      filename: file.originalname,
+    });
+  })().catch((error) => {
+    console.error("Error uploading file:", error);
+
+    if (isProduction) {
+      console.error("File upload error:", {
+        timestamp: new Date().toISOString(),
+        endpoint: "/uploadFile",
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
+
+    res.status(500).json({
+      error: "Failed to upload file",
+      timestamp: new Date().toISOString(),
+    });
+  });
+});
+
+app.post("/analyseFile", analysisRateLimiter, (req: Request, res: Response) => {
   (async () => {
     const { file } = req.body;
     if (!file) {
-      return res.status(400).json({ error: 'No file provided' });
+      return res.status(400).json({ error: "No file provided" });
     }
-    console.log('Received analyseFile request for file:', file);
+    console.log("Received analyseFile request for file:", file);
     const analysisService = getAnalysisService();
     const cachedFileDetails = await getCachedFileDetails(file);
     try {
-      const analysisResults =
-        await analysisService.analyseFile(cachedFileDetails);
+      const analysisResults = await analysisService.analyseFile(cachedFileDetails);
 
       res.json(analysisResults);
     } catch (error) {
-      console.error('Error analysing file:', error);
-      res.status(500).json({ error: 'Failed to analyse file' });
+      console.error("Error analysing file:", error);
+      res.status(500).json({ error: "Failed to analyse file" });
     }
   })().catch((error) => {
-    console.error('Unhandled error in /analyseFile:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Unhandled error in /analyseFile:", error);
+    res.status(500).json({ error: "Internal server error" });
   });
 });
 
-app.post('/aiVulnSummary', aiRateLimiter, (req: Request, res: Response) => {
+app.post("/aiVulnSummary", aiRateLimiter, (req: Request, res: Response) => {
   (async () => {
     const { vulnerabilities, sessionId } = req.body;
-    if (!vulnerabilities || vulnerabilities.vulnerabilities.length === 0) {
-      return res.status(400).json({ error: 'No vulnerabilities provided' });
+    if (!vulnerabilities || !vulnerabilities.vulnerabilities || vulnerabilities.vulnerabilities.length === 0) {
+      return res.status(400).json({ error: "No vulnerabilities provided" });
     }
-    console.log(
-      'Received aiVUlnSummary request with vulnerabilities:',
-      vulnerabilities,
-    );
+    console.log("Received aiVulnSummary request for:", vulnerabilities.name, "@", vulnerabilities.version);
     try {
       // Get credentials from session store
       const { apiKey, model } = getSessionCredentials(sessionId);
+      console.log("Using credentials - apiKey:", apiKey ? "provided" : "default", "model:", model || "default");
       const service = getAiService(aiService, model, apiKey);
-      const summary =
-        await service.generateVulnerabilitySummary(vulnerabilities);
+      // Pass only the vulnerabilities array to the service
+      console.log("Calling generateVulnerabilitySummary...");
+      const summary = await service.generateVulnerabilitySummary(vulnerabilities.vulnerabilities);
+      console.log("Got summary response, sending to client...");
       res.json(summary);
+      console.log("Response sent successfully");
     } catch (error) {
-      console.error('Error generating vulnerability summary:', error);
-      res
-        .status(500)
-        .json({ error: 'Failed to generate vulnerability summary' });
+      console.error("Error generating vulnerability summary:", error);
+      res.status(500).json({ error: "Failed to generate vulnerability summary", details: error instanceof Error ? error.message : String(error) });
     }
   })().catch((error) => {
-    console.error('Unhandled error in /aiVUlnSummary:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Unhandled error in /aiVulnSummary:", error);
+    res.status(500).json({ error: "Internal server error" });
   });
 });
 
-app.post('/inlineai', inlineAiRateLimiter, (req: Request, res: Response) => {
+app.post("/inlineai", inlineAiRateLimiter, (req: Request, res: Response) => {
   (async () => {
     const { prompt, context, selectedText, sessionId } = req.body;
     if (!selectedText || !prompt || !context) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: "Missing required fields" });
     }
-    console.log('Received inlineai request with text:', selectedText);
+    console.log("Received inlineai request with text:", selectedText);
     try {
       // Get credentials from session store
       const { apiKey, model } = getSessionCredentials(sessionId);
       const service = getAiService(aiService, model, apiKey);
-      const response = await service.generateInlineResponse(
-        prompt,
-        context,
-        selectedText,
-      );
+      const response = await service.generateInlineResponse(prompt, context, selectedText);
       res.json({ response });
     } catch (error) {
-      console.error('Error generating inline response:', error);
-      res.status(500).json({ error: 'Failed to generate inline response' });
+      console.error("Error generating inline response:", error);
+      res.status(500).json({ error: "Failed to generate inline response" });
     }
   })().catch((error) => {
-    console.error('Unhandled error in /inlineai:', error);
-    res.status(500).json({ error: 'Internal server error' });
+    console.error("Unhandled error in /inlineai:", error);
+    res.status(500).json({ error: "Internal server error" });
   });
 });
 
-app.get('/fixPlan', fixPlanRateLimiter, (req: Request, res: Response) => {
+app.get("/fixPlan", fixPlanRateLimiter, (req: Request, res: Response) => {
   (async () => {
     const { username, repo, branch, sessionId } = req.query;
 
     if (!username || !repo || !branch) {
-      return res.status(400).json({ error: 'Missing required fields' });
+      return res.status(400).json({ error: "Missing required fields" });
     }
 
-    console.log('Received fixPlan request for:', { username, repo, branch });
+    console.log("Received fixPlan request for:", { username, repo, branch });
 
     res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Cache-Control',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'X-Accel-Buffering': 'no',
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Headers": "Cache-Control",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "X-Accel-Buffering": "no",
     });
 
     // Send initial connection confirmation
     res.write(
-      `data: ${JSON.stringify({ type: 'connection', message: 'Connected to fix plan generator' })}\n\n`,
+      `data: ${JSON.stringify({ type: "connection", message: "Connected to fix plan generator" })}\n\n`,
     );
 
     // Set a timeout to prevent hanging connections
     let timeoutHandle = setTimeout(() => {
-      res.write(`data: ${JSON.stringify({ error: 'Request timeout' })}\n\n`);
+      res.write(`data: ${JSON.stringify({ error: "Request timeout" })}\n\n`);
       res.end();
     }, 600000);
 
@@ -483,19 +455,19 @@ app.get('/fixPlan', fixPlanRateLimiter, (req: Request, res: Response) => {
     const resetTimeout = () => {
       clearTimeout(timeoutHandle);
       timeoutHandle = setTimeout(() => {
-        res.write(`data: ${JSON.stringify({ error: 'Request timeout' })}\n\n`);
+        res.write(`data: ${JSON.stringify({ error: "Request timeout" })}\n\n`);
         res.end();
       }, 600000);
     };
 
-    req.on('close', () => {
-      console.log('Connection closed by client');
+    req.on("close", () => {
+      console.log("Connection closed by client");
       clearTimeout(timeoutHandle);
       res.end();
     });
 
-    req.on('error', () => {
-      console.log('Connection error');
+    req.on("error", () => {
+      console.log("Connection error");
       clearTimeout(timeoutHandle);
       res.end();
     });
@@ -507,18 +479,23 @@ app.get('/fixPlan', fixPlanRateLimiter, (req: Request, res: Response) => {
         String(branch),
         res,
       );
+
+      // Check if validation failed (empty data means res.end() was already called)
+      if (!data || !data.dependencies || Object.keys(data.dependencies).length === 0) {
+        clearTimeout(timeoutHandle);
+        return;
+      }
+
       // SSE Steps - init
       res.write(
         `data: ${JSON.stringify({
-          progress: 'Initializing fix plan generation...',
-          step: 'init',
+          progress: "Initializing fix plan generation...",
+          step: "init",
         })}\n\n`,
       );
 
       // Get credentials from session store
-      const { apiKey, model } = getSessionCredentials(
-        sessionId ? String(sessionId) : undefined,
-      );
+      const { apiKey, model } = getSessionCredentials(sessionId ? String(sessionId) : undefined);
       const agentsService = new AgentsService(data, model, apiKey); //initial service with stored analysis data
 
       const progressCallback = (
@@ -542,14 +519,13 @@ app.get('/fixPlan', fixPlanRateLimiter, (req: Request, res: Response) => {
         res.flushHeaders();
       };
 
-      const response =
-        await agentsService.generateEcosystemFixPlans(progressCallback);
+      const response = await agentsService.generateEcosystemFixPlans(progressCallback);
 
       // Send unified fix plan with correct step for frontend
       res.write(
         `data: ${JSON.stringify({
-          step: 'global_planning_complete',
-          progress: 'Fix plan generation completed!',
+          step: "global_planning_complete",
+          progress: "Fix plan generation completed!",
           data: {
             globalFixPlan: response,
           },
@@ -561,47 +537,47 @@ app.get('/fixPlan', fixPlanRateLimiter, (req: Request, res: Response) => {
       clearTimeout(timeoutHandle);
       res.end();
     } catch (error) {
-      console.error('Error generating fix plan:', error);
+      console.error("Error generating fix plan:", error);
       clearTimeout(timeoutHandle);
       res.write(
         `data: ${JSON.stringify({
-          step: 'global_planning_error',
-          error: 'Failed to generate fix plan',
-          details: error instanceof Error ? error.message : 'Unknown error',
-          phase: 'error',
+          step: "global_planning_error",
+          error: "Failed to generate fix plan",
+          details: error instanceof Error ? error.message : "Unknown error",
+          phase: "error",
         })}\n\n`,
       );
       res.end();
     }
   })().catch((error) => {
-    console.error('Unhandled error in /fixPlan:', error);
+    console.error("Unhandled error in /fixPlan:", error);
     res.write(
       `data: ${JSON.stringify({
-        error: 'Internal server error',
+        error: "Internal server error",
       })}\n\n`,
     );
     res.end();
   });
 });
 
-app.get('/progress', (req: Request, res: Response) => {
+app.get("/progress", (req: Request, res: Response) => {
   res.writeHead(200, {
-    'Content-Type': 'text/event-stream',
-    'Cache-Control': 'no-cache',
-    Connection: 'keep-alive',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Headers': 'Cache-Control',
-    'Access-Control-Allow-Methods': 'GET, OPTIONS',
-    'X-Accel-Buffering': 'no',
+    "Content-Type": "text/event-stream",
+    "Cache-Control": "no-cache",
+    Connection: "keep-alive",
+    "Access-Control-Allow-Origin": "*",
+    "Access-Control-Allow-Headers": "Cache-Control",
+    "Access-Control-Allow-Methods": "GET, OPTIONS",
+    "X-Accel-Buffering": "no",
   });
 
-  console.log('New progress connection established');
+  console.log("New progress connection established");
 
   // Send initial connection confirmation
   res.write(
     `data: ${JSON.stringify({
-      type: 'connection',
-      message: 'Connected to progress updates',
+      type: "connection",
+      message: "Connected to progress updates",
       timestamp: new Date().toISOString(),
     })}\n\n`,
   );
@@ -618,25 +594,23 @@ app.get('/progress', (req: Request, res: Response) => {
           })}\n\n`,
         );
       } catch (error) {
-        console.error('Error writing progress update:', error);
+        console.error("Error writing progress update:", error);
       }
     }
   };
 
   // Add callback to global service
   progressService.addCallback(progressCallback);
-  console.log(
-    `Progress callback added. Total callbacks: ${progressService.getCallBackCount()}`,
-  );
+  console.log(`Progress callback added. Total callbacks: ${progressService.getCallBackCount()}`);
 
   // Set a timeout to prevent hanging connections
   const timeout = setTimeout(() => {
     if (!res.destroyed && !res.writableEnded) {
-      console.log('Progress connection timeout');
+      console.log("Progress connection timeout");
       res.write(
         `data: ${JSON.stringify({
-          type: 'timeout',
-          message: 'Connection timeout',
+          type: "timeout",
+          message: "Connection timeout",
           timestamp: new Date().toISOString(),
         })}\n\n`,
       );
@@ -650,12 +624,12 @@ app.get('/progress', (req: Request, res: Response) => {
       try {
         res.write(
           `data: ${JSON.stringify({
-            type: 'heartbeat',
+            type: "heartbeat",
             timestamp: new Date().toISOString(),
           })}\n\n`,
         );
       } catch {
-        console.log('Heartbeat failed, connection likely broken');
+        console.log("Heartbeat failed, connection likely broken");
         clearInterval(heartbeat);
       }
     } else {
@@ -663,8 +637,8 @@ app.get('/progress', (req: Request, res: Response) => {
     }
   }, 30000); // Every 30 seconds
 
-  req.on('close', () => {
-    console.log('Progress connection closed by client');
+  req.on("close", () => {
+    console.log("Progress connection closed by client");
     progressService.removeCallback(progressCallback);
     console.log(
       `Progress callback removed. Remaining callbacks: ${progressService.getCallBackCount()}`,
@@ -674,7 +648,7 @@ app.get('/progress', (req: Request, res: Response) => {
 
     // Only reset if no more active connections
     if (progressService.getCallBackCount() === 0) {
-      console.log('No more active connections, resetting progress service');
+      console.log("No more active connections, resetting progress service");
       progressService.reset();
     }
 
@@ -683,16 +657,14 @@ app.get('/progress', (req: Request, res: Response) => {
     }
   });
 
-  req.on('error', (error: Error & { code?: string }) => {
+  req.on("error", (error: Error & { code?: string }) => {
     // Handle different types of connection errors more gracefully
-    if (error.code === 'ECONNRESET') {
-      console.log(
-        'Progress connection reset by client (normal browser close/navigation)',
-      );
-    } else if (error.code === 'EPIPE') {
-      console.log('Progress connection broken pipe (client disconnected)');
+    if (error.code === "ECONNRESET") {
+      console.log("Progress connection reset by client (normal browser close/navigation)");
+    } else if (error.code === "EPIPE") {
+      console.log("Progress connection broken pipe (client disconnected)");
     } else {
-      console.log('Progress connection error:', error.message ?? error);
+      console.log("Progress connection error:", error.message ?? error);
     }
 
     progressService.removeCallback(progressCallback);
@@ -711,11 +683,11 @@ app.get('/progress', (req: Request, res: Response) => {
 });
 
 app.use((err: Error, req: Request, res: Response) => {
-  console.error('Unhandled error:', err);
+  console.error("Unhandled error:", err);
 
   if (isProduction) {
     res.status(500).json({
-      error: 'Internal server error',
+      error: "Internal server error",
       timestamp: new Date().toISOString(),
     });
   } else {
@@ -729,24 +701,24 @@ app.use((err: Error, req: Request, res: Response) => {
 
 app.use((req: Request, res: Response) => {
   res.status(404).json({
-    error: 'Route not found',
+    error: "Route not found",
     path: req.originalUrl,
     method: req.method,
     timestamp: new Date().toISOString(),
   });
 });
 
-process.on('SIGINT', () => {
-  console.log('Shutting down...');
+process.on("SIGINT", () => {
+  console.log("Shutting down...");
   server.close(() => {
-    console.log('Server closed.');
+    console.log("Server closed.");
     process.exit(0);
   });
 });
-process.on('SIGTERM', () => {
-  console.log('Shutting down...');
+process.on("SIGTERM", () => {
+  console.log("Shutting down...");
   server.close(() => {
-    console.log('Server closed.');
+    console.log("Server closed.");
     process.exit(0);
   });
 });
@@ -756,11 +728,9 @@ const server = app.listen(PORT, () => {
   console.log(`Environment: ${config.nodeEnv}`);
   console.log(`Server running on http://localhost:${PORT}`);
   console.log(
-    `Security: ${isProduction ? 'Production mode (strict)' : 'Development mode (permissive)'}`,
+    `Security: ${isProduction ? "Production mode (strict)" : "Development mode (permissive)"}`,
   );
-  console.log(
-    `Logging: ${isProduction ? 'Production (errors only)' : 'Development (verbose)'}`,
-  );
+  console.log(`Logging: ${isProduction ? "Production (errors only)" : "Development (verbose)"}`);
   console.log(`Started at: ${new Date().toISOString()}`);
 
   if (isProduction) {

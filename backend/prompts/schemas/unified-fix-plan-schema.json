@@ -71,10 +71,7 @@
     "dependency_intelligence": {
       "type": "object",
       "description": "Deep insights into dependency relationships, conflicts, and optimization opportunities",
-      "required": [
-        "shared_transitive_vulnerabilities",
-        "optimization_opportunities"
-      ],
+      "required": ["shared_transitive_vulnerabilities", "optimization_opportunities"],
       "properties": {
         "critical_paths": {
           "type": "array",
@@ -209,7 +206,7 @@
             "description": "List of packages to be fixed in this phase",
             "items": {
               "type": "string",
-              "pattern": "^[a-zA-Z0-9@/_-]+(@[0-9]+\\.[0-9]+\\.[0-9]+.*)?$"
+              "description": "use the format as package@version (e.g., lodash@4.17.21)"
             }
           },
           "fixes": {

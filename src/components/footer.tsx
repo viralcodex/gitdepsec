@@ -12,9 +12,7 @@ const Footer = () => {
           target="_blank"
           rel="noopener noreferrer"
         >
-          <span className="text-sm text-blue-500 hover:underline">
-            Aviral Shukla
-          </span>
+          <span className="text-sm text-blue-500 hover:underline">Aviral Shukla</span>
         </Link>
       </div>
     </footer>

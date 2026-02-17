@@ -18,9 +18,7 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
 
   const hasMultipleErrors = errorMsgs.length > 1;
   const badgeHeight =
-    errorClicked && hasMultipleErrors
-      ? `${Math.min(errorMsgs.length * 2.5 + 2, 12)}rem`
-      : "2rem";
+    errorClicked && hasMultipleErrors ? `${Math.min(errorMsgs.length * 2.5 + 2, 12)}rem` : "2rem";
 
   return (
     <button
@@ -47,9 +45,7 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
       <Badge
         className={cn(
           errorClicked ? "w-full gap-0 space-x-2" : "w-8 gap-0",
-          hasMultipleErrors && errorClicked
-            ? "flex-col items-start"
-            : "flex-row items-center",
+          hasMultipleErrors && errorClicked ? "flex-col items-start" : "flex-row",
           "flex bg-red-700 text-white justify-center border-white transition-all duration-500 ease-in-out py-2 shadow-[256px_256px_256px_rgba(0,0,0,0.5)]",
         )}
         style={{
@@ -59,7 +55,7 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
       >
         <div
           className={cn(
-            "flex flex-row justify-start items-center gap-x-2",
+            "flex flex-row justify-start gap-x-2",
             hasMultipleErrors && errorClicked && "w-full justify-start pb-2",
           )}
         >
@@ -88,14 +84,10 @@ const ErrorBadge = (props: ErrorBadgeProps) => {
                 key={idx}
                 className={cn(
                   "text-xs xl:text-sm block py-1 px-2",
-                  hasMultipleErrors &&
-                    errorClicked &&
-                    "border-l-2 border-red-400 mb-1 last:mb-0",
+                  hasMultipleErrors && errorClicked && "border-l-2 border-red-400 mb-1 last:mb-0",
                 )}
               >
-                {hasMultipleErrors && errorClicked && (
-                  <span className="mr-1">•</span>
-                )}
+                {hasMultipleErrors && errorClicked && <span className="mr-1">•</span>}
                 {error}
               </div>
             );

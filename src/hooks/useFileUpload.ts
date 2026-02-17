@@ -17,9 +17,7 @@ export const useFileUpload = () => {
       setUploaded(false);
       const result = verifyFile(inputFile, setError, setInputFile);
       if (!result) {
-        setError(
-          "Invalid file type. Please select a file of type .json, .yaml, .xml, .txt",
-        );
+        setError("Invalid file type. Please select a file of type .json, .yaml, .xml, .txt");
       } else {
         setError("");
         void uploadFile(inputFile)

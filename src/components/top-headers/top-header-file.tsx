@@ -59,9 +59,7 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
     <form
       onSubmit={handleSubmit}
       className={cn(
-        isDiagramExpanded
-          ? "hidden"
-          : "w-full flex flex-col items-center justify-center",
+        isDiagramExpanded ? "hidden" : "w-full flex flex-col items-center justify-center",
       )}
       aria-label="File analysis form"
     >

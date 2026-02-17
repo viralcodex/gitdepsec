@@ -44,9 +44,7 @@ const FixPlanProgress = ({
                   "w-7 h-7 rounded-full flex items-center justify-center border transition-all",
                   isCompleted && "bg-green-500 border-green-500",
                   isActive && "bg-primary border-primary animate-pulse",
-                  !isActive &&
-                    !isCompleted &&
-                    "bg-muted border-muted-foreground/20",
+                  !isActive && !isCompleted && "bg-muted border-muted-foreground/20",
                 )}
               >
                 {isCompleted ? (
@@ -74,9 +72,7 @@ const FixPlanProgress = ({
       {/* Progress Bar */}
       <div className="space-x-3 mx-[5%] flex flex-row items-center justify-between">
         <div className="flex justify-end items-center">
-          <span className="text-[10px] text-muted-foreground">
-            {Math.round(progress)}%
-          </span>
+          <span className="text-[10px] text-muted-foreground">{Math.round(progress)}%</span>
         </div>
         <Progress value={progress} className="h-1.5" />
       </div>

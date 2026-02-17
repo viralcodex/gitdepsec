@@ -161,12 +161,15 @@ export interface UnifiedFixPlan {
       risk?: string;
       resolution?: string;
       estimated_impact?: string;
+      cve_id?: string;
     }>;
     shared_transitive_vulnerabilities?: Array<{
       package?: string;
       used_by?: string[];
+      used_by_summary?: string;
       vulnerability_count?: number;
-      fix?: string;
+      vulnerability_ids?: string[];
+      vulnerability_summary?: string;
       impact_multiplier?: string;
     }>;
     version_conflicts?: Array<{
@@ -175,12 +178,12 @@ export interface UnifiedFixPlan {
       resolution?: string;
       risk_level?: string;
     }>;
-    optimization_opportunities?: string[]; // Required in backend schema
     smart_actions?: Array<{
       title?: string;
       description?: string;
       impact?: string;
       estimated_time?: string;
+      command?: string;
     }>;
   };
   priority_phases?: Array<{
@@ -378,4 +381,10 @@ export interface HistoryItem {
   dependencies: GroupedDependencies;
   branches: string[];
   cachedAt?: number;
+}
+
+export interface ParsedRisk {
+  severity: "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
+  cvss: string;
+  exploitAvailable: boolean;
 }

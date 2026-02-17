@@ -17,6 +17,7 @@ import {
   useFileState,
   useAppActions,
   useFixPlanData,
+  useRepoState,
 } from "@/store/app-store";
 import useFixPlanGeneration from "@/hooks/useFixPlanGeneration";
 import useFileUpload from "@/hooks/useFileUpload";
@@ -28,9 +29,7 @@ import dynamic from "next/dynamic";
 import DiagramProgress from "@/components/diagram-progress";
 
 //LAZY LOADING COMPONENTS
-const HistorySidebar = dynamic(
-  () => import("@/components/history-items/history-sidebar"),
-);
+const HistorySidebar = dynamic(() => import("@/components/history-items/history-sidebar"));
 const DepDiagram = dynamic(() => import("@/components/dependency-diagram"), {
   ssr: false,
   loading: () => <DiagramProgress />,
@@ -39,16 +38,13 @@ const DependencyDetailsCard = dynamic(
   () => import("@/components/dependency-sidebar/dependency-sidebar"),
   { ssr: true },
 );
-const FixPlanCard = dynamic(
-  () => import("@/components/fix-plan/fix-plan-card"),
-  { ssr: true },
-);
+const FixPlanCard = dynamic(() => import("@/components/fix-plan/fix-plan-card"), { ssr: true });
 
 const Page = () => {
   const params = useParams<{ username: string; repo: string }>();
   const username = params.username;
   const repo = params.repo;
-  const branch = useSearchParams().get("branch") || "";
+  const branchParam = useSearchParams().get("branch");
   const file = username?.includes("file_") ? decodeURIComponent(repo) : "";
 
   const [forceRefresh, setForceRefresh] = useState<boolean>(false);
@@ -61,15 +57,15 @@ const Page = () => {
   const { resetNavigationState } = useAppActions();
   const { error } = useErrorState();
   const { graphData, resetGraphState } = useGraphState();
-  const {
-    fileHeaderOpen,
-    isFixPlanDialogOpen,
-    setFileHeaderOpen,
-    setFixPlanDialogOpen,
-  } = useUIState();
-  const { selectedNode, setSelectedNode, resetDiagramState } =
-    useDiagramState();
+  const { fileHeaderOpen, isFixPlanDialogOpen, setFileHeaderOpen, setFixPlanDialogOpen } =
+    useUIState();
+  const { selectedNode, setSelectedNode, resetDiagramState } = useDiagramState();
   const { globalFixPlan, ecosystemFixPlans } = useFixPlanData();
+  const { defaultBranch } = useRepoState();
+
+  // Use defaultBranch from store when URL param is null
+  // Convert null to undefined to match hook parameter types
+  const branch = branchParam || defaultBranch || "";
 
   // Custom hooks
   const { generateFixPlan } = useFixPlanGeneration({ username, repo, branch });
@@ -78,20 +74,17 @@ const Page = () => {
   const { inputUrl, handleInputChange } = useUrlInput({
     username,
     repo,
-    branch,
   });
   useBranchSync({ branchParam: branch });
   useGraph(username, repo, branch, file, forceRefresh);
   useRepoData(inputUrl);
-  const [selectedEcosystem, setSelectedEcosystem] = useState<
-    string | undefined
-  >(graphData ? Object.keys(graphData)[0] : undefined);
+  const [selectedEcosystem, setSelectedEcosystem] = useState<string | undefined>(
+    graphData ? Object.keys(graphData)[0] : undefined,
+  );
 
   useEffect(() => {
     if (graphData && Object.keys(graphData).length > 0) {
-      setSelectedEcosystem((prev) =>
-        prev && graphData[prev] ? prev : Object.keys(graphData)[0],
-      );
+      setSelectedEcosystem((prev) => (prev && graphData[prev] ? prev : Object.keys(graphData)[0]));
     }
   }, [graphData]);
 
@@ -187,9 +180,7 @@ const Page = () => {
       )}
       <div
         className={
-          selectedNode && !isMobile
-            ? "w-[65%] flex flex-col items-center justify-center"
-            : "flex-1"
+          selectedNode && !isMobile ? "w-[65%] flex flex-col items-center justify-center" : "flex-1"
         }
       >
         <HistorySidebar addButtonRef={addButtonRef} />

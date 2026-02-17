@@ -4,21 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dropdown } from "@/components/ui/dropdown";
 import { Input } from "@/components/ui/input";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn, verifyUrl } from "@/lib/utils";
-import {
-  LucideArrowBigRight,
-  LucideLoader2,
-  RefreshCcwDot,
-} from "lucide-react";
+import { LucideArrowBigRight, LucideLoader2, RefreshCcwDot } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import HeaderToggle from "../header-toggle";
-import HeaderOptions from "../save-analysis-history";
+import SaveAnalysisHistory from "../save-analysis-history";
 import { ButtonGroup } from "../ui/button-group";
 import {
   useRepoState,
@@ -38,13 +30,7 @@ interface TopHeaderProps {
 }
 
 const TopHeaderGithub = (props: TopHeaderProps) => {
-  const {
-    inputUrl,
-    handleInputChange,
-    onRefresh,
-    resetGraphSvg,
-    addButtonRef,
-  } = props;
+  const { inputUrl, handleInputChange, onRefresh, resetGraphSvg, addButtonRef } = props;
 
   // Store hooks
   const { branches, selectedBranch, loadingBranches } = useRepoState();
@@ -72,14 +58,7 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
     return () => {
       setResult(undefined);
     };
-  }, [
-    inputUrl,
-    setBranchError,
-    selectedBranch,
-    graphData,
-    dependencies,
-    branches,
-  ]);
+  }, [inputUrl, setBranchError, selectedBranch, graphData, dependencies, branches]);
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -126,31 +105,25 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
     <form
       onSubmit={handleSubmit}
       className={cn(
-        isDiagramExpanded
-          ? "hidden"
-          : "w-full flex flex-col items-center justify-center",
+        isDiagramExpanded ? "hidden" : "w-full flex flex-col items-center justify-center",
       )}
       aria-label="GitHub repository analysis form"
     >
       <div className="flex flex-col items-center justify-center px-4 pt-4 w-full">
-        <Card className="relative max-h-[200px] bg-background sm:max-w-[700px] w-full border-2 border-accent mx-auto mt-4 flex justify-center p-4 gap-4 sm:flex-row flex-col">
-          <HeaderOptions data={result} addButtonRef={addButtonRef} />
+        <Card className="relative max-h-50 bg-background sm:max-w-175 w-full border-2 border-accent mx-auto mt-4 flex justify-center p-4 gap-4 sm:flex-row flex-col">
+          <SaveAnalysisHistory data={result} addButtonRef={addButtonRef} />
           <HeaderToggle from="github" setIsFileHeaderOpen={setFileHeaderOpen} />
           <Input
-            className="sm:w-[65%] h-14 border-1"
+            className="sm:w-[65%] h-14 border"
             placeholder="https://github.com/username/repo"
             value={inputUrl}
             onChange={handleInputChange}
             aria-label="GitHub repository URL"
           />
           <div className="sm:w-[35%] h-14">
-            <Dropdown className="shadow-none border-input border-1 text-sm px-3 overflow-x-auto" />
+            <Dropdown className="shadow-none border-input border text-sm px-3 overflow-x-auto" />
           </div>
-          <ButtonGroup
-            className="sm:flex-row"
-            role="group"
-            aria-label="Repository actions"
-          >
+          <ButtonGroup className="sm:flex-row" role="group" aria-label="Repository actions">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button

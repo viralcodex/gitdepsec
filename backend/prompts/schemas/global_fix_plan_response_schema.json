@@ -18,7 +18,10 @@
           "items": {
             "type": "object",
             "properties": {
-              "path": { "type": "string", "description": "A sequence of dependencies representing a critical path. Dependency A -> Dependency B -> Dependency C etc." },
+              "path": {
+                "type": "string",
+                "description": "A sequence of dependencies representing a critical path. Dependency A -> Dependency B -> Dependency C etc."
+              },
               "description": { "type": "string" }
             }
           },
@@ -46,7 +49,7 @@
         },
         "sequential_requirements": { "type": "string" },
         "global_commands": {
-          "type": "array", 
+          "type": "array",
           "items": { "type": "string" },
           "description": "Commands should be wrapped in <code></code> tags."
         }

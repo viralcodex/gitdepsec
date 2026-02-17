@@ -1,12 +1,7 @@
 import { FIX_PLAN_PROPERTY_ORDER, PHASE_STEP_MAP } from "@/constants/constants";
 import { GlobalFixPlanSSEMessage } from "@/constants/model";
 import { getFixPlanSSE } from "@/lib/api";
-import {
-  store,
-  useErrorState,
-  useFixPlanState,
-  useUIState,
-} from "@/store/app-store";
+import { store, useErrorState, useFixPlanState, useUIState } from "@/store/app-store";
 import { useCallback, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 
@@ -17,7 +12,7 @@ export const useFixPlanGeneration = ({
 }: {
   username: string;
   repo: string;
-  branch: string;
+  branch?: string;
 }) => {
   const {
     setGlobalFixPlan,
@@ -47,7 +42,7 @@ export const useFixPlanGeneration = ({
   useEffect(() => {
     return () => {
       if (eventSourceRef.current) {
-        console.log('Cleaning up SSE connection');
+        console.log("Cleaning up SSE connection");
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
@@ -65,12 +60,24 @@ export const useFixPlanGeneration = ({
         updatePartialFixPlan(orderedUpdate, ecosystem);
       }
     },
-    [updatePartialFixPlan]
+    [updatePartialFixPlan],
   );
 
   const onError = useCallback(
-    (error: string) => {
+    (error: string, isCritical?: boolean) => {
       toast.dismiss();
+
+      // For critical errors (like complete fix plan failure), stop loading
+      if (isCritical) {
+        toast.error(error || "Fix plan generation failed");
+        setIsFixPlanLoading(false);
+        const currentErrors = store.getState().fixPlanError || {};
+        setFixPlanError({
+          ...currentErrors,
+          _global: error,
+        });
+        return;
+      }
 
       const errorParts = error.split(" ");
       let dependencyKey = "";
@@ -90,7 +97,7 @@ export const useFixPlanGeneration = ({
         });
       }
     },
-    [setFixPlanError],
+    [setFixPlanError, setIsFixPlanLoading],
   );
 
   const onComplete = useCallback(() => {
@@ -114,8 +121,7 @@ export const useFixPlanGeneration = ({
           return (
             value &&
             typeof value === "object" &&
-            ("executive_summary" in value ||
-              "dependency_intelligence" in value)
+            ("executive_summary" in value || "dependency_intelligence" in value)
           );
         });
 
@@ -137,9 +143,10 @@ export const useFixPlanGeneration = ({
         }
       } else {
         // Legacy format: single global fix plan
-        const globalPlan = typeof fixPlanData === "object"
-          ? JSON.stringify(fixPlanData, null, 2)
-          : String(fixPlanData);
+        const globalPlan =
+          typeof fixPlanData === "object"
+            ? JSON.stringify(fixPlanData, null, 2)
+            : String(fixPlanData);
 
         setGlobalFixPlan(globalPlan);
         if (typeof fixPlanData === "object") {
@@ -151,11 +158,7 @@ export const useFixPlanGeneration = ({
   );
 
   const onProgress = useCallback(
-    (data: {
-      step?: string;
-      progress?: string | number;
-      data?: Record<string, unknown>;
-    }) => {
+    (data: { step?: string; progress?: string | number; data?: Record<string, unknown> }) => {
       const ecosystem = data.data?.ecosystem as string | undefined;
 
       if (data.step && PHASE_STEP_MAP[data.step]) {
@@ -180,7 +183,7 @@ export const useFixPlanGeneration = ({
 
         // Handle smart_actions specially - merge into dependency_intelligence
         if (data.data.smart_actions) {
-          const depIntel = partialUpdate.dependency_intelligence as Record<string, unknown> || {};
+          const depIntel = (partialUpdate.dependency_intelligence as Record<string, unknown>) || {};
           depIntel.smart_actions = data.data.smart_actions;
           partialUpdate.dependency_intelligence = depIntel;
         }
@@ -190,12 +193,7 @@ export const useFixPlanGeneration = ({
         }
       }
     },
-    [
-      setCurrentFixPlanPhase,
-      setCurrentFixPlanStep,
-      setFixPlanProgress,
-      updatePartialFixPlan,
-    ],
+    [setCurrentFixPlanPhase, setCurrentFixPlanStep, setFixPlanProgress, updatePartialFixPlan],
   );
 
   const generateFixPlan = useCallback(
@@ -204,14 +202,19 @@ export const useFixPlanGeneration = ({
       const { graphData, isFixPlanLoading, selectedBranch, currentFixPlanRepoKey } = state;
       const repoData = currentFixPlanRepoKey ? state.fixPlansByRepo[currentFixPlanRepoKey] : null;
       const hasExistingFixPlan = Boolean(
-        repoData?.globalFixPlan?.trim() || Object.keys(repoData?.ecosystemFixPlans || {}).length
+        repoData?.globalFixPlan?.trim() || Object.keys(repoData?.ecosystemFixPlans || {}).length,
       );
+
+      setFixPlanDialogOpen(true);
 
       // Prevent multiple simultaneous calls
       if (isFixPlanLoading) return;
 
       if (!graphData || Object.keys(graphData).length === 0) {
         setError("No graph data available to generate fix plan.");
+        setFixPlanError({
+          _global: "No graph data available to generate fix plan.",
+        })
         return;
       }
 
@@ -229,7 +232,6 @@ export const useFixPlanGeneration = ({
       resetFixPlanState();
       setError("");
       setIsFixPlanLoading(true);
-      setFixPlanDialogOpen(true);
 
       try {
         // Close existing EventSource if any
@@ -241,21 +243,22 @@ export const useFixPlanGeneration = ({
         eventSourceRef.current = await getFixPlanSSE(
           username,
           repo,
-          selectedBranch ?? branch,
+          selectedBranch ?? branch!,
           onError,
           onComplete,
           onGlobalFixPlanMessage,
-          onProgress
+          onProgress,
         );
       } catch (error) {
         console.error("Error generating fix plan:", error);
-        const errorMessage = error instanceof Error
-          ? error.message
-          : "An error occurred while generating the fix plan.";
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : "An error occurred while generating the fix plan.";
         toast.error(errorMessage);
         setError(errorMessage);
         resetFixPlanState();
-        
+
         // Close EventSource only on error
         if (eventSourceRef.current) {
           eventSourceRef.current.close();

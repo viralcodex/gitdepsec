@@ -1,16 +1,15 @@
 import { Brain, Package, Shield, Sparkles, Zap } from "lucide-react";
 
-export const MANIFEST_FILES: { [key: string]: { file: string; icon: string } } =
-  {
-    npm: { file: "package.json", icon: "/js.svg" },
-    PyPI: { file: "requirements.txt", icon: "/pipy.svg" },
-    RubyGems: { file: "Gemfile", icon: "/ruby.svg" },
-    Maven: { file: "pom.xml", icon: "/mvn.svg" },
-    Pub: { file: "pubspec.yaml", icon: "/dart.svg" },
-    Gradle: { file: "build.gradle", icon: "gradle" },
-    cargo: { file: "Cargo.toml", icon: "cargo" },
-    Composer: { file: "composer.json", icon: "composer" },
-  };
+export const MANIFEST_FILES: { [key: string]: { file: string; icon: string } } = {
+  npm: { file: "package.json", icon: "/js.svg" },
+  PyPI: { file: "requirements.txt", icon: "/pipy.svg" },
+  RubyGems: { file: "Gemfile", icon: "/ruby.svg" },
+  Maven: { file: "pom.xml", icon: "/mvn.svg" },
+  Pub: { file: "pubspec.yaml", icon: "/dart.svg" },
+  Gradle: { file: "build.gradle", icon: "gradle" },
+  cargo: { file: "Cargo.toml", icon: "cargo" },
+  Composer: { file: "composer.json", icon: "composer" },
+};
 
 export const PROGRESS_STEPS: { [key: string]: string } = {
   PARSING_MANIFESTS: "Parsing Manifest files",
@@ -106,11 +105,6 @@ export const DEFAULT_BRANCH_NAMES = ["main", "master", "develop", "dev"];
 // Stable empty references to prevent unnecessary re-renders
 export const EMPTY_OBJECT: object = {};
 export const EMPTY_ECOSYSTEM_FIXES: Record<string, string> = {};
-export const EMPTY_ECOSYSTEM_PARTIAL: Record<
-  string,
-  Partial<Record<string, unknown>>
-> = {};
-export const EMPTY_ECOSYSTEM_PROGRESS: Record<
-  string,
-  { phase: string | null; progress: number }
-> = {};
+export const EMPTY_ECOSYSTEM_PARTIAL: Record<string, Partial<Record<string, unknown>>> = {};
+export const EMPTY_ECOSYSTEM_PROGRESS: Record<string, { phase: string | null; progress: number }> =
+  {};

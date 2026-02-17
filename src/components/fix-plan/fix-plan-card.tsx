@@ -3,15 +3,12 @@ import { Download, RefreshCcw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import Image from "next/image";
-import {
-  useFixPlanData,
-  useFixPlanProgress,
-  useFixPlanState,
-} from "@/store/app-store";
+import { useErrorState, useFixPlanData, useFixPlanProgress, useFixPlanState } from "@/store/app-store";
 import { useMemo } from "react";
 import FixPlanProgress from "./fix-plan-progress";
 import GlobalFixPlan from "./global-fix-plan";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
+import { ServerError } from "../ui/error-state";
 
 interface FixPlanCardProps {
   onClose: () => void;
@@ -24,18 +21,18 @@ const FixPlanCard = (props: FixPlanCardProps) => {
   const { onClose, onDownload, regenerateFixPlan, ecosystemOptions } = props;
 
   const { globalFixPlan } = useFixPlanData();
+  const { fixPlanError } = useErrorState();
   const {
     isLoading: isFixPlanLoading,
     currentPhase: currentFixPlanPhase,
     progress: fixPlanProgress,
   } = useFixPlanProgress();
 
-  const {
-    ecosystemFixPlans,
-    selectedEcosystem,
-    setSelectedEcosystem,
-    ecosystemProgress,
-  } = useFixPlanState();
+  const { ecosystemFixPlans, selectedEcosystem, setSelectedEcosystem, ecosystemProgress } =
+    useFixPlanState();
+
+  // Check if there's a global error
+  const globalError = fixPlanError?._global;
 
   const shouldShowEcosystemTabs = useMemo(() => {
     return ecosystemOptions && ecosystemOptions.length > 1;
@@ -85,15 +82,12 @@ const FixPlanCard = (props: FixPlanCardProps) => {
             <div className="flex flex-row justify-between space-x-2 sm:space-x-4 lg:space-x-8 xl:space-x-12">
               <Tooltip>
                 <TooltipTrigger asChild id="regenerate-fix-plan">
-                  <button
-                    disabled={!fixPlanComplete}
-                    onClick={() => regenerateFixPlan(true)}
-                  >
+                  <button disabled={!fixPlanComplete} onClick={() => regenerateFixPlan(true)}>
                     <RefreshCcw
                       className={cn(
                         fixPlanComplete
                           ? "cursor-pointer"
-                          : "text-muted-foreground cursor-not-allowed"
+                          : "text-muted-foreground cursor-not-allowed",
                       )}
                     />
                   </button>
@@ -107,7 +101,7 @@ const FixPlanCard = (props: FixPlanCardProps) => {
                       className={cn(
                         fixPlanComplete
                           ? "cursor-pointer"
-                          : "text-muted-foreground cursor-not-allowed"
+                          : "text-muted-foreground cursor-not-allowed",
                       )}
                     />
                   </button>
@@ -125,7 +119,20 @@ const FixPlanCard = (props: FixPlanCardProps) => {
         </CardHeader>
         <CardContent className="h-full overflow-hidden">
           <div className="w-full h-full overflow-y-auto scrollbar-background-bg scrollbar-background-thumb">
-            {shouldShowEcosystemTabs ? (
+            {globalError ? (
+              <div className="flex items-center justify-center h-full min-h-75">
+                <ServerError
+                  title="Fix Plan Generation Failed"
+                  message={globalError}
+                  size="md"                  
+                  primaryAction={{
+                    label: "Try Again",
+                    icon: <RefreshCcw className="w-4 h-4" />,
+                    onClick: () => regenerateFixPlan(true),
+                  }}
+                />
+              </div>
+            ) : shouldShowEcosystemTabs ? (
               <Tabs
                 value={activeEcosystem || ecosystemOptions![0]}
                 onValueChange={setSelectedEcosystem}
@@ -153,17 +160,11 @@ const FixPlanCard = (props: FixPlanCardProps) => {
                   const ecosystemProgressData = ecosystemProgress[ecosystem];
                   // Ecosystem is done if it has a fix plan OR progress is 100%
                   const isEcosystemComplete =
-                    Boolean(ecosystemFixPlan) ||
-                    ecosystemProgressData?.progress === 100;
-                  const isEcosystemLoading =
-                    isFixPlanLoading && !isEcosystemComplete;
+                    Boolean(ecosystemFixPlan) || ecosystemProgressData?.progress === 100;
+                  const isEcosystemLoading = isFixPlanLoading && !isEcosystemComplete;
 
                   return (
-                    <TabsContent
-                      key={ecosystem}
-                      value={ecosystem}
-                      className="mt-0"
-                    >
+                    <TabsContent key={ecosystem} value={ecosystem} className="mt-0">
                       {isEcosystemLoading && (
                         <FixPlanProgress
                           isLoading={true}
@@ -188,10 +189,7 @@ const FixPlanCard = (props: FixPlanCardProps) => {
                   progress={fixPlanProgress}
                 />
                 {/* UNIFIED GLOBAL FIX PLAN */}
-                <GlobalFixPlan
-                  globalFixPlan={globalFixPlan}
-                  isFixPlanLoading={isFixPlanLoading}
-                />
+                <GlobalFixPlan globalFixPlan={globalFixPlan} isFixPlanLoading={isFixPlanLoading} />
               </>
             )}
           </div>

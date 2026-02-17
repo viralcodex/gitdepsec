@@ -9,8 +9,7 @@ import React, { useState, useRef, useEffect } from "react";
 import toast from "react-hot-toast";
 
 const FloatingAiForm = () => {
-  const { selectedText, setSelectedText, mousePosition, selectedDependency } =
-    useTextSelection();
+  const { selectedText, setSelectedText, mousePosition, selectedDependency } = useTextSelection();
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState("");
   const [prompt, setPrompt] = useState("");
@@ -122,10 +121,7 @@ const FloatingAiForm = () => {
   }, []);
 
   // Calculate position based on mouse position
-  const getPosition = (mousePosition: {
-    x: number;
-    y: number;
-  }): React.CSSProperties => {
+  const getPosition = (mousePosition: { x: number; y: number }): React.CSSProperties => {
     if (!mousePosition) return { display: "none" };
     let top = 0;
     let left = 0;
@@ -155,9 +151,7 @@ const FloatingAiForm = () => {
     };
   };
 
-  const style: React.CSSProperties = showForm
-    ? getPosition(mousePosition)
-    : { display: "none" };
+  const style: React.CSSProperties = showForm ? getPosition(mousePosition) : { display: "none" };
 
   // Handle form submission
   const handleSubmit = async (e: React.FormEvent) => {
@@ -173,17 +167,15 @@ const FloatingAiForm = () => {
       const context = {
         name: selectedDependency?.name,
         version: selectedDependency?.version,
-        vulnerabilities: selectedDependency?.vulnerabilities?.map(
-          (vuln: Vulnerability) => {
-            return {
-              ...vuln,
-              affected: vuln.affected?.map((affected) => ({
-                ...affected,
-                versions: [],
-              })),
-            };
-          },
-        ),
+        vulnerabilities: selectedDependency?.vulnerabilities?.map((vuln: Vulnerability) => {
+          return {
+            ...vuln,
+            affected: vuln.affected?.map((affected) => ({
+              ...affected,
+              versions: [],
+            })),
+          };
+        }),
       };
       const response = await getInlineAiResponse(prompt, selectedText, context);
       setResponse(response);
@@ -209,30 +201,24 @@ const FloatingAiForm = () => {
         {parsedSummary.summary && (
           <div className="mb-2">
             <strong className="text-accent mb-2">Summary:</strong>
-            <p className="text-xs text-muted-foreground">
-              {parsedSummary.summary}
-            </p>
+            <p className="text-xs text-muted-foreground">{parsedSummary.summary}</p>
           </div>
         )}
         {parsedSummary.explaination && (
           <div className="mb-2">
             <strong className="text-accent mb-2">Explaination:</strong>
-            <p className="text-xs text-muted-foreground">
-              {parsedSummary.explaination}
-            </p>
+            <p className="text-xs text-muted-foreground">{parsedSummary.explaination}</p>
           </div>
         )}
         <div>
           <strong className="text-accent mb-2">Actions to Take:</strong>
           {
             <ul className="list-disc pl-3 text-muted-foreground">
-              {parsedSummary.actionable_items?.map(
-                (item: string, index: number) => (
-                  <li key={index} className="wrap-normal text-xs mb-1">
-                    <p>{item}</p>
-                  </li>
-                ),
-              )}
+              {parsedSummary.actionable_items?.map((item: string, index: number) => (
+                <li key={index} className="wrap-normal text-xs mb-1">
+                  <p>{item}</p>
+                </li>
+              ))}
             </ul>
           }
         </div>
@@ -246,7 +232,7 @@ const FloatingAiForm = () => {
       ref={formRef}
       style={style}
       className={cn(
-        "opacity-70 z-9999 hover:opacity-100 fixed bg-sidebar-accent-foreground p-2 shadow-[2px_2px_10px_rgba(0,0,0,0.80)] w-[350px] rounded-sm border-1 border-accent",
+        "opacity-70 z-9999 hover:opacity-100 fixed bg-sidebar-accent-foreground p-2 shadow-[2px_2px_10px_rgba(0,0,0,0.80)] w-87.5 rounded-sm border border-accent",
       )}
       onMouseDown={(e) => {
         e.stopPropagation();
@@ -276,7 +262,7 @@ const FloatingAiForm = () => {
               }}
               placeholder="Ask anything..."
               className={cn(
-                error ? "border-2 border-red-500" : "border-1",
+                error ? "border-2 border-red-500" : "border",
                 "p-3.5 rounded w-4/5 text-accent text-sm",
               )}
               autoFocus
@@ -318,9 +304,9 @@ const FloatingAiForm = () => {
         <div
           className={cn(
             mousePosition.y < window.innerHeight / 2
-              ? "top-full border-x-1 border-b-1 rounded-b-sm rounded-t-none"
-              : "bottom-full border-x-1 border-t-1 rounded-t-sm rounded-b-none",
-            "w-full py-3 px-3 absolute left-0 z-9999 bg-accent-foreground text-sm wrap-normal overflow-y-auto max-h-[200px] scrollbar-background-thumb scrollbar-background-bg-2",
+              ? "top-full border-x border-b rounded-b-sm rounded-t-none"
+              : "bottom-full border-x border-t rounded-t-sm rounded-b-none",
+            "w-full py-3 px-3 absolute left-0 z-9999 bg-accent-foreground text-sm wrap-normal overflow-y-auto max-h-50 scrollbar-background-thumb scrollbar-background-bg-2",
           )}
           role="region"
           aria-live="polite"

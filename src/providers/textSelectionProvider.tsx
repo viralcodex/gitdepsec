@@ -10,23 +10,15 @@ interface TextSelectionContextType {
   setSelectedDependency: (dependency: Dependency | undefined) => void;
 }
 
-const TextSelectionContext = React.createContext<
-  TextSelectionContextType | undefined
->(undefined);
+const TextSelectionContext = React.createContext<TextSelectionContextType | undefined>(undefined);
 
-export const TextSelectionProvider = ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export const TextSelectionProvider = ({ children }: { children: React.ReactNode }) => {
   const [selectedText, setSelectedText] = useState<string>("");
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number }>({
     x: 0,
     y: 0,
   });
-  const [selectedDependency, setSelectedDependency] = useState<
-    Dependency | undefined
-  >(undefined);
+  const [selectedDependency, setSelectedDependency] = useState<Dependency | undefined>(undefined);
 
   const handleMouseUp = (event: MouseEvent) => {
     // Check if we're clicking inside the floating AI form
@@ -71,9 +63,7 @@ export const TextSelectionProvider = ({
 export const useTextSelection = () => {
   const context = useContext(TextSelectionContext);
   if (!context) {
-    throw new Error(
-      "useTextSelection must be used within a TextSelectionProvider",
-    );
+    throw new Error("useTextSelection must be used within a TextSelectionProvider");
   }
   return context;
 };

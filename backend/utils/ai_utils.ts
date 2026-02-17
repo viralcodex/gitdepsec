@@ -1,4 +1,4 @@
-import { OpenRouter } from '@openrouter/sdk';
+import { OpenRouter } from "@openrouter/sdk";
 
 /**
  * Shared AI utility for making OpenRouter API calls with consistent error handling
@@ -22,44 +22,55 @@ export class AIUtils {
       model: string;
       schemaName?: string;
       returnString?: boolean;
-      plugins?: [{ id: 'response-healing' }];
+      plugins?: [{ id: "response-healing" }];
+      timeout?: number;
     },
   ): Promise<T> {
-    console.log('Sending AI request with model:', options.model);
-    const response = await ai.chat.send({
-      model: options.model,
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: userPrompt },
-      ],
-      responseFormat: {
-        type: 'json_schema',
-        jsonSchema: {
-          name: options.schemaName ?? 'response',
-          strict: true,
-          schema: jsonSchema,
-        },
-      },
-      stream: false,
-      ...(options.plugins && { plugins: options.plugins }),
+    console.log("Sending AI request with model:", options.model);
+
+    // Create timeout promise
+    const timeoutMs = options.timeout ?? 60000; // Default 60 seconds
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(`AI request timed out after ${timeoutMs}ms`)), timeoutMs);
     });
 
+    // Race between AI call and timeout
+    const response = await Promise.race([
+      ai.chat.send({
+        model: options.model,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        responseFormat: {
+          type: "json_schema",
+          jsonSchema: {
+            name: options.schemaName ?? "response",
+            strict: true,
+            schema: jsonSchema,
+          },
+        },
+        stream: false,
+        ...(options.plugins && { plugins: options.plugins }),
+      }),
+      timeoutPromise,
+    ]);
+
     if (!response?.choices?.[0]?.message?.content) {
-      throw new Error('No response from AI model');
+      throw new Error("No response from AI model");
     }
 
     const content = response.choices[0].message.content;
-    console.log('AI Response:', content);
+    console.log("AI Response:", content);
 
     try {
-      const contentStr =
-        typeof content === 'string' ? content : JSON.stringify(content);
+      const contentStr = typeof content === "string" ? content : JSON.stringify(content);
       const parsed = JSON.parse(contentStr);
 
       return (options.returnString ? JSON.stringify(parsed) : parsed) as T;
     } catch (error) {
-      console.error('Failed to parse AI response:', error);
-      throw new Error('Invalid JSON response from AI model');
+      console.error("Failed to parse AI response:", error);
+      throw new Error("Invalid JSON response from AI model");
     }
   }
 
@@ -85,12 +96,10 @@ export class AIUtils {
           throw error;
         }
         const delay = baseDelay * Math.pow(2, i);
-        console.warn(
-          `AI call attempt ${i + 1} failed, retrying in ${delay}ms...`,
-        );
+        console.warn(`AI call attempt ${i + 1} failed, retrying in ${delay}ms...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }
-    throw new Error('Max retries exceeded');
+    throw new Error("Max retries exceeded");
   }
 }
