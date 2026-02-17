@@ -306,10 +306,10 @@ export class FixPlanPDFGenerator {
         const rows = intel.shared_transitive_vulnerabilities.map((v) => [
           v.package || "",
           String(v.vulnerability_count || 0),
-          v.fix || "",
+          v.vulnerability_summary || "",
           v.impact_multiplier || "",
         ]);
-        this.addTable(["Package", "Vuln Count", "Fix", "Impact"], rows, [50, 25, 50, 40]);
+        this.addTable(["Package", "Vuln Count", "Summary", "Impact"], rows, [50, 25, 50, 40]);
         this.addSpacer(4);
       }
 
