@@ -53,7 +53,7 @@ const VirtualizedItem = ({ index, style, data }: VirtualizedItemProps) => {
       <span className="flex-1 truncate">{branch}</span>
       <Check
         className={cn(
-          "ml-auto h-4 w-4 flex-shrink-0",
+          "ml-auto h-4 w-4 shrink-0",
           selectedBranch === branch ? "opacity-100" : "opacity-0",
         )}
       />
@@ -165,14 +165,14 @@ export function VirtualDropdown({
           minWidth: "200px",
         }}
       >
-        <Command className="max-h-[400px] rounded-md" shouldFilter={false}>
+        <Command className="max-h-100 rounded-md" shouldFilter={false}>
           <CommandInput
             placeholder={isBranchDropdown ? "Search branches..." : "Search"}
             className="h-9"
             value={searchValue}
             onValueChange={setSearchValue}
           />
-          <CommandList className="max-h-[340px] overflow-hidden">
+          <CommandList className="max-h-85 overflow-hidden">
             {!filteredBranches.length ? (
               <CommandEmpty>
                 {debouncedSearchValue ? "No branches found" : "No branches available"}

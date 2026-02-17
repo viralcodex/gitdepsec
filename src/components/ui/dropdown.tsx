@@ -87,7 +87,7 @@ export function Dropdown({
           aria-expanded={open}
           disabled={isBranchDropdown ? loadingBranches || !shouldOpen : !shouldOpen}
           className={cn(
-            "sm:h-[56px] text-md w-full text-input justify-between overflow-y-hidden overflow-x-scroll scrollbar-background-hidden border-[3px] border-black px-3 sm:px-4 transition-transform hover:text-secondary-foreground hover:bg-gray-300 max-sm:w-full group",
+            "sm:h-14 text-md w-full text-input justify-between overflow-y-hidden overflow-x-scroll scrollbar-background-hidden border-[3px] border-black px-3 sm:px-4 transition-transform hover:text-secondary-foreground hover:bg-gray-300 max-sm:w-full group",
             isBranchDropdown && (!branches || branches.length === 0 || !shouldShowBranches)
               ? "opacity-60 cursor-not-allowed"
               : "",
@@ -106,7 +106,7 @@ export function Dropdown({
         </Button>
       </PopoverTrigger>
       <PopoverContent className={cn("p-0 border-black border-[3px]", className)}>
-        <Command className="max-h-[400px] rounded-md">
+        <Command className="max-h-100 rounded-md">
           {!ecosystems && (
             <CommandInput
               placeholder={isBranchDropdown ? "Search Branch..." : "Search Ecosystem..."}
@@ -115,7 +115,7 @@ export function Dropdown({
           )}
           <CommandList
             onScroll={handleScroll}
-            className="max-h-[350px] scrollbar-background-bg scrollbar-background-thumb"
+            className="max-h-87.5 scrollbar-background-bg scrollbar-background-thumb"
           >
             {isBranchDropdown ? (
               // Branch dropdown mode

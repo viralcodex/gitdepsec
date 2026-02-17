@@ -129,7 +129,7 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
                 <History className="w-6 h-6 text-[#f2d46b]" />
               </div>
               <div>
-                <h2 className="text-lg font-semibold tracking-tight text-[#f2d46b]">
+                <h2 className="font-ui-heading text-lg font-semibold tracking-tight text-[#f2d46b]">
                   History
                 </h2>
                 <p className="text-xs text-muted-foreground">
@@ -184,7 +184,7 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
                     <div className="sticky top-0 z-10 px-5 py-3 bg-background/90 backdrop-blur-sm border-y border-border/60">
                       <div className="flex items-center gap-3">
                         <Clock className="size-5 text-muted-foreground" />
-                        <span className="text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">
+                        <span className="font-ui-heading text-xs font-semibold text-muted-foreground uppercase tracking-[0.2em]">
                           {date}
                         </span>
                         <span className="ml-auto text-[10px] text-muted-foreground bg-transparent border border-border/60 px-2 py-0.5 rounded-full">
@@ -214,12 +214,12 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
 
                           <div className="flex items-center justify-between gap-3">
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-[#f2d46b] truncate">
+                              <p className="font-ui-data text-sm font-semibold text-[#f2d46b] truncate">
                                 {hist.username}/{hist.repo}
                               </p>
                               <div className="flex items-center gap-1.5 mt-1">
                                 <GitBranch className="size-5 text-muted-foreground" />
-                                <span className="text-xs text-muted-foreground truncate">
+                                <span className="font-ui-data text-xs text-muted-foreground truncate">
                                   {hist.branch}
                                 </span>
                               </div>

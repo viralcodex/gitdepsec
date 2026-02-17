@@ -1,7 +1,5 @@
 {
   "type": "object",
-  "title": "Vulnerability Summary Schema",
-  "description": "Schema for AI-generated vulnerability summaries with strict formatting and prioritization rules.",
   "required": ["summary", "actionable_items", "explaination"],
   "properties": {
     "summary": {

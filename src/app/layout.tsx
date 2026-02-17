@@ -90,7 +90,7 @@ export default function RootLayout({
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://fonts.googleapis.com" />
       </head>
-      <body className="flex h-screen flex-col bg-background bg-repeat bg-size-[300px_300px] bg-[url('/bg.svg')] bg-blend-multiply relative font-sans tracking-wide">
+      <body className="relative flex h-screen flex-col bg-background bg-repeat bg-size-[300px_300px] bg-[url('/bg.svg')] bg-blend-multiply font-sans antialiased">
         <SpeedInsights />
         <ThemeProvider>
           <NetworkStatusProvider>

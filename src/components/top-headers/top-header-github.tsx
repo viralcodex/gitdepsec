@@ -127,7 +127,7 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  className="flex-1 sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
+                  className="font-ui-heading flex-1 sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm font-semibold cursor-pointer disabled:cursor-not-allowed"
                   type="submit"
                   disabled={isDisabled()}
                   aria-label="Analyse GitHub repository"
@@ -149,7 +149,7 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
-                  className="flex-1 sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm cursor-pointer disabled:cursor-not-allowed"
+                  className="font-ui-heading flex-1 sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm font-semibold cursor-pointer disabled:cursor-not-allowed"
                   type="button"
                   onClick={onRefreshAnalysis}
                   disabled={isDisabled()}

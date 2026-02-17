@@ -38,10 +38,11 @@ export const getAiService = (aiService: AiService, model?: string, apiKey?: stri
   let service = aiServiceCache.get(cacheKey);
 
   if (!service) {
+    console.log("Creating new AiService instance for model:", model ?? "default");
     service = new AiService(model, apiKey);
     aiServiceCache.set(cacheKey, service);
   }
-
+  console.log("Using AiService instance for model:", model ?? "default");
   return service;
 };
 

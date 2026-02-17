@@ -116,7 +116,7 @@ const UnifiedFixPlanComponent = ({ fixPlan, partialFixPlan, isLoading }: Unified
           <TabsTrigger
             value="overview"
             className={cn(
-              "cursor-pointer relative overflow-visible",
+              "font-ui-heading cursor-pointer relative overflow-visible",
               isLoading && !hasOverviewData && "tab-loading",
             )}
           >
@@ -126,7 +126,7 @@ const UnifiedFixPlanComponent = ({ fixPlan, partialFixPlan, isLoading }: Unified
           <TabsTrigger
             value="intelligence"
             className={cn(
-              "cursor-pointer relative overflow-visible",
+              "font-ui-heading cursor-pointer relative overflow-visible",
               isLoading && !hasIntelligenceData && "tab-loading",
             )}
           >
@@ -136,7 +136,7 @@ const UnifiedFixPlanComponent = ({ fixPlan, partialFixPlan, isLoading }: Unified
           <TabsTrigger
             value="phases"
             className={cn(
-              "cursor-pointer relative overflow-visible",
+              "font-ui-heading cursor-pointer relative overflow-visible",
               isLoading && !hasPhasesData && "tab-loading",
             )}
           >
@@ -146,7 +146,7 @@ const UnifiedFixPlanComponent = ({ fixPlan, partialFixPlan, isLoading }: Unified
           <TabsTrigger
             value="automation"
             className={cn(
-              "cursor-pointer relative overflow-visible",
+              "font-ui-heading cursor-pointer relative overflow-visible",
               isLoading && !hasAutomationData && "tab-loading",
             )}
           >
@@ -156,7 +156,7 @@ const UnifiedFixPlanComponent = ({ fixPlan, partialFixPlan, isLoading }: Unified
           <TabsTrigger
             value="risk"
             className={cn(
-              "cursor-pointer relative overflow-visible",
+              "font-ui-heading cursor-pointer relative overflow-visible",
               isLoading && !hasRiskData && "tab-loading",
             )}
           >
@@ -226,13 +226,13 @@ const UnifiedFixPlanComponent = ({ fixPlan, partialFixPlan, isLoading }: Unified
         <div className="mt-3 pt-2 border-t border-muted text-xs text-muted-foreground">
           <div className="flex flex-wrap gap-4">
             {metadata.generated_at && (
-              <span>Generated: {new Date(metadata.generated_at).toLocaleString()}</span>
+              <span className="font-ui-data">Generated: {new Date(metadata.generated_at).toLocaleString()}</span>
             )}
-            {metadata.analysis_duration && <span>Duration: {metadata.analysis_duration}</span>}
+            {metadata.analysis_duration && <span className="font-ui-data">Duration: {metadata.analysis_duration}</span>}
             {metadata.total_packages_analyzed && (
-              <span>Packages Analyzed: {metadata.total_packages_analyzed}</span>
+              <span className="font-ui-data">Packages Analyzed: {metadata.total_packages_analyzed}</span>
             )}
-            {metadata.ecosystem && <span>Ecosystem: {metadata.ecosystem}</span>}
+            {metadata.ecosystem && <span className="font-ui-data">Ecosystem: {metadata.ecosystem}</span>}
           </div>
         </div>
       )}

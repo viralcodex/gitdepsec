@@ -32,7 +32,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
           {processedVulns?.map((vuln, index) => (
             <div key={index} className="pb-4 border-b border-border/40 last:border-b-0">
               {/* Vulnerability Title */}
-              <h4 className={cn(isMobile ? "text-sm" : "text-base", "font-semibold text-foreground leading-snug mb-2")}>
+              <h3 className={cn(isMobile ? "text-lg" : "text-2xl", "font-bold text-white leading-snug mb-3")}>
                 {vuln.summary
                   ? removeMarkdown(vuln.summary.toTitleCase(), {
                     replaceLinksWithURL: true,
@@ -40,10 +40,10 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                     gfm: true,
                   })
                   : "No summary available"}
-              </h4>
+              </h3>
 
               {/* File Path */}
-              <p className="text-xs text-muted-foreground mb-3">
+              <p className="text-xs text-white/90 mb-3">
                 {allDetails?.filePath ? allDetails?.filePath : transitiveNodeDetails?.filePath}
               </p>
 
@@ -61,7 +61,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
               </div>
               {/* Details */}
               <div className="space-y-4">
-                <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground leading-relaxed")}>
+                <p className={cn(isMobile ? "text-xs" : "text-sm", "text-white/95 leading-relaxed")}>
                   {vuln.details ? (
                     vuln.details.length > 200 ? (
                       showMoreDesc[index] ? (
@@ -72,7 +72,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                             gfm: true,
                           })}
                           <button
-                            className="ml-1 text-primary hover:underline font-medium"
+                            className="ml-1 text-white/90 hover:text-white hover:underline font-medium"
                             onClick={() =>
                               setShowMoreDesc((prev) => ({
                                 ...prev,
@@ -92,7 +92,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                           }).slice(0, 200)}
                           ...
                           <button
-                            className="ml-1 text-primary hover:underline font-medium"
+                            className="ml-1 text-white/90 hover:text-white hover:underline font-medium"
                             onClick={() =>
                               setShowMoreDesc((prev) => ({
                                 ...prev,
@@ -118,31 +118,31 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                 {/* Vulnerability ID */}
                 {vuln.id && (
                   <div className="space-y-1">
-                    <p className={cn(isMobile ? "text-sm" : "text-sm", "font-semibold text-foreground")}>
-                      Vulnerability ID
-                    </p>
+                    <h4 className={cn(isMobile ? "text-base" : "text-lg", "font-bold text-white/90 tracking-wide uppercase")}>
+                      <span className="text-blue-400">→</span> Vulnerability ID
+                    </h4>
                     <a
-                      className="inline-flex items-center gap-1.5 text-primary hover:underline text-sm"
+                      className="inline-flex items-center gap-1.5 text-white/90 hover:text-white hover:underline text-sm"
                       href={getVulnerabilityUrl(vuln.id)}
                       target="_blank"
                       rel="noopener noreferrer"
                     >
                       {vuln.id}
-                      <ExternalLink className="size-3.5" />
+                      <ExternalLink className="size-3.5 text-white/90 hover:text-white" />
                     </a>
                   </div>
                 )}
                 {/* Severity Scores */}
                 {vuln.severityScore && (
                   <div className="space-y-2">
-                    <p className={cn(isMobile ? "text-sm" : "text-sm", "font-semibold text-foreground")}>
-                      Severity
-                    </p>
+                    <h4 className={cn(isMobile ? "text-base" : "text-lg", "font-bold text-white/90 tracking-wide uppercase")}>
+                      <span className="text-amber-400">→</span> Severity
+                    </h4>
                     <div className="flex flex-col gap-1.5">
-                      <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground flex items-center gap-2")}>
+                      <p className={cn(isMobile ? "text-xs" : "text-sm", "text-white/95 flex items-center gap-2")}>
                         CVSS V3: {getSeverityBadge(vuln.severityScore.cvss_v3 ?? "unknown")}
                       </p>
-                      <p className={cn(isMobile ? "text-xs" : "text-sm", "text-muted-foreground flex items-center gap-2")}>
+                      <p className={cn(isMobile ? "text-xs" : "text-sm", "text-white/95 flex items-center gap-2")}>
                         CVSS V4: {getSeverityBadge(vuln.severityScore.cvss_v4 ?? "unknown")}
                       </p>
                     </div>
@@ -151,13 +151,13 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                 {/* References */}
                 {vuln.references && vuln.references.length > 0 && (
                   <div className="space-y-2">
-                    <p className={cn(isMobile ? "text-sm" : "text-sm", "font-semibold text-foreground")}>
-                      References
-                    </p>
+                    <h4 className={cn(isMobile ? "text-base" : "text-lg", "font-bold text-white/90 tracking-wide uppercase")}>
+                      <span className="text-emerald-400">→</span> References
+                    </h4>
                     <div className="space-y-3">
                       {Object.entries(vuln.groupedRefs).map(([type, urls]) => (
                         <div key={type}>
-                          <p className="text-xs font-medium text-muted-foreground mb-1">
+                          <p className={cn(isMobile ? "text-sm" : "text-md", "font-medium text-white/90 mb-1")}>
                             {type.slice(0, 1) + type.slice(1).toLowerCase()}
                           </p>
                           <div className="space-y-1">
@@ -169,7 +169,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                                   rel="noopener noreferrer"
                                   className={cn(
                                     isMobile ? "text-xs" : "text-xs",
-                                    "text-primary/80 hover:text-primary hover:underline transition-colors",
+                                    "text-white/90 hover:text-white hover:underline transition-colors",
                                   )}
                                 >
                                   {url}
@@ -185,7 +185,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
                                   [type]: !prev[type],
                                 }))
                               }
-                              className="text-xs text-primary hover:underline mt-1"
+                              className="text-xs text-white/90 hover:text-white hover:underline mt-1"
                             >
                               {showMoreRefs[type] ? "Show less" : `Show ${urls.length - 3} more...`}
                             </button>
@@ -200,7 +200,7 @@ const DependencyDetails = (props: DependencyDetailsProps) => {
           ))}
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground text-center py-8">
+        <p className="text-sm text-white/90 text-center py-8">
           No vulnerabilities found for this dependency.
         </p>
       )}

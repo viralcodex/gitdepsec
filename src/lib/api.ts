@@ -232,20 +232,29 @@ export async function getAiVulnerabilitiesSummary(vulnerabilities: {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Connection": "keep-alive",
       },
       body: JSON.stringify({
         vulnerabilities,
         sessionId,
       }),
-      signal: AbortSignal.timeout(60000), // 60 seconds for AI requests
     });
 
-    if (!response.ok) {
-      throw new Error("Failed to generate AI vulnerabilities summary");
+    if (response.status === 429) {
+      throw new Error("AI summary rate limit reached. Please wait and try again.");
     }
 
-    if (response.status === 429) {
-      return await response.json();
+    if (!response.ok) {
+      const errorPayload = await response.json().catch(() => null);
+      const details =
+        errorPayload && typeof errorPayload === "object"
+          ? (errorPayload.details ?? errorPayload.error)
+          : undefined;
+      throw new Error(
+        details
+          ? `Failed to generate AI vulnerabilities summary: ${String(details)}`
+          : "Failed to generate AI vulnerabilities summary",
+      );
     }
 
     // Backend now returns stringified JSON, so parse it

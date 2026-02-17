@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Card, CardContent, CardFooter, CardHeader } from "../ui/card";
 import { Dependency, GraphNode, Vulnerability, VulnerabilitySummaryResponse } from "@/constants/model";
 import removeMarkdown from "remove-markdown";
@@ -28,6 +28,7 @@ const DependencyDetailsCard = ({ node, onClose, isMobile }: DependencyDetailsPro
   const [error, setError] = useState<string | null>(null);
   const [summary, setSummary] = useState<VulnerabilitySummaryResponse | null>(null);
   const [tabValue, setTabValue] = useState<string>("Vuln_details");
+  const lastRequestedSummaryKeyRef = useRef<string | null>(null);
 
   let transitiveNodeDetails: Dependency | undefined;
   let matchedTransitiveNode: Dependency | undefined;
@@ -142,13 +143,15 @@ const DependencyDetailsCard = ({ node, onClose, isMobile }: DependencyDetailsPro
   }, [allDetails]);
 
   useEffect(() => {
+    const summaryKey = `${allDetails?.name}@${allDetails?.version}`;
     if (sessionStorage) {
       const cachedSummary = sessionStorage.getItem(
-        `ai-summary-${allDetails?.name}@${allDetails?.version}`,
+        `ai-summary-${summaryKey}`,
       );
       if (cachedSummary) {
         setSummary(JSON.parse(cachedSummary));
         setIsLoading(false);
+        lastRequestedSummaryKeyRef.current = summaryKey;
         return;
       }
     }
@@ -156,10 +159,18 @@ const DependencyDetailsCard = ({ node, onClose, isMobile }: DependencyDetailsPro
       setError("No vulnerabilities available for this dependency");
       return;
     }
+
+    // Avoid duplicate auto-requests for the same dependency key (React StrictMode/dev rerenders).
+    if (lastRequestedSummaryKeyRef.current === summaryKey) {
+      return;
+    }
+
+    lastRequestedSummaryKeyRef.current = summaryKey;
     fetchSummary();
   }, [allDetails, fetchSummary]);
 
   const refreshSummary = () => {
+    lastRequestedSummaryKeyRef.current = null;
     setSummary(null);
     setError(null);
     setIsLoading(true);
@@ -189,7 +200,7 @@ const DependencyDetailsCard = ({ node, onClose, isMobile }: DependencyDetailsPro
   };
 
   if (!node) {
-    return <div className="text-center">No dependency selected</div>;
+    return <div className="text-center text-white/90">No dependency selected</div>;
   }
 
   return (
@@ -249,14 +260,14 @@ const DependencyDetailsCard = ({ node, onClose, isMobile }: DependencyDetailsPro
                 <TabsTrigger
                   value="Vuln_details"
                   onClick={() => setTabValue("Vuln_details")}
-                  className="h-11 rounded-none cursor-pointer border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent px-4 font-medium"
+                  className="h-11 rounded-none cursor-pointer border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold px-4 font-medium text-white/85 hover:text-white"
                 >
                   Details
                 </TabsTrigger>
                 <TabsTrigger
                   value="AI_vuln_details"
                   onClick={() => setTabValue("AI_vuln_details")}
-                  className="rounded-t-none cursor-pointer flex items-center px-5 font-semibold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent"
+                  className="rounded-t-none cursor-pointer flex items-center px-5 font-semibold rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:font-bold text-white/85 hover:text-white"
                 >
                   <Image
                     priority
@@ -313,8 +324,8 @@ const DependencyDetailsCard = ({ node, onClose, isMobile }: DependencyDetailsPro
             </div>
           </Tabs>
         </CardContent>
-        <CardFooter className="p-3 border-t border-border/40 bg-muted/20">
-          <p className={cn(isMobile ? "text-xs" : "text-[11px]", "text-muted-foreground text-center w-full leading-relaxed")}>
+        <CardFooter className="pb-3 border-t [.border-t]:pt-3 border-border/40 bg-muted/20">
+          <p className={cn(isMobile ? "text-xs" : "text-[11px]", "text-white/85 text-center w-full leading-relaxed")}>
             AI results can be inaccurate. Always verify before taking action.
           </p>
         </CardFooter>

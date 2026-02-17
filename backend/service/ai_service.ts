@@ -9,6 +9,8 @@ import { AIUtils } from "../utils/ai_utils";
 class AiService {
   private ai: OpenRouter;
   private defaultModel: string;
+  private readonly summaryTimeoutMs = 300000;
+  private readonly summaryMaxRetries = 3;
 
   constructor(model?: string, apiKey?: string) {
     const key = apiKey ?? process.env.OPEN_ROUTER_KEY;
@@ -28,12 +30,19 @@ class AiService {
       "{{vulnerabilities}}",
       JSON.stringify(vulnerabilities),
     );
-    console.log("Generating vulnerability summary with model:", model ?? this.defaultModel);
-    return AIUtils.callAI(this.ai, systemPrompt, userPrompt, vulnerabilitySummarySchema, {
-      model: model ?? this.defaultModel,
-      schemaName: "vulnerability_summary",
-      returnString: true,
-    });
+    const selectedModel = model ?? this.defaultModel;
+    console.log("Generating vulnerability summary with model:", selectedModel);
+
+    return AIUtils.callAIWithRetry(
+      () =>
+        AIUtils.callAI(this.ai, systemPrompt, userPrompt, vulnerabilitySummarySchema, {
+          model: selectedModel,
+          schemaName: "vulnerability_summary",
+          returnString: true,
+          timeout: this.summaryTimeoutMs,
+        }),
+      this.summaryMaxRetries,
+    );
   }
 
   generateInlineResponse(

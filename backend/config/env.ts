@@ -4,7 +4,7 @@ dotenv.config();
 
 // Load environment variables with defaults
 export const config = {
-  port: parseInt(process.env.PORT ?? "4000", 10),
+  port: parseInt(process.env.PORT ?? "8080", 10),
   nodeEnv: process.env.NODE_ENV ?? "development",
   openRouterApiKey: process.env.OPEN_ROUTER_KEY ?? "",
   defaultModel: process.env.DEFAULT_MODEL,
