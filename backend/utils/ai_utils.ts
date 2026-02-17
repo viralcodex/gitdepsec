@@ -27,13 +27,13 @@ export class AIUtils {
     },
   ): Promise<T> {
     console.log("Sending AI request with model:", options.model);
-    
+
     // Create timeout promise
     const timeoutMs = options.timeout ?? 60000; // Default 60 seconds
     const timeoutPromise = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error(`AI request timed out after ${timeoutMs}ms`)), timeoutMs);
     });
-    
+
     // Race between AI call and timeout
     const response = await Promise.race([
       ai.chat.send({

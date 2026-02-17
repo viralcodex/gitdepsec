@@ -479,13 +479,13 @@ app.get("/fixPlan", fixPlanRateLimiter, (req: Request, res: Response) => {
         String(branch),
         res,
       );
-      
+
       // Check if validation failed (empty data means res.end() was already called)
       if (!data || !data.dependencies || Object.keys(data.dependencies).length === 0) {
         clearTimeout(timeoutHandle);
         return;
       }
-      
+
       // SSE Steps - init
       res.write(
         `data: ${JSON.stringify({
