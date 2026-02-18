@@ -1,0 +1,39 @@
+# Source files (we only publish dist/)
+src/
+tsconfig.json
+*.ts
+!*.d.ts
+
+# Dev files
+.gitignore
+*.spec.ts
+*.test.ts
+__tests__/
+coverage/
+.nyc_output/
+
+# Build/dev tools
+tsup.config.ts
+.eslintrc*
+.prettierrc*
+*.config.js
+*.config.mjs
+*.config.ts
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Test
+test/
+tests/

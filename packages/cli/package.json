@@ -1,0 +1,67 @@
+{
+  "name": "gitdepsec",
+  "version": "1.0.0",
+  "description": "CLI tool for analyzing dependency vulnerabilities in your projects",
+  "keywords": [
+    "security",
+    "vulnerabilities",
+    "dependencies",
+    "npm",
+    "pypi",
+    "maven",
+    "cli",
+    "devops",
+    "osv",
+    "cve"
+  ],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "gds": "dist/cli.js",
+    "gitdepsec": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json && chmod +x dist/cli.js",
+    "dev": "bun --watch src/cli.ts",
+    "start": "bun dist/cli.js",
+    "prepublishOnly": "bun run build",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "link": "bun run build && bun link"
+  },
+  "dependencies": {
+    "ae-cvss-calculator": "^1.0.8",
+    "axios": "^1.10.0",
+    "chalk": "^5.4.1",
+    "commander": "^13.1.0",
+    "js-yaml": "^4.1.0",
+    "ora": "^8.2.0",
+    "xml2js": "^0.6.2",
+    "zod": "^3.25"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^24.0.10",
+    "@types/xml2js": "^0.4.14",
+    "@types/bun": "^1.1.0",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/gitdepsec"
+  },
+  "bugs": {
+    "url": "https://github.com/your-username/gitdepsec/issues"
+  },
+  "homepage": "https://github.com/your-username/gitdepsec#readme"
+}
