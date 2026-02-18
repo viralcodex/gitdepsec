@@ -20,5 +20,5 @@ out/
 /backend/graph_image-*
 .VSCODECounter
 *.bak
-.github/
 .claude/
+.tsbuildinfo
