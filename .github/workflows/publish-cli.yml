@@ -1,0 +1,74 @@
+name: Publish CLI to npm
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/cli/**'
+      - '.github/workflows/publish-cli.yml'
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Install dependencies
+        working-directory: packages/cli
+        run: bun install
+
+      - name: Build package
+        working-directory: packages/cli
+        run: bun run build
+
+      - name: Check if version changed
+        id: version-check
+        working-directory: packages/cli
+        run: |
+          PACKAGE_NAME=$(node -p "require('./package.json').name")
+          LOCAL_VERSION=$(node -p "require('./package.json').version")
+          NPM_VERSION=$(npm view $PACKAGE_NAME version 2>/dev/null || echo "0.0.0")
+          
+          echo "local_version=$LOCAL_VERSION" >> $GITHUB_OUTPUT
+          echo "npm_version=$NPM_VERSION" >> $GITHUB_OUTPUT
+          
+          if [ "$LOCAL_VERSION" != "$NPM_VERSION" ]; then
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+            echo "📦 Version changed: $NPM_VERSION → $LOCAL_VERSION"
+          else
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+            echo "⏭️ Version unchanged ($LOCAL_VERSION), skipping publish"
+          fi
+
+      - name: Publish to npm
+        if: steps.version-check.outputs.should_publish == 'true'
+        working-directory: packages/cli
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.version-check.outputs.should_publish }}" == "true" ]; then
+            echo "### ✅ Published gitdepsec@${{ steps.version-check.outputs.local_version }} to npm" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ⏭️ Skipped publishing (version ${{ steps.version-check.outputs.local_version }} already exists)" >> $GITHUB_STEP_SUMMARY
+          fi
