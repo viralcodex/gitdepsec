@@ -8,6 +8,8 @@
   "type": "commonjs",
   "main": "index.js",
   "scripts": {
+    "setup:dev": "./setup-and-run.sh",
+    "mcp:dev": "bun mcp/server.ts",
     "dev": "bun --watch server.ts",
     "build": "cross-env NODE_ENV=production tsc",
     "start": "bun server.ts",
@@ -34,6 +36,7 @@
     "@langchain/core": "^0.3.72",
     "@langchain/google-genai": "^0.2.16",
     "@langchain/langgraph": "^0.4.9",
+    "@modelcontextprotocol/sdk": "^1.26.0",
     "@openrouter/sdk": "^0.3.11",
     "@types/pg": "^8.15.5",
     "ae-cvss-calculator": "^1.0.8",
@@ -49,7 +52,8 @@
     "morgan": "^1.10.1",
     "multer": "^2.0.2",
     "pg": "^8.16.3",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "zod": "^3.25"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",

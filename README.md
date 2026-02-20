@@ -43,6 +43,22 @@ Clone the repository and open the repository in any text editor/IDE you like.
 
 ## Backend
 
+- Quick start (one command from project root):
+
+  ```bash
+  bun run backend:setup
+  ```
+
+- This command will:
+  - create `backend/.env` if missing
+  - set local defaults for `PORT`, `NODE_ENV`, `DEV_ORIGIN`, and `DATABASE_URL` (only if empty/missing)
+  - install backend dependencies
+  - start or create the Postgres Docker container
+  - run Drizzle schema generation + push
+  - start the backend dev server
+
+- Manual setup (if you prefer step-by-step):
+
 - Navigate to the **./backend** directory inside the repository
 
   ```bash
@@ -89,6 +105,21 @@ Clone the repository and open the repository in any text editor/IDE you like.
   ```bash
   bun run dev
   ```
+
+### MCP (Phase 1)
+
+- Run the local MCP server (stdio transport) with:
+
+  ```bash
+  bun run backend:mcp
+  ```
+
+- Phase 1 tools:
+  - `scan_repo`
+  - `scan_manifest`
+  - `list_vulnerabilities`
+
+- Full MCP notes are in `backend/mcp/README.md`.
 
 # Ideation and Motivation
 

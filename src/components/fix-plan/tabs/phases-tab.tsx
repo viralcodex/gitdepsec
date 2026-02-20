@@ -116,8 +116,8 @@ export const PhasesTab = ({ priority_phases, isLoading }: PhasesTabProps) => {
                 {/* Batch Commands */}
                 {phase.batch_commands && phase.batch_commands.length > 0 && (
                   <div>
-                    <div className="font-medium text-sm mb-1">Batch Commands:</div>
-                    <CodeBlock code={phase.batch_commands.join("\n")} />
+                    <div className="font-ui-pixel text-sm mb-1">Batch Commands:</div>
+                    <CodeBlock code={phase.batch_commands.join("\n")} label="BATCH" />
                   </div>
                 )}
 

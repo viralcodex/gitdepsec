@@ -227,7 +227,7 @@ const DependencyDetailsCard = ({ node, onClose, isMobile }: DependencyDetailsPro
               <p className="font-bold text-white tracking-tight truncate">
                 {node.label.toTitleCase()}
               </p>
-              <p className="text-sm sm:text-md text-white/70 font-medium">{node.version}</p>
+              <p className="text-sm sm:text-md text-white/90 font-bold">{node.version}</p>
             </div>
             <div className="flex items-center gap-1">
               <Button
@@ -276,7 +276,7 @@ const DependencyDetailsCard = ({ node, onClose, isMobile }: DependencyDetailsPro
                     width={20}
                     height={20}
                   />
-                  AI Fix Plan
+                  AI Summary
                 </TabsTrigger>
               </TabsList>
               {tabValue === "AI_vuln_details" && (

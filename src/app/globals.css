@@ -5,9 +5,9 @@
 
 /*
  * Available Geist Font Variables (switch --font-sans to any of these):
- * --font-geist-sans          : Standard Geist Sans
+ * --font-geist-sans          : Standard Geist Sans (current base)
  * --font-geist-mono          : Geist Mono (monospace)
- * --font-geist-pixel-square  : Geist Pixel Square (current)
+ * --font-geist-pixel-square  : Geist Pixel Square
  * --font-geist-pixel-line    : Geist Pixel Line
  */
 
@@ -193,6 +193,7 @@
   }
   body {
     @apply bg-background text-foreground leading-relaxed;
+    font-family: var(--font-geist-sans);
   }
   h1,
   h2,

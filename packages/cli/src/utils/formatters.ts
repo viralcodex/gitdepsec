@@ -46,7 +46,19 @@ export function formatAnalysisTable(result: AnalysisResult): string {
   lines.push("");
 
   if (result.totalVulnerabilities === 0) {
+<<<<<<< Updated upstream
     lines.push(chalk.green.bold("✓ No vulnerabilities found!"));
+=======
+    lines.push("");
+    lines.push(rule("double"));
+    lines.push(chalk.green.bold(`${INDENT}No vulnerabilities detected`));
+    lines.push(rule("double"));
+
+    if (result.errors && result.errors.length > 0) {
+      lines.push(sectionHeader("Warnings"));
+      result.errors.forEach((err) => lines.push(`${INDENT}${chalk.yellow(">")} ${err}`));
+    }
+>>>>>>> Stashed changes
     lines.push("");
     return lines.join("\n");
   }
@@ -61,6 +73,7 @@ export function formatAnalysisTable(result: AnalysisResult): string {
     
     deps.forEach((dep) => {
       if (dep.vulnerabilities && dep.vulnerabilities.length > 0) {
+<<<<<<< Updated upstream
         lines.push("");
         lines.push(`  ${chalk.bold(dep.name)}@${chalk.dim(dep.version)} ${chalk.dim(`(${dep.ecosystem})`)}`);
         
@@ -68,6 +81,19 @@ export function formatAnalysisTable(result: AnalysisResult): string {
           const severity = getSeverityFromScore(vuln.severityScore);
           const score = vuln.severityScore?.cvss_v3 || vuln.severityScore?.cvss_v4 || "N/A";
           lines.push(`    ${colorSeverity(severity)} ${chalk.cyan(vuln.id)} (CVSS: ${score})`);
+=======
+        // Package name with version
+        lines.push(`\n${INDENT}${chalk.white.bold(dep.name)} ${chalk.dim("@" + dep.version)} ${chalk.dim.italic(dep.ecosystem)}`);
+
+        dep.vulnerabilities.forEach((vuln) => {
+          const severity = getSeverityFromScore(vuln.severityScore);
+          const score = vuln.severityScore?.cvss_v3 || vuln.severityScore?.cvss_v4 || "-";
+
+          // Vulnerability line with aligned columns and clickable link
+          const linkedId = chalk.cyan(vulnLink(vuln.id.padEnd(22)));
+          lines.push(`${DOUBLE_INDENT}${severityBadge(severity)} ${linkedId} ${chalk.dim("CVSS")} ${chalk.white(score)}`);
+
+>>>>>>> Stashed changes
           if (vuln.summary) {
             lines.push(`      ${chalk.dim(truncate(vuln.summary, 80))}`);
           }
