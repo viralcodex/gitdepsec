@@ -60,7 +60,7 @@ const DepDiagram = ({
     useMemo(() => {
       // Calculate dimensions first, regardless of data availability
       const calculatedWidth = isMobile
-        ? windowSize.width - 20
+        ? windowSize.width - 16
         : selectedNode
           ? windowSize.width * 0.64 - 20
           : windowSize.width - 100;

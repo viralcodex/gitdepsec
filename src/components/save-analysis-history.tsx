@@ -58,20 +58,23 @@ const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) =
 
     const updatedHistory = { ...savedHistoryItems };
 
-    if (updatedHistory[dateKey]) {
-      // Check for duplicates before adding for that date
-      const isDuplicate = updatedHistory[dateKey].some(
+    // Check for duplicates across all dates
+    const isDuplicate = Object.values(updatedHistory)
+      .flat()
+      .some(
         (item) =>
           item.username === newHistoryItem.username &&
           item.repo === newHistoryItem.repo &&
           item.branch === newHistoryItem.branch,
       );
-      if (!isDuplicate) {
-        updatedHistory[dateKey].unshift(newHistoryItem);
-      } else {
-        toast.error("This history entry already exists!");
-        return;
-      }
+
+    if (isDuplicate) {
+      toast.error("This history entry already exists!");
+      return;
+    }
+
+    if (updatedHistory[dateKey]) {
+      updatedHistory[dateKey].unshift(newHistoryItem);
     } else {
       updatedHistory[dateKey] = [newHistoryItem];
     }
