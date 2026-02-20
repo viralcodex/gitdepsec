@@ -1,15 +1,84 @@
 import chalk from "chalk";
 import type { AnalysisResult } from "../core/analyser.js";
-import type { FixPlan, FixAction } from "../core/fix-planner.js";
-import type { Dependency, DependencyGroups, Vulnerability } from "../core/types.js";
+import type { FixPlan } from "../core/fix-planner.js";
 
-const SEVERITY_COLORS = {
-  critical: chalk.bgRed.white.bold,
-  high: chalk.red.bold,
-  medium: chalk.yellow,
-  low: chalk.green,
-  unknown: chalk.gray,
-};
+// Design tokens
+const WIDTH = 72;
+
+// Vulnerability URL helpers
+function getVulnerabilityUrl(id: string): string {
+  if (id.startsWith("GHSA-")) {
+    return `https://github.com/advisories/${id}`;
+  }
+  if (/^(cve|CVE)-[0-9]{4}-[0-9]{4,}$/.test(id)) {
+    return `https://nvd.nist.gov/vuln/detail/${id}`;
+  }
+  return `https://nvd.nist.gov/vuln/detail/${id}`;
+}
+
+// Terminal hyperlink (OSC 8 escape sequence)
+function terminalLink(text: string, url: string): string {
+  return `\x1b]8;;${url}\x07${text}\x1b]8;;\x07`;
+}
+
+// Create a clickable vulnerability ID
+function vulnLink(id: string): string {
+  const url = getVulnerabilityUrl(id);
+  return terminalLink(id, url);
+}
+const INDENT = "  ";
+const DOUBLE_INDENT = "    ";
+
+// Refined severity styling - minimal, clean badges
+const SEVERITY_STYLE = {
+  critical: (text: string) => chalk.bgRed.white.bold(` ${text} `),
+  high: (text: string) => chalk.red.bold(text),
+  medium: (text: string) => chalk.yellow(text),
+  low: (text: string) => chalk.dim(text),
+  unknown: (text: string) => chalk.gray(text),
+} as const;
+
+// Clean horizontal rules
+function rule(style: "heavy" | "light" | "double" = "light"): string {
+  const chars = { heavy: "━", light: "─", double: "═" };
+  return chalk.dim(chars[style].repeat(WIDTH));
+}
+
+// Box drawing for sections
+function boxTop(): string {
+  return chalk.dim("┌" + "─".repeat(WIDTH - 2) + "┐");
+}
+
+function boxBottom(): string {
+  return chalk.dim("└" + "─".repeat(WIDTH - 2) + "┘");
+}
+
+function boxRow(content: string): string {
+  const stripped = content.replace(/\x1b\[[0-9;]*m/g, "");
+  const padding = Math.max(0, WIDTH - 4 - stripped.length);
+  return chalk.dim("│") + " " + content + " ".repeat(padding) + " " + chalk.dim("│");
+}
+
+// Stat row with aligned values
+function statRow(label: string, value: string | number, color?: (s: string) => string): string {
+  const labelText = chalk.dim(label);
+  const valueText = color ? color(String(value)) : String(value);
+  return `${INDENT}${labelText.padEnd(28)}${valueText}`;
+}
+
+// Severity badge - clean, consistent width
+function severityBadge(severity: string): string {
+  const labels: Record<string, string> = {
+    critical: "CRIT",
+    high: "HIGH",
+    medium: "MED ",
+    low: "LOW ",
+    unknown: " -- ",
+  };
+  const label = labels[severity] || labels.unknown;
+  const styleFn = SEVERITY_STYLE[severity as keyof typeof SEVERITY_STYLE] || SEVERITY_STYLE.unknown;
+  return styleFn(label);
+}
 
 function getSeverityFromScore(score?: { cvss_v3?: string; cvss_v4?: string }): string {
   const cvss = parseFloat(score?.cvss_v3 || score?.cvss_v4 || "0");
@@ -20,30 +89,33 @@ function getSeverityFromScore(score?: { cvss_v3?: string; cvss_v4?: string }): s
   return "unknown";
 }
 
-function colorSeverity(severity: string): string {
-  const fn = SEVERITY_COLORS[severity as keyof typeof SEVERITY_COLORS] || chalk.gray;
-  return fn(` ${severity.toUpperCase()} `);
+function truncate(str: string, length: number): string {
+  if (str.length <= length) return str;
+  return `${str.slice(0, length - 3)}...`;
+}
+
+function sectionHeader(title: string): string {
+  return `\n${chalk.bold.white(title)}\n${rule("light")}`;
 }
 
 export function formatAnalysisTable(result: AnalysisResult): string {
   const lines: string[] = [];
-  
+
   // Header
   lines.push("");
-  lines.push(chalk.bold.cyan("═══════════════════════════════════════════════════════════════"));
-  lines.push(chalk.bold.cyan("                    VULNERABILITY REPORT                        "));
-  lines.push(chalk.bold.cyan("═══════════════════════════════════════════════════════════════"));
+  lines.push(boxTop());
+  lines.push(boxRow(chalk.bold.white("GITDEPSEC") + chalk.dim("  Vulnerability Report")));
+  lines.push(boxBottom());
   lines.push("");
 
-  // Summary
-  lines.push(chalk.bold("Summary:"));
-  lines.push(`  Total Dependencies: ${chalk.cyan(result.totalDependencies)}`);
-  lines.push(`  Vulnerabilities:    ${chalk.red.bold(result.totalVulnerabilities)}`);
-  lines.push(`    ${SEVERITY_COLORS.critical(" CRITICAL ")} ${result.criticalCount}`);
-  lines.push(`    ${SEVERITY_COLORS.high(" HIGH ")} ${result.highCount}`);
-  lines.push(`    ${SEVERITY_COLORS.medium(" MEDIUM ")} ${result.mediumCount}`);
-  lines.push(`    ${SEVERITY_COLORS.low(" LOW ")} ${result.lowCount}`);
+  // Summary stats in a clean grid
+  lines.push(statRow("Scanned", result.totalDependencies, chalk.white));
+  lines.push(statRow("Vulnerabilities", result.totalVulnerabilities, result.totalVulnerabilities > 0 ? chalk.red.bold : chalk.green));
   lines.push("");
+  lines.push(statRow("Critical", result.criticalCount, result.criticalCount > 0 ? chalk.bgRed.white.bold : chalk.dim));
+  lines.push(statRow("High", result.highCount, result.highCount > 0 ? chalk.red.bold : chalk.dim));
+  lines.push(statRow("Medium", result.mediumCount, result.mediumCount > 0 ? chalk.yellow : chalk.dim));
+  lines.push(statRow("Low", result.lowCount, result.lowCount > 0 ? chalk.dim : chalk.dim));
 
   if (result.totalVulnerabilities === 0) {
 <<<<<<< Updated upstream
@@ -63,14 +135,14 @@ export function formatAnalysisTable(result: AnalysisResult): string {
     return lines.join("\n");
   }
 
-  // Vulnerabilities by file
-  lines.push(chalk.bold("Vulnerabilities by File:"));
-  lines.push(chalk.dim("─".repeat(65)));
+  // Findings section
+  lines.push(sectionHeader("Findings"));
 
   Object.entries(result.dependencies).forEach(([filePath, deps]) => {
-    lines.push("");
-    lines.push(chalk.bold.underline(filePath));
-    
+    // File path as subtle subheader
+    const shortPath = filePath.split("/").slice(-3).join("/");
+    lines.push(`\n${INDENT}${chalk.dim.underline(shortPath)}`);
+
     deps.forEach((dep) => {
       if (dep.vulnerabilities && dep.vulnerabilities.length > 0) {
 <<<<<<< Updated upstream
@@ -95,44 +167,42 @@ export function formatAnalysisTable(result: AnalysisResult): string {
 
 >>>>>>> Stashed changes
           if (vuln.summary) {
-            lines.push(`      ${chalk.dim(truncate(vuln.summary, 80))}`);
+            lines.push(`${DOUBLE_INDENT}${chalk.dim(truncate(vuln.summary, 62))}`);
           }
           if (vuln.fixAvailable) {
-            lines.push(`      ${chalk.green("Fix:")} Upgrade to ${chalk.green.bold(vuln.fixAvailable)}`);
+            lines.push(`${DOUBLE_INDENT}${chalk.dim("Fix:")} ${chalk.green(vuln.fixAvailable)}`);
           }
         });
       }
 
       // Transitive vulnerabilities
-      const vulnTransitives = dep.transitiveDependencies?.nodes?.filter(
-        (n) => n.vulnerabilities && n.vulnerabilities.length > 0
-      ) ?? [];
-      
-      if (vulnTransitives.length > 0) {
-        lines.push(`    ${chalk.dim("Transitive dependencies:")}`);
-        vulnTransitives.forEach((node) => {
-          lines.push(`      ${chalk.yellow("↳")} ${node.name}@${node.version}`);
+      const vulnerableTransitives =
+        dep.transitiveDependencies?.nodes?.filter(
+          (n) => n.vulnerabilities && n.vulnerabilities.length > 0,
+        ) ?? [];
+
+      if (vulnerableTransitives.length > 0) {
+        lines.push(`${DOUBLE_INDENT}${chalk.dim.italic("via transitive:")}`);
+        vulnerableTransitives.forEach((node) => {
+          lines.push(`${DOUBLE_INDENT}  ${chalk.dim(node.name + "@" + node.version)}`);
           node.vulnerabilities?.forEach((vuln) => {
             const severity = getSeverityFromScore(vuln.severityScore);
-            lines.push(`        ${colorSeverity(severity)} ${chalk.cyan(vuln.id)}`);
+            lines.push(`${DOUBLE_INDENT}    ${severityBadge(severity)} ${chalk.dim(vulnLink(vuln.id))}`);
           });
         });
       }
     });
   });
 
-  lines.push("");
-  lines.push(chalk.dim("─".repeat(65)));
-  lines.push("");
-  
+  // Errors/warnings
   if (result.errors && result.errors.length > 0) {
-    lines.push(chalk.yellow.bold("Warnings:"));
-    result.errors.forEach((err) => {
-      lines.push(`  ${chalk.yellow("⚠")} ${err}`);
-    });
-    lines.push("");
+    lines.push(sectionHeader("Warnings"));
+    result.errors.forEach((err) => lines.push(`${INDENT}${chalk.yellow(">")} ${err}`));
   }
 
+  lines.push("");
+  lines.push(rule("light"));
+  lines.push("");
   return lines.join("\n");
 }
 
@@ -142,12 +212,11 @@ export function formatAnalysisJson(result: AnalysisResult): string {
 
 export function formatAnalysisMarkdown(result: AnalysisResult): string {
   const lines: string[] = [];
-  
+
   lines.push("# Vulnerability Report\n");
-  
   lines.push("## Summary\n");
-  lines.push(`| Metric | Count |`);
-  lines.push(`|--------|-------|`);
+  lines.push("| Metric | Count |");
+  lines.push("|--------|-------|");
   lines.push(`| Total Dependencies | ${result.totalDependencies} |`);
   lines.push(`| Total Vulnerabilities | ${result.totalVulnerabilities} |`);
   lines.push(`| Critical | ${result.criticalCount} |`);
@@ -157,7 +226,7 @@ export function formatAnalysisMarkdown(result: AnalysisResult): string {
   lines.push("");
 
   if (result.totalVulnerabilities === 0) {
-    lines.push("**✓ No vulnerabilities found!**\n");
+    lines.push("No vulnerabilities found.\n");
     return lines.join("\n");
   }
 
@@ -165,18 +234,19 @@ export function formatAnalysisMarkdown(result: AnalysisResult): string {
 
   Object.entries(result.dependencies).forEach(([filePath, deps]) => {
     lines.push(`### ${filePath}\n`);
-    
+
     deps.forEach((dep) => {
       if (dep.vulnerabilities && dep.vulnerabilities.length > 0) {
         lines.push(`#### ${dep.name}@${dep.version} (${dep.ecosystem})\n`);
         lines.push("| ID | Severity | CVSS | Summary |");
         lines.push("|---|---|---|---|");
-        
+
         dep.vulnerabilities.forEach((vuln) => {
           const severity = getSeverityFromScore(vuln.severityScore);
           const score = vuln.severityScore?.cvss_v3 || vuln.severityScore?.cvss_v4 || "N/A";
           const summary = vuln.summary?.replace(/\|/g, "\\|") || "No summary";
-          lines.push(`| ${vuln.id} | ${severity.toUpperCase()} | ${score} | ${truncate(summary, 50)} |`);
+          const vulnUrl = getVulnerabilityUrl(vuln.id);
+          lines.push(`| [${vuln.id}](${vulnUrl}) | ${severity.toUpperCase()} | ${score} | ${truncate(summary, 70)} |`);
         });
         lines.push("");
       }
@@ -189,57 +259,50 @@ export function formatAnalysisMarkdown(result: AnalysisResult): string {
 export function formatFixPlanTable(plan: FixPlan): string {
   const lines: string[] = [];
 
+  // Header
   lines.push("");
-  lines.push(chalk.bold.cyan("═══════════════════════════════════════════════════════════════"));
-  lines.push(chalk.bold.cyan("                        FIX PLAN                                "));
-  lines.push(chalk.bold.cyan("═══════════════════════════════════════════════════════════════"));
-  lines.push("");
-
-  // Summary
-  lines.push(chalk.bold("Summary:"));
-  lines.push(`  Total Vulnerabilities: ${chalk.red.bold(plan.summary.totalVulnerabilities)}`);
-  lines.push(`  Fixable:               ${chalk.green.bold(plan.summary.fixableCount)}`);
-  lines.push(`  Critical:              ${SEVERITY_COLORS.critical(" " + plan.summary.criticalCount + " ")}`);
-  lines.push(`  High:                  ${SEVERITY_COLORS.high(" " + plan.summary.highCount + " ")}`);
-  lines.push(`  Estimated Time:        ${chalk.cyan(plan.summary.estimatedTime)}`);
+  lines.push(boxTop());
+  lines.push(boxRow(chalk.bold.white("GITDEPSEC") + chalk.dim("  Fix Plan")));
+  lines.push(boxBottom());
   lines.push("");
 
-  // Quick Wins
+  // Summary stats
+  lines.push(statRow("Vulnerabilities", plan.summary.totalVulnerabilities, chalk.red.bold));
+  lines.push(statRow("Fixable", plan.summary.fixableCount, chalk.green.bold));
+  lines.push(statRow("Critical", plan.summary.criticalCount, plan.summary.criticalCount > 0 ? chalk.bgRed.white.bold : chalk.dim));
+  lines.push(statRow("High", plan.summary.highCount, plan.summary.highCount > 0 ? chalk.red.bold : chalk.dim));
+  lines.push(statRow("Estimated time", plan.summary.estimatedTime, chalk.cyan));
+
+  // Quick wins section
   if (plan.quickWins.length > 0) {
-    lines.push(chalk.bold.green("⚡ Quick Wins:"));
-    lines.push(chalk.dim("   These fixes address critical/high vulnerabilities with simple upgrades"));
-    lines.push("");
-    
+    lines.push(sectionHeader("Quick Wins"));
     plan.quickWins.forEach((action, i) => {
-      lines.push(`   ${chalk.bold(`${i + 1}.`)} ${chalk.bold(action.dependency)} ${chalk.dim(action.currentVersion)} → ${chalk.green.bold(action.recommendedVersion)}`);
+      lines.push(`${INDENT}${chalk.dim(`${i + 1}.`)} ${chalk.white.bold(action.dependency)}`);
+      lines.push(`${DOUBLE_INDENT}${chalk.dim(action.currentVersion)} ${chalk.dim("->")} ${chalk.green.bold(action.recommendedVersion)}`);
       if (action.command) {
-        lines.push(`      ${chalk.cyan("$")} ${chalk.dim(action.command)}`);
+        lines.push(`${DOUBLE_INDENT}${chalk.dim("$")} ${chalk.cyan(action.command)}`);
       }
     });
-    lines.push("");
   }
 
   // Phases
   plan.phases.forEach((phase) => {
-    const phaseColor = phase.name === "Immediate" ? chalk.red.bold : 
-                       phase.name === "Urgent" ? chalk.yellow.bold :
-                       phase.name === "Standard" ? chalk.blue.bold : chalk.gray.bold;
-    
-    lines.push(phaseColor(`📋 Phase: ${phase.name}`));
-    lines.push(chalk.dim(`   Urgency: ${phase.urgency}`));
+    lines.push(sectionHeader(phase.name));
+    lines.push(`${INDENT}${chalk.dim.italic("Window: " + phase.urgency)}`);
     lines.push("");
 
     phase.actions.forEach((action) => {
-      const sevColor = SEVERITY_COLORS[action.severity];
-      lines.push(`   ${sevColor(" " + action.severity.toUpperCase() + " ")} ${chalk.bold(action.dependency)}@${action.currentVersion}`);
-      lines.push(`      ${chalk.dim(action.reasoning)}`);
+      lines.push(`${INDENT}${severityBadge(action.severity)} ${chalk.white.bold(action.dependency)}${chalk.dim("@" + action.currentVersion)}`);
+      lines.push(`${DOUBLE_INDENT}${chalk.dim(action.reasoning)}`);
       if (action.command) {
-        lines.push(`      ${chalk.cyan("$")} ${action.command}`);
+        lines.push(`${DOUBLE_INDENT}${chalk.dim("$")} ${chalk.cyan(action.command)}`);
       }
       lines.push("");
     });
   });
 
+  lines.push(rule("light"));
+  lines.push("");
   return lines.join("\n");
 }
 
@@ -251,7 +314,6 @@ export function formatFixPlanMarkdown(plan: FixPlan): string {
   const lines: string[] = [];
 
   lines.push("# Fix Plan\n");
-  
   lines.push("## Summary\n");
   lines.push(`- **Total Vulnerabilities:** ${plan.summary.totalVulnerabilities}`);
   lines.push(`- **Fixable:** ${plan.summary.fixableCount}`);
@@ -261,9 +323,9 @@ export function formatFixPlanMarkdown(plan: FixPlan): string {
   lines.push("");
 
   if (plan.quickWins.length > 0) {
-    lines.push("## ⚡ Quick Wins\n");
+    lines.push("## Quick Wins\n");
     plan.quickWins.forEach((action, i) => {
-      lines.push(`${i + 1}. **${action.dependency}** ${action.currentVersion} → ${action.recommendedVersion}`);
+      lines.push(`${i + 1}. **${action.dependency}** ${action.currentVersion} -> ${action.recommendedVersion}`);
       if (action.command) {
         lines.push(`   \`\`\`bash\n   ${action.command}\n   \`\`\``);
       }
@@ -273,7 +335,6 @@ export function formatFixPlanMarkdown(plan: FixPlan): string {
 
   plan.phases.forEach((phase) => {
     lines.push(`## ${phase.name} (${phase.urgency})\n`);
-    
     phase.actions.forEach((action) => {
       lines.push(`### ${action.dependency}@${action.currentVersion}\n`);
       lines.push(`- **Severity:** ${action.severity.toUpperCase()}`);
@@ -287,9 +348,4 @@ export function formatFixPlanMarkdown(plan: FixPlan): string {
   });
 
   return lines.join("\n");
-}
-
-function truncate(str: string, length: number): string {
-  if (str.length <= length) return str;
-  return str.slice(0, length - 3) + "...";
 }

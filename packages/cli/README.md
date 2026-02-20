@@ -110,41 +110,41 @@ export GDS_OUTPUT_FORMAT=table
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `gds analyse` | Analyze dependencies for vulnerabilities |
-| `gds fix` | Generate fix recommendations |
-| `gds init` | Create configuration file |
-| `gds --version` | Show version |
-| `gds --help` | Show help |
+| Command         | Description                              |
+| --------------- | ---------------------------------------- |
+| `gds analyse`   | Analyze dependencies for vulnerabilities |
+| `gds fix`       | Generate fix recommendations             |
+| `gds init`      | Create configuration file                |
+| `gds --version` | Show version                             |
+| `gds --help`    | Show help                                |
 
 ## CLI Options Reference
 
 ### `gds analyse`
 
-| Option | Description |
-|--------|-------------|
-| `-f, --file <files...>` | Manifest file(s) to analyze |
-| `-r, --repo <repo>` | GitHub repository in `owner/repo` format |
-| `-b, --branch <branch>` | Branch to analyze |
-| `-t, --token <token>` | GitHub personal access token |
-| `--no-transitive` | Disable transitive dependency scanning |
-| `--format <format>` | Output format: `table`, `json`, `markdown` |
-| `-o, --output <file>` | Save output to file |
-| `-q, --quiet` | Minimal output |
-| `-v, --verbose` | Verbose output |
+| Option                  | Description                                |
+| ----------------------- | ------------------------------------------ |
+| `-f, --file <files...>` | Manifest file(s) to analyze                |
+| `-r, --repo <repo>`     | GitHub repository in `owner/repo` format   |
+| `-b, --branch <branch>` | Branch to analyze                          |
+| `-t, --token <token>`   | GitHub personal access token               |
+| `--no-transitive`       | Disable transitive dependency scanning     |
+| `--format <format>`     | Output format: `table`, `json`, `markdown` |
+| `-o, --output <file>`   | Save output to file                        |
+| `-q, --quiet`           | Minimal output                             |
+| `-v, --verbose`         | Verbose output                             |
 
 ### `gds fix`
 
-| Option | Description |
-|--------|-------------|
-| `-f, --file <files...>` | Manifest file(s) to generate fixes for |
-| `-r, --repo <repo>` | GitHub repository in `owner/repo` format |
-| `-b, --branch <branch>` | Branch to analyze |
-| `-t, --token <token>` | GitHub personal access token |
-| `--no-transitive` | Disable transitive dependency scanning |
-| `--format <format>` | Output format: `table`, `json`, `markdown` |
-| `-o, --output <file>` | Save output to file |
+| Option                  | Description                                |
+| ----------------------- | ------------------------------------------ |
+| `-f, --file <files...>` | Manifest file(s) to generate fixes for     |
+| `-r, --repo <repo>`     | GitHub repository in `owner/repo` format   |
+| `-b, --branch <branch>` | Branch to analyze                          |
+| `-t, --token <token>`   | GitHub personal access token               |
+| `--no-transitive`       | Disable transitive dependency scanning     |
+| `--format <format>`     | Output format: `table`, `json`, `markdown` |
+| `-o, --output <file>`   | Save output to file                        |
 
 ## Supported Ecosystems
 
@@ -159,13 +159,14 @@ export GDS_OUTPUT_FORMAT=table
 
 For `gds analyse`:
 
-| Code | Description |
-|------|-------------|
-| 0 | Success, no vulnerabilities found |
-| 1 | Vulnerabilities found |
-| 2 | Error during analysis |
+| Code | Description                       |
+| ---- | --------------------------------- |
+| 0    | Success, no vulnerabilities found |
+| 1    | Vulnerabilities found             |
+| 2    | Error during analysis             |
 
 For `gds fix`:
+
 - `0`: Fix plan generated
 - `2`: Error during fix plan generation
 

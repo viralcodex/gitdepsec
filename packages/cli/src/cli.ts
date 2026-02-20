@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { Command } from "commander";
+import { Command, Option } from "commander";
 import chalk from "chalk";
 import { analyseCommand } from "./commands/analyse.js";
 import { fixCommand } from "./commands/fix.js";
