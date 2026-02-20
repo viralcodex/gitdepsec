@@ -151,7 +151,6 @@ export function formatAnalysisTable(result: AnalysisResult): string {
           // Vulnerability line with aligned columns and clickable link
           const linkedId = chalk.cyan(vulnLink(vuln.id.padEnd(22)));
           lines.push(`${DOUBLE_INDENT}${severityBadge(severity)} ${linkedId} ${chalk.dim("CVSS")} ${chalk.white(score)}`);
-
           if (vuln.summary) {
             lines.push(`${DOUBLE_INDENT}${chalk.dim(truncate(vuln.summary, 62))}`);
           }
