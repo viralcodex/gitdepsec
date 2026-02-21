@@ -58,7 +58,7 @@ const DiagramProgress = ({ width, height }: DiagramProgressProps) => {
       className="border border-accent rounded-xl bg-black/50 flex items-center justify-center relative overflow-hidden"
       style={{ width, height }}
       role="region"
-      aria-label="Analysis progress"
+      aria-label="Audit progress"
     >
       {/* Background image for visual appeal */}
       <div

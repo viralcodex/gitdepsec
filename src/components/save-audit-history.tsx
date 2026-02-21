@@ -6,15 +6,15 @@ import { useSavedHistoryState, useGraphState } from "@/store/app-store";
 import { HistoryItem } from "@/constants/model";
 import { MAX_HISTORY_ITEMS } from "@/constants/constants";
 
-interface SaveAnalysisHistoryProps {
+interface SaveAuditHistoryProps {
   data?: HistoryItem;
   addButtonRef?: React.RefObject<HTMLDivElement | null>;
 }
-const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) => {
+const SaveAuditHistory = ({ data, addButtonRef }: SaveAuditHistoryProps) => {
   const { savedHistoryItems, setSavedHistoryItems } = useSavedHistoryState();
   const { graphRepoKey } = useGraphState();
 
-  // disable the button if entered url doesn't match the current analysed repo
+  // disable the button if entered url doesn't match the current audited repo
   const shouldDisableButton = () => {
     if (!data || !data.username || !data.repo || !data.branch) return true;
 
@@ -112,4 +112,4 @@ const SaveAnalysisHistory = ({ data, addButtonRef }: SaveAnalysisHistoryProps) =
   );
 };
 
-export default SaveAnalysisHistory;
+export default SaveAuditHistory;

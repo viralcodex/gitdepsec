@@ -64,8 +64,8 @@ export const PHASES = [
 export const PHASE_STEP_MAP: Record<string, string> = {
   preprocessing_start: "preprocessing",
   preprocessing_complete: "preprocessing",
-  parallel_analysis_start: "intelligence",
-  parallel_analysis_complete: "intelligence",
+  parallel_audit_start: "intelligence",
+  parallel_audit_complete: "intelligence",
   intelligence_start: "intelligence",
   intelligence_complete: "intelligence",
   batch_start: "batch",

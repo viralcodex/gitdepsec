@@ -139,7 +139,7 @@ Then we parse your dependencies and fetch transitive dependencies of each of the
 
 # Future Plans
 
-I have a lot of things in mind, and would like to make this a tool that all software developers can use and analyse their projects dependencies locally or online. Also, a CLI tool in the current landscape of people moving to more TUI based apps.
+I have a lot of things in mind, and would like to make this a tool that all software developers can use and audit their projects dependencies locally or online. Also, a CLI tool in the current landscape of people moving to more TUI based apps.
 
 # Contributions and Bug Reporting
 

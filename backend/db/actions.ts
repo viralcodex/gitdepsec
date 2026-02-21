@@ -13,7 +13,7 @@ export function getCachedBranches(username: string, repo: string) {
     .limit(1);
 }
 
-export function getCachedAnalysis(username: string, repo: string, branch: string) {
+export function getCachedAudit(username: string, repo: string, branch: string) {
   return db
     .select()
     .from(dependencies)
@@ -27,7 +27,7 @@ export function getCachedAnalysis(username: string, repo: string, branch: string
     .limit(1);
 }
 
-export function upsertAnalysis({
+export function upsertAudit({
   username,
   repo,
   branch,
@@ -51,7 +51,7 @@ export function upsertAnalysis({
     });
 }
 
-export function deleteCachedAnalysis(username: string, repo: string, branch: string) {
+export function deleteCachedAudit(username: string, repo: string, branch: string) {
   return db
     .delete(dependencies)
     .where(

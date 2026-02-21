@@ -253,19 +253,19 @@ export interface UnifiedFixPlan {
   };
   metadata?: {
     generated_at?: string;
-    analysis_duration?: string;
+    audit_duration?: string;
     total_packages_analyzed?: number;
     ecosystem?: string;
   };
 }
 
 // Global Fix Plan Data Structures
-export interface GlobalAnalysisData {
-  analysis?: {
+export interface GlobalAuditData {
+  audit?: {
     summary?: string;
     dependency_relationships?: string[];
     shared_vulnerabilities?: string[];
-    critical_path_analysis?: { path: string; description: string }[];
+    critical_path_audit?: { path: string; description: string }[];
   };
   prioritization?: {
     strategy?: string;
@@ -278,7 +278,7 @@ export interface GlobalAnalysisData {
   };
   risk_management?: {
     assessment?: string;
-    breaking_change_analysis?: string;
+    breaking_change_audit?: string;
     testing_strategy?: {
       unit_tests?: string;
       integration_tests?: string;
@@ -288,7 +288,7 @@ export interface GlobalAnalysisData {
 }
 
 export interface OptimisationData {
-  optimization_analysis?: {
+  optimization_audit?: {
     summary?: string;
     redundancies_found?: Array<{ type: string; description: string }>;
     batch_opportunities?: Array<{ name: string; description: string }>;
@@ -300,7 +300,7 @@ export interface OptimisationData {
 }
 
 export interface ConflictResolutionData {
-  analysis?: {
+  audit?: {
     conflicts_summary?: string;
     critical_conflicts?: Array<{ dependency: string; description: string }>;
     version_conflicts?: Array<{ package: string; description: string }>;

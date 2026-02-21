@@ -26,12 +26,12 @@ const HistoryPanel = () => {
 
   return (
     <Card
-      aria-label="Recent analysis history"
+      aria-label="Recent audit history"
       className="w-full max-w-3xl m-0 border-none text-secondary bg-[rgba(169,169,169,0.4)] p-4 sm:px-4 sm:py-2 backdrop-blur-[1px]"
     >
       <div>
         <header className="flex flex-row justify-between items-center w-full">
-          <p className="font-ui-heading font-bold sm:text-lg text-md">Continue Analysis:</p>
+          <p className="font-ui-heading font-bold sm:text-lg text-md">Continue Audit:</p>
           {/* <p className="text-xs text-secondary hover:text-accent hover:underline cursor-pointer">
             View All
           </p> */}
@@ -59,8 +59,8 @@ const HistoryPanel = () => {
             <EmptyCard
               size="sm"
               variant="search"
-              title="No recent analyses"
-              message="Your analysis history will appear here"
+              title="No recent audits"
+              message="Your audit history will appear here"
               useCoffeeCup={false}
               className="border-none bg-transparent"
             />

@@ -145,7 +145,7 @@ export async function getManifestFileContents(
   }
 }
 
-export async function analyseDependencies(
+export async function auditDependencies(
   username: string,
   repo: string,
   branch: string,
@@ -154,8 +154,8 @@ export async function analyseDependencies(
 ): Promise<ManifestFileContentsApiResponse> {
   try {
     const url = file
-      ? new URL(`${baseUrl}/analyseFile`)
-      : new URL(`${baseUrl}/analyseDependencies`);
+      ? new URL(`${baseUrl}/auditFile`)
+      : new URL(`${baseUrl}/auditDependencies`);
 
     const response = await fetch(url, {
       method: "POST",
@@ -165,7 +165,7 @@ export async function analyseDependencies(
       body: file
         ? JSON.stringify({ file })
         : JSON.stringify({ username, repo, branch, github_pat, forceRefresh }),
-      signal: AbortSignal.timeout(60000), // 60 seconds for analysis
+      signal: AbortSignal.timeout(60000), // 60 seconds for audit
     });
 
     if (response.status === 429) {
@@ -175,11 +175,11 @@ export async function analyseDependencies(
     const data = (await response.json()) as ManifestFileContentsApiResponse;
     return data;
   } catch (error) {
-    console.error("Error analysing dependencies:", error);
+    console.error("Error auditing dependencies:", error);
     if (error instanceof Error && error.name === "TimeoutError") {
       throw new Error("Request timed out. Please try again.");
     }
-    throw new Error("Failed to analyse dependencies. Please try again later.");
+    throw new Error("Failed to audit dependencies. Please try again later.");
   }
 }
 
@@ -415,8 +415,8 @@ export async function getFixPlanSSE(
         // New 5-phase architecture steps
         case "preprocessing_start":
         case "preprocessing_complete":
-        case "parallel_analysis_start":
-        case "parallel_analysis_complete":
+        case "parallel_audit_start":
+        case "parallel_audit_complete":
         case "intelligence_start":
         case "intelligence_complete":
         case "batch_start":
@@ -443,7 +443,7 @@ export async function getFixPlanSSE(
             });
           }
           break;
-        case "analysis_complete":
+        case "audit_complete":
           onComplete();
           break;
       }

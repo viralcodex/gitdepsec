@@ -10,7 +10,7 @@ export const generalRateLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-export const analysisRateLimiter = rateLimit({
+export const auditRateLimiter = rateLimit({
   windowMs: Number(process.env.RATE_LIMIT_WINDOW_MS) || 1 * 60 * 1000, // 1 minute
   max: Number(process.env.ANALYSIS_RATE_LIMIT_MAX) || 20, // limit each IP to 20 requests per windowMs
   message: {

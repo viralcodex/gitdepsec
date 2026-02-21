@@ -24,11 +24,11 @@ export const viewport: Viewport = {
 };
 
 export const metadata: Metadata = {
-  title: "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
+  title: "GitVulSafe - Dependency Vulnerability Scanner & Security Audit Tool",
   description:
     "Visualize, detect and fix dependency vulnerabilities in your codebase with AI-powered insights. Analyze GitHub repositories and manifest files for security risks across npm, pip, Maven, and more. Free open-source dependency scanner.",
   openGraph: {
-    title: "GitVulSafe - Dependency Vulnerability Scanner & Security Analysis Tool",
+    title: "GitVulSafe - Dependency Vulnerability Scanner & Security Audit Tool",
     description:
       "Visualize, detect and fix dependency vulnerabilities in your codebase with AI-powered insights. Analyze GitHub repositories and manifest files for security risks across npm, pip, Maven, and more.",
     url: "https://GitVulSafe.com",
@@ -47,7 +47,7 @@ export const metadata: Metadata = {
   },
   metadataBase: new URL("https://GitVulSafe.com"),
   keywords: [
-    "dependency analysis",
+    "dependency audit",
     "security vulnerabilities",
     "open source",
     "software security",

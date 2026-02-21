@@ -4,7 +4,7 @@ import {
   ConflictDetection,
   FlattenedDependency,
   DependencyApiResponse,
-  ParallelAnalysisResults,
+  ParallelAuditResults,
   PrioritizedVulnerability,
   QuickWin,
   TransitiveInsight,
@@ -51,10 +51,10 @@ class AgentsService {
   private ai: OpenRouter;
   private defaultModel: string;
   private apiKey: string;
-  private analysisData: DependencyApiResponse;
-  private ecosystemMappedAnalysisData: Record<string, DependencyApiResponse>;
+  private auditData: DependencyApiResponse;
+  private ecosystemMappedAuditData: Record<string, DependencyApiResponse>;
   private ecosystemFlattenedData: Record<string, FlattenedDependency[]> = {};
-  private flattenedAnalysisData: FlattenedDependency[] = [];
+  private flattenedAuditData: FlattenedDependency[] = [];
   private flattenedDependencyByKey = new Map<string, FlattenedDependency>();
   private ecosystems: Set<string>;
   private progressCallback: (step: string, message: string, data?: Record<string, unknown>) => void;
@@ -114,7 +114,7 @@ class AgentsService {
     return result;
   }
 
-  constructor(analysisData: DependencyApiResponse, model?: string, apiKey?: string) {
+  constructor(auditData: DependencyApiResponse, model?: string, apiKey?: string) {
     const key = apiKey ?? process.env.OPEN_ROUTER_KEY;
     if (!key) {
       throw new Error("OPEN_ROUTER_KEY is not set and no API key provided");
@@ -124,22 +124,22 @@ class AgentsService {
       apiKey: key,
     });
     this.defaultModel = model ?? process.env.DEFAULT_MODEL ?? "xiaomi/mimo-v2-flash:free";
-    this.flattenedAnalysisData = [];
-    this.analysisData = analysisData;
-    this.ecosystemMappedAnalysisData = {};
+    this.flattenedAuditData = [];
+    this.auditData = auditData;
+    this.ecosystemMappedAuditData = {};
     this.ecosystems = new Set<string>();
-    this.mapByEcosystemAnalysisData();
+    this.mapByEcosystemAuditData();
     this.flattenDependencies();
     this.progressCallback = () => { };
   }
 
-  private mapByEcosystemAnalysisData() {
+  private mapByEcosystemAuditData() {
     this.ecosystems = new Set(
-      Object.values(this.analysisData.dependencies).flatMap((deps) =>
+      Object.values(this.auditData.dependencies).flatMap((deps) =>
         deps.map((dep) => dep.ecosystem),
       ),
     );
-    /** Create a mapping of ecosystem to its specific analysis data
+    /** Create a mapping of ecosystem to its specific audit data
      * [ecosystem: string]: DependencyApiResponse
      * eg:
      * {npm: { dependencies: { ... } }
@@ -148,7 +148,7 @@ class AgentsService {
     this.ecosystems.forEach((ecosystem) => {
       const ecosystemData: DependencyApiResponse = {
         dependencies: Object.fromEntries(
-          Object.entries(this.analysisData.dependencies)
+          Object.entries(this.auditData.dependencies)
             .map(([filePath, deps]) => [
               filePath,
               deps.filter((dep) => dep.ecosystem === ecosystem),
@@ -156,7 +156,7 @@ class AgentsService {
             .filter(([_, deps]) => deps.length > 0),
         ),
       };
-      this.ecosystemMappedAnalysisData[ecosystem] = ecosystemData;
+      this.ecosystemMappedAuditData[ecosystem] = ecosystemData;
       // Flatten dependencies for this ecosystem
       this.ecosystemFlattenedData[ecosystem] = this.flattenDependenciesForData(ecosystemData);
     });
@@ -166,9 +166,9 @@ class AgentsService {
    * Enhances dependencies with depth and usage frequency for better prioritization
    */
   private flattenDependencies(): void {
-    this.flattenedAnalysisData = this.flattenDependenciesForData(this.analysisData);
+    this.flattenedAuditData = this.flattenDependenciesForData(this.auditData);
     this.flattenedDependencyByKey = new Map(
-      this.flattenedAnalysisData.map((dep) => [this.createDependencyKey(dep.name, dep.version), dep]),
+      this.flattenedAuditData.map((dep) => [this.createDependencyKey(dep.name, dep.version), dep]),
     );
   }
 
@@ -179,7 +179,7 @@ class AgentsService {
     // Track package usage across the dependency tree
     const usageCounter = new Map<string, number>();
 
-    const dependencyAnalysisData = Object.entries(data.dependencies).flatMap(([filePath, deps]) => {
+    const dependencyAuditData = Object.entries(data.dependencies).flatMap(([filePath, deps]) => {
       return deps.map((dep) => {
         const key = `${dep.name}@${dep.version}`;
         usageCounter.set(key, (usageCounter.get(key) ?? 0) + 1);
@@ -196,7 +196,7 @@ class AgentsService {
       });
     });
 
-    const transitiveDepsAnalysisData = dependencyAnalysisData.flatMap((dep) => {
+    const transitiveDepsAuditData = dependencyAuditData.flatMap((dep) => {
       return (
         dep.transitiveDependencies?.nodes
           ?.filter((node) => {
@@ -225,7 +225,7 @@ class AgentsService {
 
     // Remove duplicates while preserving the first occurrence
     const seenPackages = new Map<string, FlattenedDependency>();
-    const allDeps = [...dependencyAnalysisData, ...transitiveDepsAnalysisData];
+    const allDeps = [...dependencyAuditData, ...transitiveDepsAuditData];
 
     allDeps.forEach((dep) => {
       const key = `${dep.name}@${dep.version}`;
@@ -249,7 +249,7 @@ class AgentsService {
     const ecosystems = Array.from(this.ecosystems);
 
     if (ecosystems.length === 0) {
-      throw new Error("No ecosystems found in analysis data");
+      throw new Error("No ecosystems found in audit data");
     }
 
     // Single ecosystem - use current instance
@@ -270,7 +270,7 @@ class AgentsService {
 
       try {
         // Create dedicated service instance for this ecosystem
-        const ecosystemData = this.ecosystemMappedAnalysisData[ecosystem];
+        const ecosystemData = this.ecosystemMappedAuditData[ecosystem];
         const ecosystemService = new AgentsService(ecosystemData, this.defaultModel, this.apiKey);
 
         const result = await ecosystemService.generateUnifiedFixPlan(taggedCallback);
@@ -312,24 +312,24 @@ class AgentsService {
       progress: 0,
     });
 
-    this.progressCallback("preprocessing_complete", "Dependency analysis complete", {
+    this.progressCallback("preprocessing_complete", "Dependency audit complete", {
       phase: "preprocessing",
       progress: 8,
-      totalDependencies: this.flattenedAnalysisData.length,
+      totalDependencies: this.flattenedAuditData.length,
       totalVulnerabilities: this.getTotalVulnerabilitiesCount(),
-      directDependencies: this.flattenedAnalysisData.reduce(
+      directDependencies: this.flattenedAuditData.reduce(
         (count, dep) => count + (dep.dependencyLevel === "direct" ? 1 : 0),
         0,
       ),
-      transitiveDependencies: this.flattenedAnalysisData.reduce(
+      transitiveDependencies: this.flattenedAuditData.reduce(
         (count, dep) => count + (dep.dependencyLevel === "transitive" ? 1 : 0),
         0,
       ),
     });
 
     // ===== PHASE 1: PARALLEL INTELLIGENCE LAYER =====
-    this.progressCallback("parallel_analysis_start", "Running intelligence analyzers", {
-      phase: "parallel_analysis",
+    this.progressCallback("parallel_audit_start", "Running intelligence analyzers", {
+      phase: "parallel_audit",
       progress: 8,
       analyzers: [
         "Priority Scorer",
@@ -339,7 +339,7 @@ class AgentsService {
       ],
     });
 
-    const parallelResults = this.runParallelAnalysis();
+    const parallelResults = this.runParallelAudit();
 
     // Transform intelligence data once for reuse
     const intelligenceData = this.transformIntelligenceData(parallelResults);
@@ -354,8 +354,8 @@ class AgentsService {
     });
 
     // Send intelligence data immediately to populate Intelligence tab
-    this.progressCallback("parallel_analysis_complete", "Intelligence analysis completed", {
-      phase: "parallel_analysis",
+    this.progressCallback("parallel_audit_complete", "Intelligence audit completed", {
+      phase: "parallel_audit",
       progress: 18,
       quickWins: parallelResults.quickWins.length,
       conflicts: parallelResults.conflicts.length,
@@ -532,7 +532,7 @@ class AgentsService {
   /**
    * Transform intelligence data once for reuse
    */
-  private transformIntelligenceData(parallelResults: ParallelAnalysisResults): {
+  private transformIntelligenceData(parallelResults: ParallelAuditResults): {
     transitive_insights: Array<Record<string, unknown>>;
     conflicts: Array<Record<string, unknown>>;
     quick_wins: Array<Record<string, unknown>>;
@@ -571,7 +571,7 @@ class AgentsService {
   /**
    * PHASE 1: Run all parallel analysis agents
    */
-  private runParallelAnalysis(): ParallelAnalysisResults {
+  private runParallelAudit(): ParallelAuditResults {
     // All agents run synchronously (local processing, no AI calls)
     const priorities = this.vulnerabilityPrioritizationAgent();
     const transitiveInsights = this.transitiveIntelligenceAgent();
@@ -599,7 +599,7 @@ class AgentsService {
   private vulnerabilityPrioritizationAgent(): PrioritizedVulnerability[] {
     const allVulns: PrioritizedVulnerability[] = [];
 
-    this.flattenedAnalysisData.forEach((dep) => {
+    this.flattenedAuditData.forEach((dep) => {
       (dep.vulnerabilities ?? []).forEach((vuln) => {
         const prioritized: PrioritizedVulnerability = {
           ...vuln,
@@ -685,7 +685,7 @@ class AgentsService {
       }
     >();
 
-    this.flattenedAnalysisData.forEach((dep) => {
+    this.flattenedAuditData.forEach((dep) => {
       if (
         dep.dependencyLevel !== "transitive" ||
         !dep.vulnerabilities ||
@@ -748,7 +748,7 @@ class AgentsService {
     >();
 
     // Build version constraint map
-    this.flattenedAnalysisData.forEach((dep) => {
+    this.flattenedAuditData.forEach((dep) => {
       dep.transitiveDependencies?.edges?.forEach((edge) => {
         const targetNode = dep.transitiveDependencies?.nodes?.[edge.target];
         if (targetNode) {
@@ -861,10 +861,10 @@ class AgentsService {
   }
 
   /**
-   * PHASE 1 - ANALYZER 5: Critical Path Analysis (LOCAL - NO AI)
+   * PHASE 1 - ANALYZER 5: Critical Path Audit (LOCAL - NO AI)
    * Identifies high-risk dependency chains from manifest to vulnerable packages
    */
-  private generateCriticalPaths(parallelResults: ParallelAnalysisResults): Array<{
+  private generateCriticalPaths(parallelResults: ParallelAuditResults): Array<{
     path: string;
     risk: string;
     resolution: string;
@@ -934,10 +934,10 @@ class AgentsService {
    * PHASE 2: Process dependencies in batches with adaptive sizing
    */
   private async processDependenciesInBatches(
-    parallelResults: ParallelAnalysisResults,
+    parallelResults: ParallelAuditResults,
   ): Promise<Array<Record<string, unknown>>> {
     // Separate dependencies by severity for adaptive batching
-    const depsWithVulns = this.flattenedAnalysisData.filter(
+    const depsWithVulns = this.flattenedAuditData.filter(
       (dep) => dep.vulnerabilities && dep.vulnerabilities.length > 0,
     );
 
@@ -1035,7 +1035,7 @@ class AgentsService {
    */
   private async batchFixPlanAgent(
     batch: FlattenedDependency[],
-    parallelContext: ParallelAnalysisResults,
+    parallelContext: ParallelAuditResults,
     batchNumber: number,
     severity: "critical" | "high" | "medium",
   ): Promise<Record<string, unknown>> {
@@ -1105,7 +1105,7 @@ class AgentsService {
    */
   private async generateExecutiveSummary(
     batchResults: Array<Record<string, unknown>>,
-    _parallelResults: ParallelAnalysisResults,
+    _parallelResults: ParallelAuditResults,
   ): Promise<Record<string, unknown>> {
     const totalVulns = this.getTotalVulnerabilitiesCount();
     const fixableVulns = this.getFixableVulnerabilities();
@@ -1169,7 +1169,7 @@ class AgentsService {
    */
   private async generatePriorityPhases(
     _batchResults: Array<Record<string, unknown>>,
-    _parallelResults: ParallelAnalysisResults,
+    _parallelResults: ParallelAuditResults,
   ): Promise<Array<Record<string, unknown>>> {
     const systemPrompt = prompts.PRIORITY_PHASES_GENERATION.system;
     const userPrompt = prompts.PRIORITY_PHASES_GENERATION.template.replace(
@@ -1216,7 +1216,7 @@ class AgentsService {
    * AI-generated top 3 prioritized actions based on severity and impact
    */
   private async generateSmartActions(
-    parallelResults: ParallelAnalysisResults,
+    parallelResults: ParallelAuditResults,
     totalVulns: number,
     fixableVulns: number,
     criticalHighCount: number,
@@ -1304,7 +1304,7 @@ class AgentsService {
    */
   private async generateRiskManagement(
     batchResults: Array<Record<string, unknown>>,
-    _parallelResults: ParallelAnalysisResults,
+    _parallelResults: ParallelAuditResults,
   ): Promise<Record<string, unknown>> {
     const systemPrompt = prompts.RISK_MANAGEMENT_GENERATION.system;
     const userPrompt = prompts.RISK_MANAGEMENT_GENERATION.template.replace(
@@ -1443,7 +1443,7 @@ class AgentsService {
       metadata: {
         generated_at: generatedAt,
         generation_date: timestamp,
-        total_packages_analyzed: this.flattenedAnalysisData.length,
+        total_packages_analyzed: this.flattenedAuditData.length,
         total_vulnerabilities: this.getTotalVulnerabilitiesCount(),
         fixable_vulnerabilities: this.getFixableVulnerabilities(),
         ecosystem: this.detectEcosystem(),
@@ -1749,8 +1749,8 @@ class AgentsService {
    */
   private detectEcosystem(): string {
     // Simple detection based on first dependency
-    if (this.flattenedAnalysisData.length > 0) {
-      return this.flattenedAnalysisData[0].ecosystem;
+    if (this.flattenedAuditData.length > 0) {
+      return this.flattenedAuditData[0].ecosystem;
     }
     return "npm";
   }
@@ -1770,7 +1770,7 @@ class AgentsService {
     let total = 0;
     let fixable = 0;
 
-    Object.values(this.analysisData.dependencies).forEach((deps) => {
+    Object.values(this.auditData.dependencies).forEach((deps) => {
       deps.forEach((dep) => {
         // Count direct vulnerabilities
         if (dep.vulnerabilities) {

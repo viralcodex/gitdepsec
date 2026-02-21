@@ -46,8 +46,8 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
       return;
     }
     // Redirect or perform any action with the uploaded file
-    console.log("File ready for analysis:", newFileName);
-    toast.success("File ready for analysis");
+    console.log("File ready for audit:", newFileName);
+    toast.success("File ready for audit");
     setLoading(true);
     setError("");
     resetGraphSvg();
@@ -61,7 +61,7 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
       className={cn(
         isDiagramExpanded ? "hidden" : "w-full flex flex-col items-center justify-center",
       )}
-      aria-label="File analysis form"
+      aria-label="File audit form"
     >
       <div className="flex flex-col items-center justify-center px-4 pt-4 w-full">
         <Card className="relative max-h-[200px] bg-background sm:max-w-[700px] w-full border-2 border-accent mx-auto mt-4 flex justify-between p-4 gap-4 sm:flex-row flex-col">
@@ -74,7 +74,7 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
                 setInputFile(e.target.files?.[0] || null);
                 setError("");
               }}
-              aria-label="Upload manifest file for analysis"
+              aria-label="Upload manifest file for audit"
             />
           </div>
           <div className="font-ui-mono border-1 rounded-md text-accent text-md flex flex-col items-center justify-center sm:w-[42%] w-full p-2">
@@ -89,7 +89,7 @@ const TopHeaderFile = (props: TopHeaderFileProps) => {
               <LucideLoader2 className="animate-spin" strokeWidth={3} />
             ) : (
               <span className="flex flex-row items-center justify-center">
-                <span className="sm:hidden">Analyse</span>
+                <span className="sm:hidden">Audit</span>
                 <LucideArrowBigRight strokeWidth={3} />
               </span>
             )}

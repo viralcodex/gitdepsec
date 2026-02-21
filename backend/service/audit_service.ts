@@ -2,6 +2,7 @@ import { Cvss3P0, Cvss4P0 } from "ae-cvss-calculator";
 import axios from "axios";
 import yaml from "js-yaml";
 import { parseStringPromise } from "xml2js";
+import { parse, TomlValue } from 'smol-toml';
 
 import {
   DEPS_DEV_BASE_URL,
@@ -38,10 +39,12 @@ import {
 import GithubService from "./github_service";
 import ProgressService from "./progress_service";
 
-class AnalysisService {
-  private globalDependencyMap;
-  private dependencyFileMapping;
-  private stepErrors;
+class AuditService {
+  private globalDependencyMap: Map<string, Dependency>;
+  private dependencyFileMapping: Map<string, Set<string>>;
+  private stepErrors: Map<string, string[]>;
+  private npmLatestVersionCache: Map<string, string>;
+  private pypiLatestVersionCache: Map<string, string>;
   private progressService: ProgressService;
   private performanceConfig = {
     concurrency: DEFAULT_CONCURRENCY,
@@ -56,7 +59,9 @@ class AnalysisService {
   constructor(githubPAT: string = "", progressService: ProgressService | null = null) {
     this.stepErrors = new Map<string, string[]>();
     this.globalDependencyMap = new Map<string, Dependency>();
-    this.dependencyFileMapping = new Map<string, string[]>();
+    this.dependencyFileMapping = new Map<string, Set<string>>();
+    this.npmLatestVersionCache = new Map<string, string>();
+    this.pypiLatestVersionCache = new Map<string, string>();
     this.configurePerformance({
       concurrency: 10,
       batchSize: 100,
@@ -101,7 +106,7 @@ class AnalysisService {
     batchSize: number,
     concurrency: number,
     processor: (item: T) => Promise<R>,
-    description: string,
+    description?: string,
   ): Promise<R[]> {
     const results: R[] = [];
 
@@ -111,9 +116,11 @@ class AnalysisService {
       batches.push(items.slice(i, i + batchSize));
     }
 
-    console.log(
-      `${description}: Processing ${items.length} items in ${batches.length} batches with concurrency ${concurrency}`,
-    );
+    if (description) {
+      console.log(
+        `${description}: Processing ${items.length} items in ${batches.length} batches with concurrency ${concurrency}`,
+      );
+    }
 
     // Process batches with controlled concurrency
     for (let i = 0; i < batches.length; i += concurrency) {
@@ -130,12 +137,14 @@ class AnalysisService {
       // Progress logging with intermediate progress tracking
       const processed = Math.min(i + concurrency, batches.length);
       const progressPercentage = (processed / batches.length) * 100;
-      console.log(
-        `${description}: Processed ${processed}/${batches.length} batches (${progressPercentage.toFixed(1)}%)`,
-      );
+      if (description) {
+        console.log(
+          `${description}: Processed ${processed}/${batches.length} batches (${progressPercentage.toFixed(1)}%)`,
+        );
 
-      // Send progress update with the current step and percentage (not decimal sequence numbers)
-      this.progressService.progressUpdater(description, progressPercentage);
+        // Send progress update with the current step and percentage (not decimal sequence numbers)
+        this.progressService.progressUpdater(description, progressPercentage);
+      }
     }
 
     return results;
@@ -257,7 +266,7 @@ class AnalysisService {
 
   /**
    * Helper method to collect errors by step for consolidated reporting
-   * @param step - The analysis step (e.g., 'File Parsing', 'Vulnerability Scanning')
+   * @param step - The audit step (e.g., 'File Parsing', 'Vulnerability Scanning')
    * @param error - The error object or message
    */
   private addStepError(step: string, error: any): void {
@@ -303,24 +312,21 @@ class AnalysisService {
 
     // Track which files need this dependency
     if (!this.dependencyFileMapping.has(depKey)) {
-      this.dependencyFileMapping.set(depKey, []);
+      this.dependencyFileMapping.set(depKey, new Set<string>());
     }
-    const files = this.dependencyFileMapping.get(depKey);
-    if (files && !files.includes(filePath)) {
-      files.push(filePath);
-    }
+    this.dependencyFileMapping.get(depKey)?.add(filePath);
   }
 
   /**
    * Maps processed dependencies back to their respective files
-   * @param processedDependencies - Dependencies with their analysis results
+   * @param processedDependencies - Dependencies with their audit results
    * @returns DependencyGroups organized by file path
    */
   private mapDependenciesToFiles(processedDependencies: Map<string, Dependency>): DependencyGroups {
     const result: DependencyGroups = {};
 
     processedDependencies.forEach((dependency, depKey) => {
-      const files = this.dependencyFileMapping.get(depKey) ?? [];
+      const files = this.dependencyFileMapping.get(depKey) ?? new Set<string>();
       files.forEach((filePath) => {
         if (!result[filePath]) {
           result[filePath] = [];
@@ -334,12 +340,14 @@ class AnalysisService {
   }
 
   /**
-   * Resets the global deduplication state (useful for new analysis runs)
+   * Resets the global deduplication state (useful for new audit runs)
    */
   private resetGlobalState(): void {
     this.globalDependencyMap.clear();
     this.dependencyFileMapping.clear();
-    this.stepErrors.clear(); // Reset step errors for new analysis
+    this.stepErrors.clear(); // Reset step errors for new audit
+    this.npmLatestVersionCache.clear();
+    this.pypiLatestVersionCache.clear();
   }
 
   /**
@@ -451,6 +459,7 @@ class AnalysisService {
       Promise.resolve(this.processDartFiles(manifestFiles["Pub"] ?? [])),
       this.processMavenFiles(manifestFiles["Maven"] ?? []),
       Promise.resolve(this.processRubyFiles(manifestFiles["RubyGems"] ?? [])),
+      this.processCargoFiles(manifestFiles["rust"] ?? []),
     ]);
 
     // Convert global dependency map to processed dependencies
@@ -475,18 +484,37 @@ class AnalysisService {
           const packageJson = JSON.parse(fileContent.content);
 
           const processDeps = async (deps: Record<string, string>) => {
-            for (const [name, version] of Object.entries(deps)) {
-              let finalVersion = version;
+            const depEntries = Object.entries(deps);
+            const wildcardDepNames: string[] = [];
+
+            depEntries.forEach(([name, version]) => {
               if (version === "*" || version === "latest" || !version) {
-                finalVersion = await this.fetchLatestVersionFromNpm(name);
+                wildcardDepNames.push(name);
+                return;
               }
+
               const dependency: Dependency = {
                 name,
-                version: this.normalizeVersion(finalVersion),
+                version: this.normalizeVersion(version),
                 ecosystem: Ecosystem.NPM,
               };
               this.addDependencyToGlobalMap(dependency, fileContent.path);
-            }
+            });
+
+            await this.processBatchesInParallel(
+              wildcardDepNames,
+              10,
+              3,
+              async (name) => {
+                const finalVersion = await this.fetchLatestVersionFromNpm(name);
+                const dependency: Dependency = {
+                  name,
+                  version: this.normalizeVersion(finalVersion),
+                  ecosystem: Ecosystem.NPM,
+                };
+                this.addDependencyToGlobalMap(dependency, fileContent.path);
+              },
+            );
           };
 
           if (packageJson.dependencies) await processDeps(packageJson.dependencies);
@@ -538,34 +566,28 @@ class AnalysisService {
         .split("\n")
         .filter((line) => line.trim() && !line.trim().startsWith("#"));
 
-      for (const line of lines) {
-        const [name, version] = line.split("==");
-        let ver = "unknown";
+      await this.processBatchesInParallel(
+        lines,
+        5,
+        2,
+        async (line) => {
+          const [name, version] = line.split("==");
+          let ver = "unknown";
 
-        if (name && !version) {
-          try {
-            const response = await this.retryApiCall(
-              () => axios.get(`https://pypi.org/pypi/${name.trim()}/json`),
-              2,
-              1000,
-              `PyPI version lookup for ${name.trim()}`,
-            );
-            ver = response.data.info.version;
-          } catch (error) {
-            console.error(`Error fetching latest version for ${name.trim()}:`, error);
-            this.addStepError("Version Lookup", error);
+          if (name && !version) {
+            ver = await this.fetchLatestVersionFromPyPI(name.trim());
+          } else if (name && version) {
+            ver = this.normalizeVersion(version);
           }
-        } else if (name && version) {
-          ver = this.normalizeVersion(version);
-        }
 
-        const dependency: Dependency = {
-          name: name.trim(),
-          version: ver,
-          ecosystem: Ecosystem.PYPI,
-        };
-        this.addDependencyToGlobalMap(dependency, fileContent.path);
-      }
+          const dependency: Dependency = {
+            name: name.trim(),
+            version: ver,
+            ecosystem: Ecosystem.PYPI,
+          };
+          this.addDependencyToGlobalMap(dependency, fileContent.path);
+        },
+      );
     }
   }
 
@@ -605,41 +627,74 @@ class AnalysisService {
    * Process Java Maven pom.xml files
    */
   private async processMavenFiles(files: Array<{ path: string; content: string }>): Promise<void> {
-    for (const fileContent of files) {
-      try {
-        const result = await parseStringPromise(fileContent.content);
-        const propertiesArray = result?.project?.properties?.[0];
-        const propertiesMap: Record<string, string> = {};
+    await Promise.all(
+      files.map(async (fileContent) => {
+        try {
+          const result = await parseStringPromise(fileContent.content);
+          const propertiesArray = result?.project?.properties?.[0];
+          const propertiesMap: Record<string, string> = {};
 
-        if (propertiesArray) {
-          for (const key in propertiesArray) {
-            if (Object.prototype.hasOwnProperty.call(propertiesArray, key)) {
-              propertiesMap[key] = propertiesArray[key]?.[0] ?? "";
+          if (propertiesArray) {
+            for (const key in propertiesArray) {
+              if (Object.prototype.hasOwnProperty.call(propertiesArray, key)) {
+                propertiesMap[key] = propertiesArray[key]?.[0] ?? "";
+              }
             }
           }
+
+          const dependencies = result?.project?.dependencies?.[0]?.dependency ?? [];
+
+          dependencies.forEach((dep: MavenDependency) => {
+            let version = dep.version?.[0] ?? "unknown";
+            if (version.startsWith("${") && version.endsWith("}")) {
+              const propName = version.slice(2, -1);
+              version = propertiesMap[propName] ?? "unknown";
+            }
+            const dependency: Dependency = {
+              name: dep.artifactId?.[0] ?? "",
+              version: this.normalizeVersion(version),
+              ecosystem: Ecosystem.MAVEN,
+            };
+            this.addDependencyToGlobalMap(dependency, fileContent.path);
+          });
+        } catch (error) {
+          console.error("Error parsing pom.xml:", error);
+          this.addStepError("File Parsing", error);
+          throw new Error("Failed to parse pom.xml file");
         }
+      }),
+    );
+  }
 
-        const dependencies = result?.project?.dependencies?.[0]?.dependency ?? [];
-
-        dependencies.forEach((dep: MavenDependency) => {
-          let version = dep.version?.[0] ?? "unknown";
-          if (version.startsWith("${") && version.endsWith("}")) {
-            const propName = version.slice(2, -1);
-            version = propertiesMap[propName] ?? "unknown";
-          }
-          const dependency: Dependency = {
-            name: dep.artifactId?.[0] ?? "",
-            version: this.normalizeVersion(version),
-            ecosystem: Ecosystem.MAVEN,
-          };
-          this.addDependencyToGlobalMap(dependency, fileContent.path);
+  /**
+   * Process Rust Cargo.toml files
+   */
+  private processCargoFiles(files: Array<{ path: string; content: string }>): void {
+    files.forEach((fileContent) => {
+      try {
+        const parsedToml = parse(fileContent.content);
+        const dependencies = parsedToml.dependencies ?? {};
+        const devDependencies = parsedToml["dev-dependencies"] ?? {};
+        const buildDependencies = parsedToml["build-dependencies"] ?? {};
+        const targetDependencies = parsedToml["target"] ?? {};
+        const workspaceDependencies = (parsedToml["workspace"] as Record<string, any>)?.dependencies ?? {};
+        Object.values(targetDependencies).forEach((targetDepGroup) => {
+          this.getCargoDependencies(targetDepGroup.dependencies ?? {}, fileContent.path);
+          this.getCargoDependencies(targetDepGroup["dev-dependencies"] ?? {}, fileContent.path);
+          this.getCargoDependencies(targetDepGroup["build-dependencies"] ?? {}, fileContent.path);
         });
+
+        this.getCargoDependencies(workspaceDependencies, fileContent.path);
+
+        this.getCargoDependencies(dependencies, fileContent.path);
+        this.getCargoDependencies(devDependencies, fileContent.path);
+        this.getCargoDependencies(buildDependencies, fileContent.path);
       } catch (error) {
-        console.error("Error parsing pom.xml:", error);
+        console.error("Error parsing Cargo.toml:", error);
         this.addStepError("File Parsing", error);
-        throw new Error("Failed to parse pom.xml file");
-      }
-    }
+        throw new Error("Failed to parse Cargo.toml file");
+      };
+    })
   }
 
   /**
@@ -664,6 +719,32 @@ class AnalysisService {
           this.addDependencyToGlobalMap(dependency, fileContent.path);
         }
       });
+    });
+  }
+
+  /*
+    * Helper method to process Cargo.toml dependencies from a given section (regular, dev, build, target-specific, workspace)
+    * Handles both simple version strings and detailed tables with version fields
+    */
+  private getCargoDependencies(deps: TomlValue, filePath: string): void {
+    // Process regular dependencies
+    Object.entries(deps).forEach(([name, info]) => {
+      if (typeof info === 'string') {
+        const dependency: Dependency = {
+          name,
+          version: this.normalizeVersion(info),
+          ecosystem: Ecosystem.CARGO,
+        };
+        this.addDependencyToGlobalMap(dependency, filePath);
+      }
+      else if (typeof info === "object" && info.version) {
+        const dependency: Dependency = {
+          name,
+          version: this.normalizeVersion(info.version),
+          ecosystem: Ecosystem.CARGO
+        }
+        this.addDependencyToGlobalMap(dependency, filePath);
+      }
     });
   }
 
@@ -716,10 +797,10 @@ class AnalysisService {
               };
             })
             .filter((e) => e !== null) as {
-            source: number;
-            target: number;
-            requirement: string;
-          }[];
+              source: number;
+              target: number;
+              requirement: string;
+            }[];
           dep.transitiveDependencies.nodes = vulnerableNodes;
           dep.transitiveDependencies.edges = vulnerableEdges;
         }
@@ -831,8 +912,6 @@ class AnalysisService {
       PROGRESS_STEPS[2], // Progress #6 for intermediate tracking
     );
 
-    this.progressService.progressUpdater(PROGRESS_STEPS[2], 100); // Progress #7
-
     // Apply results back to the original dependencies
     const erroredDeps: Dependency[] = [];
 
@@ -872,6 +951,7 @@ class AnalysisService {
     dependencies: DependencyGroups,
   ): Promise<DependencyGroups> {
     const vulnsIDs = new Set<string>();
+    const vulnToDependencies = new Map<string, Set<Dependency>>();
 
     // Flatten all dependencies for batch processing
     const allDeps: Dependency[] = Object.values(dependencies).flat();
@@ -884,11 +964,8 @@ class AnalysisService {
     });
     // Combine main and transitive dependencies
     const allForVuln: Dependency[] = [...allDeps, ...allTransitiveNodes];
-    const depMap = new Map<string, Dependency>();
     allForVuln.forEach((dep) => {
-      const key = `${dep.ecosystem}:${dep.name}:${dep.version}`;
       dep.vulnerabilities = [];
-      depMap.set(key, dep);
     });
 
     try {
@@ -904,7 +981,7 @@ class AnalysisService {
       // Process batches sequentially with controlled concurrency
       const globalPaginatedQueries: {
         query: OSVQuery;
-        depKey: string;
+        dependency: Dependency;
         pageToken: string;
       }[] = [];
 
@@ -929,17 +1006,21 @@ class AnalysisService {
 
             response.data?.results?.forEach((result, idx) => {
               const dep = batch[idx];
-              const depKey = `${dep.ecosystem}:${dep.name}:${dep.version}`;
+              if (!dep) return;
               if (result.vulns) {
                 result.vulns.forEach((vuln) => {
                   dep.vulnerabilities?.push({ id: vuln.id } as Vulnerability);
                   vulnsIDs.add(vuln.id);
+                  if (!vulnToDependencies.has(vuln.id)) {
+                    vulnToDependencies.set(vuln.id, new Set<Dependency>());
+                  }
+                  vulnToDependencies.get(vuln.id)?.add(dep);
                 });
               }
               if (result.next_page_token) {
                 globalPaginatedQueries.push({
                   query: queries[idx],
-                  depKey,
+                  dependency: dep,
                   pageToken: result.next_page_token,
                 });
               }
@@ -979,7 +1060,7 @@ class AnalysisService {
           ...pq.query,
           page_token: pq.pageToken,
         }));
-        const depKeys = globalPaginatedQueries.map((pq) => pq.depKey);
+        const deps = globalPaginatedQueries.map((pq) => pq.dependency);
         globalPaginatedQueries.length = 0; // Clear the array
 
         const nextResponse = await this.retryApiCall(
@@ -992,17 +1073,21 @@ class AnalysisService {
         );
 
         nextResponse.data.results.forEach((result, idx) => {
-          const dep = depMap.get(depKeys[idx]);
+          const dep = deps[idx];
           if (dep && result.vulns) {
             result.vulns.forEach((vuln) => {
               dep.vulnerabilities?.push({ id: vuln.id });
               vulnsIDs.add(vuln.id);
+              if (!vulnToDependencies.has(vuln.id)) {
+                vulnToDependencies.set(vuln.id, new Set<Dependency>());
+              }
+              vulnToDependencies.get(vuln.id)?.add(dep);
             });
           }
-          if (result.next_page_token) {
+          if (result.next_page_token && dep) {
             globalPaginatedQueries.push({
               query: nextQueries[idx],
-              depKey: depKeys[idx],
+              dependency: dep,
               pageToken: result.next_page_token,
             });
           }
@@ -1035,16 +1120,12 @@ class AnalysisService {
         PROGRESS_STEPS[4], // Progress #12 for intermediate tracking
       );
 
-      this.progressService.progressUpdater(PROGRESS_STEPS[4], 100); // Progress #13
-
       // Filter out failed requests
       const validVulnDetails = vulnDetailsResults.filter((vuln) => vuln !== null);
 
       // Update vulnerability details in dependencies
       validVulnDetails.forEach((vuln) => {
-        const matchingDeps = allForVuln.filter((d) =>
-          d.vulnerabilities?.some((v) => v.id === vuln.id),
-        );
+        const matchingDeps = vulnToDependencies.get(vuln.id) ?? new Set<Dependency>();
         matchingDeps.forEach((dep) => {
           dep.vulnerabilities = dep.vulnerabilities ?? [];
           const existingIndex = dep.vulnerabilities.findIndex((v) => v.id === vuln.id);
@@ -1087,7 +1168,7 @@ class AnalysisService {
    * @param branch - branch name (default: 'main'/'master')
    * @returns Promise<DependencyApiResponse> - object containing parsed dependencies and transitive dependencies with enriched vulnerabilities
    */
-  async analyseDependencies(
+  async auditDependencies(
     username: string,
     repo: string,
     branch: string,
@@ -1124,33 +1205,30 @@ class AnalysisService {
           "Failed to get transitive dependencies, proceeding with main dependencies only:",
           error,
         );
-        this.addStepError("Transitive Dependencies Analysis", error);
+        this.addStepError("Transitive Dependencies Audit", error);
       }
 
-      let analysedDependencies: DependencyGroups = dependenciesWithChildren;
+      let auditedDependencies: DependencyGroups = dependenciesWithChildren;
       try {
-        analysedDependencies =
+        auditedDependencies =
           await this.enrichDependenciesWithVulnerabilities(dependenciesWithChildren);
       } catch (error) {
         console.warn(
           "Failed to enrich vulnerabilities, returning dependencies without vulnerability data:",
           error,
         );
-        this.addStepError("Vulnerability Analysis", error);
+        this.addStepError("Vulnerability Audit", error);
       }
 
       const consolidatedErrors = this.consolidateStepErrors();
-      this.progressService.progressUpdater(PROGRESS_STEPS[5], 100); // Progress #15
-
-      // Final completion step
       this.progressService.progressUpdater(PROGRESS_STEPS[5], 100); // Progress #16 - Complete
 
       return {
-        dependencies: analysedDependencies,
+        dependencies: auditedDependencies,
         error: consolidatedErrors.length > 0 ? consolidatedErrors : undefined,
       };
     } catch (error) {
-      this.addStepError("Overall Analysis", error);
+      this.addStepError("Overall Audit", error);
 
       // Complete progress even on error
       this.progressService.progressUpdater(PROGRESS_STEPS[5], 100); // Progress #16 - Complete with error
@@ -1167,8 +1245,8 @@ class AnalysisService {
    * @param fileDetails - Object containing filename and content of the manifest file
    * @returns Promise<DependencyApiResponse> - object containing parsed dependencies and transitive dependencies with enriched vulnerabilities
    */
-  async analyseFile(fileDetails: FileDetails): Promise<DependencyApiResponse> {
-    // Start the progress from step 1 for file analysis
+  async auditFile(fileDetails: FileDetails): Promise<DependencyApiResponse> {
+    // Start the progress from step 1 for file audit
     this.resetGlobalState();
 
     const { filename, content } = fileDetails;
@@ -1193,11 +1271,11 @@ class AnalysisService {
       [ecosystem]: [{ path: parsedFileName, content }],
     };
 
-    const analysedDependencies = await this.analyseDependencies("", "", "", groupedFileContent);
+    const auditedDependencies = await this.auditDependencies("", "", "", groupedFileContent);
 
-    // console.log("File Analyzed dependencies:", analysedDependencies);
+    // console.log("File Audited dependencies:", auditedDependencies);
 
-    return analysedDependencies;
+    return auditedDependencies;
   }
 
   /**
@@ -1255,6 +1333,12 @@ class AnalysisService {
    * Fetches the latest version of an npm package.
    */
   async fetchLatestVersionFromNpm(packageName: string): Promise<string> {
+    //early return if we have it cached
+    const cachedVersion = this.npmLatestVersionCache.get(packageName);
+    if (cachedVersion) {
+      return cachedVersion;
+    }
+
     try {
       const response = await this.retryApiCall(
         () => axios.get(`https://registry.npmjs.org/${packageName}`),
@@ -1262,10 +1346,41 @@ class AnalysisService {
         1000,
         `NPM version lookup for ${packageName}`,
       );
-      return response.data["dist-tags"]?.latest ?? "unknown";
+      const latestVersion = response.data["dist-tags"]?.latest ?? "unknown";
+      this.npmLatestVersionCache.set(packageName, latestVersion);
+      return latestVersion;
     } catch (error) {
       console.error(`Failed to fetch latest version for ${packageName}:`, error);
       this.addStepError("Version Lookup", error);
+      this.npmLatestVersionCache.set(packageName, "unknown");
+      return "unknown";
+    }
+  }
+
+  /**
+   * Fetches the latest version of a PyPI package.
+   */
+  async fetchLatestVersionFromPyPI(packageName: string): Promise<string> {
+    //early return if we have it cached
+    const cachedVersion = this.pypiLatestVersionCache.get(packageName);
+    if (cachedVersion) {
+      return cachedVersion;
+    }
+
+    try {
+      const response = await this.retryApiCall(
+        () => axios.get(`https://pypi.org/pypi/${packageName}/json`),
+        2,
+        1000,
+        `PyPI version lookup for ${packageName}`,
+      );
+      const latestVersion = response?.data?.info?.version ?? "unknown";
+      this.pypiLatestVersionCache.set(packageName, latestVersion);
+      return latestVersion;
+    } catch (error) {
+      console.error(`Failed to fetch latest version for ${packageName}:`, error);
+      this.addStepError("Version Lookup", error);
+      this.pypiLatestVersionCache.set(packageName, "unknown");
       return "unknown";
     }
   }
@@ -1313,10 +1428,12 @@ class AnalysisService {
         return Ecosystem.MAVEN;
       case "RUBYGEMS":
         return Ecosystem.RUBYGEMS;
+      case "CARGO":
+        return Ecosystem.CARGO;
       default:
         return Ecosystem.NULL;
     }
   }
 }
 
-export default AnalysisService;
+export default AuditService;

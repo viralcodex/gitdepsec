@@ -10,7 +10,7 @@ import { LucideArrowBigRight, LucideLoader2, RefreshCcwDot } from "lucide-react"
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import HeaderToggle from "../header-toggle";
-import SaveAnalysisHistory from "../save-analysis-history";
+import SaveAuditHistory from "../save-audit-history";
 import { ButtonGroup } from "../ui/button-group";
 import {
   useRepoState,
@@ -88,7 +88,7 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
     }
   };
 
-  const onRefreshAnalysis = () => {
+  const onRefreshAudit = () => {
     if (!result) {
       return;
     }
@@ -107,11 +107,11 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
       className={cn(
         isDiagramExpanded ? "hidden" : "w-full flex flex-col items-center justify-center",
       )}
-      aria-label="GitHub repository analysis form"
+      aria-label="GitHub repository audit form"
     >
       <div className="flex flex-col items-center justify-center px-4 pt-4 w-full">
         <Card className="relative max-h-50 bg-background sm:max-w-175 w-full border-2 border-accent mx-auto mt-4 flex justify-center p-4 gap-4 sm:flex-row flex-col">
-          <SaveAnalysisHistory data={result} addButtonRef={addButtonRef} />
+          <SaveAuditHistory data={result} addButtonRef={addButtonRef} />
           <HeaderToggle from="github" setIsFileHeaderOpen={setFileHeaderOpen} />
           <Input
             className="sm:w-[65%] h-14 border"
@@ -130,20 +130,20 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
                   className="font-ui-heading flex-1 sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm font-semibold cursor-pointer disabled:cursor-not-allowed"
                   type="submit"
                   disabled={isDisabled()}
-                  aria-label="Analyse GitHub repository"
+                  aria-label="Audit GitHub repository"
                 >
                   {loading ? (
                     <LucideLoader2 className="animate-spin" strokeWidth={3} />
                   ) : (
                     <span className="flex flex-row items-center justify-center gap-x-2">
-                      <span className="sm:hidden">Analyse</span>
+                      <span className="sm:hidden">Audit</span>
                       <LucideArrowBigRight strokeWidth={3} aria-hidden="true" />
                     </span>
                   )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Analyse</p>
+                <p>Audit</p>
               </TooltipContent>
             </Tooltip>
             <Tooltip>
@@ -151,22 +151,22 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
                 <Button
                   className="font-ui-heading flex-1 sm:h-14 sm:w-15 bg-muted-foreground disabled:bg-muted-foreground disabled:opacity-80 hover:bg-input text-sm font-semibold cursor-pointer disabled:cursor-not-allowed"
                   type="button"
-                  onClick={onRefreshAnalysis}
+                  onClick={onRefreshAudit}
                   disabled={isDisabled()}
-                  aria-label="Refresh repository analysis"
+                  aria-label="Refresh repository audit"
                 >
                   {loading ? (
                     <LucideLoader2 className="animate-spin" strokeWidth={3} />
                   ) : (
                     <span className="flex flex-row items-center justify-center gap-x-2">
-                      <span className="sm:hidden">Re-analyse</span>
+                      <span className="sm:hidden">Re-audit</span>
                       <RefreshCcwDot strokeWidth={3} aria-hidden="true" />
                     </span>
                   )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Re-analyse</p>
+                <p>Re-audit</p>
               </TooltipContent>
             </Tooltip>
           </ButtonGroup>
