@@ -1,7 +1,7 @@
 {
   "name": "gitdepsec",
-  "version": "1.0.0",
-  "description": "CLI tool for auditing dependency vulnerabilities in your projects",
+  "version": "1.1.0",
+  "description": "CLI tool for analyzing dependency vulnerabilities in your projects",
   "keywords": [
     "security",
     "vulnerabilities",
