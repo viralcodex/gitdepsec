@@ -133,7 +133,7 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
                   History
                 </h2>
                 <p className="text-xs text-muted-foreground">
-                  Your saved analyses
+                  Your saved audits
                 </p>
               </div>
             </div>
@@ -239,7 +239,7 @@ const HistorySidebar = ({ addButtonRef }: SavedHistoryProps) => {
                 size="sm"
                 variant="default"
                 title="No saved history"
-                message="Save your analyses to quickly access them later"
+                message="Save your audits to quickly access them later"
                 useCoffeeCup={false}
                 className="border-none bg-transparent h-auto"
               />

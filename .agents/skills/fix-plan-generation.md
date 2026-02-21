@@ -11,7 +11,7 @@ The fix plan system uses multiple AI agents to analyze vulnerabilities and gener
 ### Agent Types
 
 1. **Coordinator Agent**: Orchestrates multiple specialized agents
-2. **Analysis Agent**: Analyzes vulnerabilities and dependencies
+2. **Audit Agent**: Analyzes vulnerabilities and dependencies
 3. **Remediation Agent**: Generates specific fix steps
 4. **Validation Agent**: Validates proposed fixes
 

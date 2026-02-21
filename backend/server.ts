@@ -7,18 +7,18 @@ import multer from "multer";
 import { config, isProduction, origin } from "./config/env";
 import AgentsService from "./service/agents_service";
 import AiService from "./service/ai_service";
-import AnalysisService from "./service/analysis_service";
+import AuditService from "./service/audit_service";
 import GithubService from "./service/github_service";
 import ProgressService from "./service/progress_service";
 import {
-  cachedAnalysis,
-  deleteCachedAnalysis,
+  cachedAudit,
+  deleteCachedAudit,
   getCachedFileDetails,
   insertFileCache,
-  upsertAnalysis,
+  upsertAudit,
 } from "./utils/cache";
 import {
-  analysisRateLimiter,
+  auditRateLimiter,
   aiRateLimiter,
   generalRateLimiter,
   inlineAiRateLimiter,
@@ -32,7 +32,7 @@ import {
   sanitizeFileName,
   userCredentialsStore,
 } from "./utils/utils";
-import { validateAndReturnAnalysisCache, validateFile } from "./utils/validations";
+import { validateAndReturnAuditCache, validateFile } from "./utils/validations";
 
 const app = express();
 const PORT = config.port || 8080;
@@ -40,15 +40,15 @@ const upload = multer();
 
 const progressService = new ProgressService();
 const githubService = new GithubService();
-const analysisService = new AnalysisService();
+const auditService = new AuditService();
 const aiService = new AiService();
 
 const getGithubService = (token?: string) => {
   return token ? new GithubService(token) : githubService;
 };
 
-const getAnalysisService = (token?: string) => {
-  return token ? new AnalysisService(token, progressService) : analysisService;
+const getAuditService = (token?: string) => {
+  return token ? new AuditService(token, progressService) : auditService;
 };
 
 if (isProduction) {
@@ -233,7 +233,7 @@ app.post("/branches", (req: Request, res: Response) => {
   });
 });
 
-app.post("/analyseDependencies", analysisRateLimiter, (req: Request, res: Response) => {
+app.post("/auditDependencies", auditRateLimiter, (req: Request, res: Response) => {
   (async () => {
     const { username, repo, branch, github_pat, forceRefresh } = req.body;
 
@@ -248,7 +248,7 @@ app.post("/analyseDependencies", analysisRateLimiter, (req: Request, res: Respon
       });
     }
 
-    console.log("Received analyseDependencies request:", {
+    console.log("Received auditDependencies request:", {
       username,
       repo,
       branch,
@@ -256,9 +256,9 @@ app.post("/analyseDependencies", analysisRateLimiter, (req: Request, res: Respon
     });
 
     if (!forceRefresh) {
-      const response = await cachedAnalysis(username, repo, branch, res);
+      const response = await cachedAudit(username, repo, branch, res);
       if (response) {
-        console.log("Returning cached analysis for:", {
+        console.log("Returning cached audit for:", {
           username,
           repo,
           branch,
@@ -273,33 +273,33 @@ app.post("/analyseDependencies", analysisRateLimiter, (req: Request, res: Respon
         branch,
         timestamp: new Date().toISOString(),
       });
-      await deleteCachedAnalysis(username, repo, branch);
+      await deleteCachedAudit(username, repo, branch);
     }
 
-    const analysisService = getAnalysisService(github_pat);
+    const auditService = getAuditService(github_pat);
 
     try {
-      const analysisResults = await analysisService.analyseDependencies(username, repo, branch);
-      // console.log("Analysis Results:", analysisResults);
+      const auditResults = await auditService.auditDependencies(username, repo, branch);
+      // console.log("Audit Results:", auditResults);
 
       // Try to get branches for this repo/branch from cache, else fetch from GitHub
 
       const branchData = await githubService.getBranches(username, repo);
-      await upsertAnalysis({
+      await upsertAudit({
         username,
         repo,
         branch,
-        data: analysisResults,
+        data: auditResults,
         branches: branchData.branches,
       });
-      res.json(analysisResults);
+      res.json(auditResults);
     } catch (error) {
       console.error("Error analysing dependencies:", error);
-      await deleteCachedAnalysis(username, repo, branch);
-      res.status(500).json({ error: "Failed to analyse dependencies" });
+      await deleteCachedAudit(username, repo, branch);
+      res.status(500).json({ error: "Failed to audit dependencies" });
     }
   })().catch((err) => {
-    console.error("Unhandled error in /analyseDependencies:", err);
+    console.error("Unhandled error in /auditDependencies:", err);
     res.status(500).json({ error: "Internal server error" });
   });
 });
@@ -346,24 +346,24 @@ app.post("/uploadFile", upload.single("file"), (req: Request, res: Response) => 
   });
 });
 
-app.post("/analyseFile", analysisRateLimiter, (req: Request, res: Response) => {
+app.post("/auditFile", auditRateLimiter, (req: Request, res: Response) => {
   (async () => {
     const { file } = req.body;
     if (!file) {
       return res.status(400).json({ error: "No file provided" });
     }
-    console.log("Received analyseFile request for file:", file);
-    const analysisService = getAnalysisService();
+    console.log("Received auditFile request for file:", file);
+    const auditService = getAuditService();
     const cachedFileDetails = await getCachedFileDetails(file);
     try {
-      const analysisResults = await analysisService.analyseFile(cachedFileDetails);
-      res.json(analysisResults);
+      const auditResults = await auditService.auditFile(cachedFileDetails);
+      res.json(auditResults);
     } catch (error) {
       console.error("Error analysing file:", error);
-      res.status(500).json({ error: "Failed to analyse file" });
+      res.status(500).json({ error: "Failed to audit file" });
     }
   })().catch((error) => {
-    console.error("Unhandled error in /analyseFile:", error);
+    console.error("Unhandled error in /auditFile:", error);
     res.status(500).json({ error: "Internal server error" });
   });
 });
@@ -471,7 +471,7 @@ app.get("/fixPlan", fixPlanRateLimiter, (req: Request, res: Response) => {
     });
 
     try {
-      const data = await validateAndReturnAnalysisCache(
+      const data = await validateAndReturnAuditCache(
         String(username),
         String(repo),
         String(branch),
@@ -494,7 +494,7 @@ app.get("/fixPlan", fixPlanRateLimiter, (req: Request, res: Response) => {
 
       // Get credentials from session store
       const { apiKey, model } = getSessionCredentials(sessionId ? String(sessionId) : undefined);
-      const agentsService = new AgentsService(data, model, apiKey); //initial service with stored analysis data
+      const agentsService = new AgentsService(data, model, apiKey); //initial service with stored audit data
 
       const progressCallback = (
         step: string,

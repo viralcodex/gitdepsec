@@ -1,5 +1,5 @@
 import chalk from "chalk";
-import type { AnalysisResult } from "../core/analyser.js";
+import type { AuditResult } from "../core/auditor.js";
 import type { FixPlan } from "../core/fix-planner.js";
 
 // Design tokens
@@ -98,7 +98,7 @@ function sectionHeader(title: string): string {
   return `\n${chalk.bold.white(title)}\n${rule("light")}`;
 }
 
-export function formatAnalysisTable(result: AnalysisResult): string {
+export function formatAuditTable(result: AuditResult): string {
   const lines: string[] = [];
 
   // Header
@@ -191,11 +191,11 @@ export function formatAnalysisTable(result: AnalysisResult): string {
   return lines.join("\n");
 }
 
-export function formatAnalysisJson(result: AnalysisResult): string {
+export function formatAuditJson(result: AuditResult): string {
   return JSON.stringify(result, null, 2);
 }
 
-export function formatAnalysisMarkdown(result: AnalysisResult): string {
+export function formatAuditMarkdown(result: AuditResult): string {
   const lines: string[] = [];
 
   lines.push("# Vulnerability Report\n");

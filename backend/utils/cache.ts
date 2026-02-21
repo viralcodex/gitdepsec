@@ -2,14 +2,14 @@ import { Response } from "express";
 
 import { CachedAnalysis, DependencyApiResponse } from "../constants/model";
 import {
-  upsertAnalysis as upsertCache,
-  deleteCachedAnalysis as deleteCache,
+  upsertAudit as upsertCache,
+  deleteCachedAudit as deleteCache,
   getFileDetails as getFileCache,
-  getCachedAnalysis,
+  getCachedAudit,
   insertFile,
 } from "../db/actions";
 
-export const cachedAnalysis = async (
+export const cachedAudit = async (
   username: string,
   repo: string,
   branch: string,
@@ -18,7 +18,7 @@ export const cachedAnalysis = async (
   let cachedData: CachedAnalysis[] = [];
 
   try {
-    cachedData = await getCachedAnalysis(username, repo, branch);
+    cachedData = await getCachedAudit(username, repo, branch);
 
     if (cachedData.length > 0 && cachedData[0].data) {
       return res.json(cachedData[0].data);
@@ -28,7 +28,7 @@ export const cachedAnalysis = async (
   }
 };
 
-export const upsertAnalysis = async ({
+export const upsertAudit = async ({
   username,
   repo,
   branch,
@@ -50,7 +50,7 @@ export const upsertAnalysis = async ({
   });
 };
 
-export const deleteCachedAnalysis = async (username: string, repo: string, branch: string) => {
+export const deleteCachedAudit = async (username: string, repo: string, branch: string) => {
   await deleteCache(username, repo, branch);
 };
 

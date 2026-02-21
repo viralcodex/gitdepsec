@@ -1,4 +1,4 @@
-import { analyseDependencies } from "@/lib/api";
+import { auditDependencies } from "@/lib/api";
 import { useEffect, useCallback } from "react";
 import {
   Dependency,
@@ -36,7 +36,7 @@ export const useGraph = (
       forceRefresh: boolean = false,
     ) => {
       try {
-        const manifestData: ManifestFileContentsApiResponse = await analyseDependencies(
+        const manifestData: ManifestFileContentsApiResponse = await auditDependencies(
           username!,
           repo!,
           branch!,

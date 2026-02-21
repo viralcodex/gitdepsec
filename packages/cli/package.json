@@ -14,7 +14,7 @@
     "osv",
     "cve"
   ],
-  "author": "",
+  "author": "Aviral Shukla",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",

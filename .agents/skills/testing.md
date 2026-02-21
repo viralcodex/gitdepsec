@@ -13,7 +13,7 @@ This skill helps Copilot understand the testing patterns and practices in this p
 ### Existing Tests
 
 - `agents_service.spec.ts` - Agent coordination tests
-- `analysis_service.spec.ts` - Analysis logic tests
+- `audit_service.spec.ts` - Audit logic tests
 
 ## Test Patterns
 
@@ -83,7 +83,7 @@ afterEach(async () => {
 
 ### Backend Services
 
-- Analysis service logic
+- Audit service logic
 - AI agent coordination
 - GitHub API integration
 - Database operations
@@ -104,7 +104,7 @@ afterEach(async () => {
 bun test
 
 # Run specific file
-bun test backend/tests/analysis_service.spec.ts
+bun test backend/tests/audit_service.spec.ts
 
 # Run with coverage
 bun test --coverage

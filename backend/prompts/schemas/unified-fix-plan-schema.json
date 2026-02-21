@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "type": "object",
   "title": "Unified Comprehensive Fix Plan Schema",
-  "description": "A unified schema that combines vulnerability analysis, fix planning, optimization, conflict resolution, and implementation strategy into one actionable response.",
+  "description": "A unified schema that combines vulnerability audit, fix planning, optimization, conflict resolution, and implementation strategy into one actionable response.",
   "required": [
     "executive_summary",
     "dependency_intelligence",
@@ -521,7 +521,7 @@
           "type": "string",
           "format": "date-time"
         },
-        "analysis_duration": {
+        "audit_duration": {
           "type": "string",
           "description": "Time taken to generate this plan"
         },

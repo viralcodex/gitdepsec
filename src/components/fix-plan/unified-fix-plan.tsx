@@ -228,7 +228,7 @@ const UnifiedFixPlanComponent = ({ fixPlan, partialFixPlan, isLoading }: Unified
             {metadata.generated_at && (
               <span className="font-ui-data">Generated: {new Date(metadata.generated_at).toLocaleString()}</span>
             )}
-            {metadata.analysis_duration && <span className="font-ui-data">Duration: {metadata.analysis_duration}</span>}
+            {metadata.audit_duration && <span className="font-ui-data">Duration: {metadata.audit_duration}</span>}
             {metadata.total_packages_analyzed && (
               <span className="font-ui-data">Packages Analyzed: {metadata.total_packages_analyzed}</span>
             )}
