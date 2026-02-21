@@ -28,7 +28,7 @@ This skill helps Copilot understand the database structure and ORM usage in this
 
 #### analyses
 
-Stores analysis history for repositories
+Stores audit history for repositories
 
 ```typescript
 {
@@ -124,7 +124,7 @@ DATABASE_URL=postgresql://user:pass@host:port/dbname
 
 ## Common Operations
 
-### Create Analysis Record
+### Create Audit Record
 
 ```typescript
 const analysis = await createAnalysis({
@@ -143,7 +143,7 @@ await saveFixPlan({
 });
 ```
 
-### Get Analysis History
+### Get Audit History
 
 ```typescript
 const history = await getAnalysisHistory(userId, limit);
@@ -160,11 +160,11 @@ analyses → fix_plans (one-to-many)
 
 Complex data stored as JSON:
 
-- `analyses.result` - Full analysis results
+- `audits.result` - Full audit results
 - `fix_plans.plan` - Structured fix plan data
 
 Access with JSON operators:
 
 ```typescript
-where: sql`${analyses.result}->>'status' = 'vulnerable'`;
+where: sql`${audits.result}->>'status' = 'vulnerable'`;
 ```

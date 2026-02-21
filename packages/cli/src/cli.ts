@@ -2,7 +2,7 @@
 
 import { Command, Option } from "commander";
 import chalk from "chalk";
-import { analyseCommand } from "./commands/analyse.js";
+import { auditCommand } from "./commands/audit.js";
 import { fixCommand } from "./commands/fix.js";
 import { initCommand } from "./commands/init.js";
 
@@ -23,11 +23,11 @@ program
   .version("1.0.0")
   .addHelpText("after", `
 ${chalk.bold("Examples:")}
-  ${chalk.dim("# Scan current directory (analyse, analyze, audit all work)")}
+  ${chalk.dim("# Scan current directory (audit, analyze, audit all work)")}
   $ gds audit
 
   ${chalk.dim("# Scan specific files")}
-  $ gds analyse -f package.json requirements.txt
+  $ gds audit -f package.json requirements.txt
 
   ${chalk.dim("# Scan a GitHub repository")}
   $ gds analyze -r owner/repo -b main
@@ -42,14 +42,13 @@ ${chalk.bold("Documentation:")}
   ${chalk.cyan("https://github.com/viralcodex/gitdepsec#readme")}
 `);
 
-// Analyse command
+// Audit command
 program
-  .command("analyse")
-  .aliases(["analyze", "audit"])
-  .description("Analyze dependencies for vulnerabilities")
+  .command("audit")
+  .description("Audit dependencies for vulnerabilities")
   .option("-f, --file <files...>", "Manifest file(s) to analyze (e.g., package.json, requirements.txt)")
   .option("-r, --repo <repo>", "GitHub repository in owner/repo format")
-  .option("-b, --branch <branch>", "Branch to analyze", "main")
+  .option("-b, --branch <branch>", "Branch to audit", "main")
   .option("-t, --token <token>", "GitHub personal access token (or set GITHUB_TOKEN env)")
   .option("--transitive", "Enable transitive dependency scanning", true)
   .option("--no-transitive", "Disable transitive dependency scanning")
@@ -58,7 +57,6 @@ program
   .option("-q, --quiet", "Minimal output - only show summary")
   .option("-v, --verbose", "Verbose output - show detailed progress")
   .addHelpText("after", `
-${chalk.bold("Aliases:")} analyse, analyze, audit
 
 ${chalk.bold("Supported Manifest Files:")}
   ${chalk.cyan("npm")}       package.json, package-lock.json
@@ -71,13 +69,13 @@ ${chalk.bold("Supported Manifest Files:")}
 
 ${chalk.bold("Examples:")}
   $ gds audit                                ${chalk.dim("# Scan current directory")}
-  $ gds analyse -f package.json              ${chalk.dim("# Scan specific file")}
+  $ gds audit -f package.json              ${chalk.dim("# Scan specific file")}
   $ gds analyze -r facebook/react            ${chalk.dim("# Scan GitHub repo")}
   $ gds audit --format json -o out.json      ${chalk.dim("# Export as JSON")}
-  $ gds analyse --format markdown            ${chalk.dim("# Output as markdown")}
-  $ gds analyse --no-transitive              ${chalk.dim("# Skip transitive deps")}
+  $ gds audit --format markdown            ${chalk.dim("# Output as markdown")}
+  $ gds audit --no-transitive              ${chalk.dim("# Skip transitive deps")}
 `)
-  .action(analyseCommand);
+  .action(auditCommand);
 
 // Fix command
 program
@@ -85,7 +83,7 @@ program
   .description("Generate fix recommendations for vulnerabilities")
   .option("-f, --file <files...>", "Manifest file(s) to fix (e.g., package.json)")
   .option("-r, --repo <repo>", "GitHub repository in owner/repo format")
-  .option("-b, --branch <branch>", "Branch to analyze", "main")
+  .option("-b, --branch <branch>", "Branch to audit", "main")
   .option("-t, --token <token>", "GitHub personal access token (or set GITHUB_TOKEN env)")
   .option("--transitive", "Enable transitive dependency scanning", true)
   .option("--no-transitive", "Disable transitive dependency scanning")

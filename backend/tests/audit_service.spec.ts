@@ -1,98 +1,106 @@
 import axios from 'axios';
-import { describe, it, expect, beforeEach, mock, spyOn } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, it, spyOn } from 'bun:test';
 
 import type {
   DependencyGroups,
   ManifestFileContents,
 } from '../constants/model';
 import { Ecosystem } from '../constants/model';
-import AnalysisService from '../service/analysis_service';
+import AuditService from '../service/audit_service';
 import GithubService from '../service/github_service';
 import ProgressService from '../service/progress_service';
+import {
+  auditFileMockOsvResponse,
+  auditIntegrationDepsDevEmptyResponse,
+  auditIntegrationGithubTreeResponse,
+  auditIntegrationManifestData,
+  auditIntegrationOsvEmptyResponse,
+  auditMockDepsDevResponse,
+  auditMockOSVResponse,
+  auditMockVulnDetails,
+} from './mocks/mock-data';
+import {
+  setupAxiosMocks,
+  setupGithubServiceMock,
+  setupProgressServiceMock,
+  silenceConsoleError,
+} from './mocks/mock-setup';
 
-describe('AnalysisService', () => {
-  let analysisService: AnalysisService;
+describe('AuditService', () => {
+  let auditService: AuditService;
   let mockProgressService: ProgressService;
   let mockGithubService: GithubService;
+  let consoleErrorSpy: ReturnType<typeof spyOn>;
 
   beforeEach(() => {
-    // Mock axios methods before creating service instances
-    spyOn(axios, 'create').mockReturnValue({
-      get: mock(() => Promise.resolve({ data: {} })),
-      post: mock(() => Promise.resolve({ data: { results: [] } })),
-    } as any);
-
-    spyOn(axios, 'get').mockResolvedValue({ data: {} } as any);
-    spyOn(axios, 'post').mockResolvedValue({ data: { results: [] } } as any);
+    consoleErrorSpy = silenceConsoleError();
+    setupAxiosMocks();
 
     // Create mock progress service
     mockProgressService = new ProgressService();
-    spyOn(mockProgressService, 'progressUpdater').mockImplementation(() => {});
+    setupProgressServiceMock(mockProgressService);
 
-    // Create analysis service instance
-    analysisService = new AnalysisService('test-pat', mockProgressService);
+    // Create audit service instance
+    auditService = new AuditService('test-pat', mockProgressService);
 
     // Mock GitHub service methods
-    mockGithubService = (analysisService as any).githubService;
-    spyOn(mockGithubService, 'getGithubApiResponse').mockResolvedValue({
-      data: { tree: [] },
-      status: 200,
-      statusText: 'OK',
-      headers: {},
-      config: {} as any,
-    });
+    mockGithubService = setupGithubServiceMock(auditService);
+  });
+
+  afterEach(() => {
+    consoleErrorSpy.mockRestore();
   });
 
   describe('Version Normalization', () => {
     it('should normalize standard semantic versions', () => {
-      expect(analysisService.normalizeVersion('1.2.3')).toBe('1.2.3');
-      expect(analysisService.normalizeVersion('10.20.30')).toBe('10.20.30');
+      expect(auditService.normalizeVersion('1.2.3')).toBe('1.2.3');
+      expect(auditService.normalizeVersion('10.20.30')).toBe('10.20.30');
     });
 
     it('should handle versions with leading special characters', () => {
-      expect(analysisService.normalizeVersion('^1.2.3')).toBe('1.2.3');
-      expect(analysisService.normalizeVersion('~2.3.4')).toBe('2.3.4');
-      expect(analysisService.normalizeVersion('>=5.0.0')).toBe('5.0.0');
+      expect(auditService.normalizeVersion('^1.2.3')).toBe('1.2.3');
+      expect(auditService.normalizeVersion('~2.3.4')).toBe('2.3.4');
+      expect(auditService.normalizeVersion('>=5.0.0')).toBe('5.0.0');
     });
 
     it('should handle versions with prerelease identifiers', () => {
-      expect(analysisService.normalizeVersion('1.2.3-alpha')).toBe(
+      expect(auditService.normalizeVersion('1.2.3-alpha')).toBe(
         '1.2.3-alpha',
       );
-      expect(analysisService.normalizeVersion('2.0.0-rc.1')).toBe('2.0.0-rc.1');
-      expect(analysisService.normalizeVersion('1.0.0+build.123')).toBe(
+      expect(auditService.normalizeVersion('2.0.0-rc.1')).toBe('2.0.0-rc.1');
+      expect(auditService.normalizeVersion('1.0.0+build.123')).toBe(
         '1.0.0+build.123',
       );
     });
 
     it('should handle incomplete versions', () => {
-      expect(analysisService.normalizeVersion('1.2')).toBe('1.2.0');
-      expect(analysisService.normalizeVersion('3')).toBe('3.0.0');
-      expect(analysisService.normalizeVersion('1.x')).toBe('1.0.0');
-      expect(analysisService.normalizeVersion('1.*')).toBe('1.0.0');
+      expect(auditService.normalizeVersion('1.2')).toBe('1.2.0');
+      expect(auditService.normalizeVersion('3')).toBe('3.0.0');
+      expect(auditService.normalizeVersion('1.x')).toBe('1.0.0');
+      expect(auditService.normalizeVersion('1.*')).toBe('1.0.0');
     });
 
     it('should detect and reject Git commit hashes', () => {
       expect(
-        analysisService.normalizeVersion(
+        auditService.normalizeVersion(
           'abc123def456abc123def456abc123def456abc1',
         ),
       ).toBe('unknown');
       expect(
-        analysisService.normalizeVersion('1a2b3c4d5e6f7890abcdef1234567890'),
+        auditService.normalizeVersion('1a2b3c4d5e6f7890abcdef1234567890'),
       ).toBe('unknown');
-      expect(analysisService.normalizeVersion('a1b2c3d')).toBe('unknown');
+      expect(auditService.normalizeVersion('a1b2c3d')).toBe('unknown');
     });
 
     it('should handle invalid or empty versions', () => {
-      expect(analysisService.normalizeVersion('')).toBe('unknown');
-      expect(analysisService.normalizeVersion(null as any)).toBe('unknown');
-      expect(analysisService.normalizeVersion(undefined)).toBe('unknown');
-      expect(analysisService.normalizeVersion('unknown')).toBe('unknown');
+      expect(auditService.normalizeVersion('')).toBe('unknown');
+      expect(auditService.normalizeVersion(null as any)).toBe('unknown');
+      expect(auditService.normalizeVersion(undefined)).toBe('unknown');
+      expect(auditService.normalizeVersion('unknown')).toBe('unknown');
     });
 
     it('should reject suspiciously long major versions', () => {
-      expect(analysisService.normalizeVersion('12345678901.2.3')).toBe(
+      expect(auditService.normalizeVersion('12345678901.2.3')).toBe(
         'unknown',
       );
     });
@@ -115,7 +123,7 @@ describe('AnalysisService', () => {
       ];
 
       const manifestFiles: ManifestFileContents = { npm: npmFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -148,7 +156,7 @@ describe('AnalysisService', () => {
       ];
 
       const manifestFiles: ManifestFileContents = { npm: npmFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -176,7 +184,7 @@ describe('AnalysisService', () => {
       ];
 
       const manifestFiles: ManifestFileContents = { npm: npmFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -197,7 +205,7 @@ describe('AnalysisService', () => {
       const manifestFiles: ManifestFileContents = { npm: npmFiles };
 
       try {
-        await analysisService.getParsedManifestFileContents(
+        await auditService.getParsedManifestFileContents(
           'test-user',
           'test-repo',
           'main',
@@ -227,7 +235,7 @@ describe('AnalysisService', () => {
       ];
 
       const manifestFiles: ManifestFileContents = { php: phpFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -258,7 +266,7 @@ describe('AnalysisService', () => {
       ];
 
       const manifestFiles: ManifestFileContents = { php: phpFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -283,7 +291,7 @@ describe('AnalysisService', () => {
       const manifestFiles: ManifestFileContents = { php: phpFiles };
 
       try {
-        await analysisService.getParsedManifestFileContents(
+        await auditService.getParsedManifestFileContents(
           'test-user',
           'test-repo',
           'main',
@@ -309,7 +317,7 @@ numpy`,
       ];
 
       const manifestFiles: ManifestFileContents = { PiPY: pythonFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -336,16 +344,15 @@ numpy`,
         {
           path: 'requirements.txt',
           content: `# This is a comment
-django==4.2.0
-
-# Another comment
-requests>=2.28.0
+                    django==4.2.0                   
+                    # Another comment
+                    requests>=2.28.0
 `,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { PiPY: pythonFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -360,15 +367,15 @@ requests>=2.28.0
         {
           path: 'requirements.txt',
           content: `package1==1.0.0
-package2>=2.0.0,<3.0.0
-package3~=1.4.2
-package4!=1.0.0
-package5[extra]>=1.0.0`,
+                    package2>=2.0.0,<3.0.0
+                    package3~=1.4.2
+                    package4!=1.0.0
+                    package5[extra]>=1.0.0`,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { PiPY: pythonFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -386,17 +393,17 @@ package5[extra]>=1.0.0`,
         {
           path: 'pubspec.yaml',
           content: `name: my_app
-version: 1.0.0
-dependencies:
-  flutter:
-    sdk: flutter
-  http: ^0.13.5
-  shared_preferences: ^2.0.15`,
+                    version: 1.0.0
+                    dependencies:
+                      flutter:
+                        sdk: flutter
+                      http: ^0.13.5
+                      shared_preferences: ^2.0.15`,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { Pub: dartFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -416,14 +423,14 @@ dependencies:
         {
           path: 'pubspec.yaml',
           content: `name: my_app
-dev_dependencies:
-  test: ^1.21.0
-  mockito: ^5.3.2`,
+                    dev_dependencies:
+                      test: ^1.21.0
+                      mockito: ^5.3.2`,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { Pub: dartFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -442,15 +449,15 @@ dev_dependencies:
         {
           path: 'pubspec.yaml',
           content: `name: my_app
-dependencies:
-  flutter:
-    sdk: flutter
-  http: ^0.13.5`,
+                    dependencies:
+                      flutter:
+                        sdk: flutter
+                      http: ^0.13.5`,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { Pub: dartFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -468,25 +475,25 @@ dependencies:
         {
           path: 'pom.xml',
           content: `<?xml version="1.0" encoding="UTF-8"?>
-<project>
-  <dependencies>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-      <version>3.0.0</version>
-    </dependency>
-    <dependency>
-      <groupId>com.google.guava</groupId>
-      <artifactId>guava</artifactId>
-      <version>31.1-jre</version>
-    </dependency>
-  </dependencies>
-</project>`,
+                      <project>
+                        <dependencies>
+                          <dependency>
+                            <groupId>org.springframework.boot</groupId>
+                            <artifactId>spring-boot-starter-web</artifactId>
+                            <version>3.0.0</version>
+                          </dependency>
+                          <dependency>
+                            <groupId>com.google.guava</groupId>
+                            <artifactId>guava</artifactId>
+                            <version>31.1-jre</version>
+                          </dependency>
+                        </dependencies>
+                      </project>`,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { Maven: mavenFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -503,19 +510,19 @@ dependencies:
         {
           path: 'pom.xml',
           content: `<?xml version="1.0" encoding="UTF-8"?>
-<project>
-  <dependencies>
-    <dependency>
-      <groupId>junit</groupId>
-      <artifactId>junit</artifactId>
-    </dependency>
-  </dependencies>
-</project>`,
+                      <project>
+                        <dependencies>
+                          <dependency>
+                            <groupId>junit</groupId>
+                            <artifactId>junit</artifactId>
+                          </dependency>
+                        </dependencies>
+                      </project>`,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { Maven: mavenFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -537,7 +544,7 @@ dependencies:
       const manifestFiles: ManifestFileContents = { Maven: mavenFiles };
 
       try {
-        await analysisService.getParsedManifestFileContents(
+        await auditService.getParsedManifestFileContents(
           'test-user',
           'test-repo',
           'main',
@@ -550,22 +557,135 @@ dependencies:
     });
   });
 
+  describe('Cargo Ecosystem Parsing', () => {
+    it('should parse Cargo.toml dependencies from core sections', async () => {
+      const rustFiles = [
+        {
+          path: 'Cargo.toml',
+          content: `[package]
+                    name = "test-app"
+                    version = "0.1.0"
+                            
+                    [dependencies]
+                    serde = "1.0.197"
+                    tokio = { version = "1.36.0", features = ["rt-multi-thread"] }
+                    rand = { git = "https://github.com/rust-random/rand" }
+                            
+                    [dev-dependencies]
+                    proptest = "1.4.0"
+                            
+                    [build-dependencies]
+                    cc = "1.0.90"`,
+        },
+      ];
+
+      const manifestFiles: ManifestFileContents = { rust: rustFiles };
+      const result = await auditService.getParsedManifestFileContents(
+        'test-user',
+        'test-repo',
+        'main',
+        manifestFiles,
+      );
+
+      expect(result.dependencies['Cargo.toml']).toBeDefined();
+      expect(result.dependencies['Cargo.toml'].length).toBe(4);
+
+      const serdeDep = result.dependencies['Cargo.toml'].find(
+        (d) => d.name === 'serde',
+      );
+      expect(serdeDep?.version).toBe('1.0.197');
+      expect(serdeDep?.ecosystem).toBe(Ecosystem.CARGO);
+
+      const tokioDep = result.dependencies['Cargo.toml'].find(
+        (d) => d.name === 'tokio',
+      );
+      expect(tokioDep?.version).toBe('1.36.0');
+
+      // Dependencies without explicit version (e.g. git/path only) are skipped by design.
+      const randDep = result.dependencies['Cargo.toml'].find(
+        (d) => d.name === 'rand',
+      );
+      expect(randDep).toBeUndefined();
+    });
+
+    it('should parse target and workspace Cargo dependencies', async () => {
+      const rustFiles = [
+        {
+          path: 'Cargo.toml',
+          content: `[package]
+                    name = "target-demo"
+                    version = "0.1.0"
+                            
+                    [target.'cfg(unix)'.dependencies]
+                    nix = "0.28.0"
+                            
+                    [target.'cfg(unix)'.dev-dependencies]
+                    serial_test = { version = "3.1.1" }
+                            
+                    [workspace]
+                    members = ["crates/*"]
+                            
+                    [workspace.dependencies]
+                    anyhow = "1.0.82"`,
+        },
+      ];
+
+      const manifestFiles: ManifestFileContents = { rust: rustFiles };
+      const result = await auditService.getParsedManifestFileContents(
+        'test-user',
+        'test-repo',
+        'main',
+        manifestFiles,
+      );
+
+      expect(result.dependencies['Cargo.toml']).toBeDefined();
+      expect(result.dependencies['Cargo.toml'].length).toBe(3);
+
+      const names = result.dependencies['Cargo.toml'].map((d) => d.name);
+      expect(names).toContain('nix');
+      expect(names).toContain('serial_test');
+      expect(names).toContain('anyhow');
+    });
+
+    it('should handle invalid Cargo.toml gracefully', async () => {
+      const rustFiles = [
+        {
+          path: 'Cargo.toml',
+          content: '[dependencies\nserde = "1.0.0"',
+        },
+      ];
+
+      const manifestFiles: ManifestFileContents = { rust: rustFiles };
+
+      try {
+        await auditService.getParsedManifestFileContents(
+          'test-user',
+          'test-repo',
+          'main',
+          manifestFiles,
+        );
+        expect(true).toBe(false); // Should not reach here
+      } catch (error: any) {
+        expect(error.message).toContain('Failed to parse Cargo.toml file');
+      }
+    });
+  });
+
   describe('RubyGems Ecosystem Parsing', () => {
     it('should parse Gemfile with gem declarations', async () => {
       const rubyFiles = [
         {
           path: 'Gemfile',
           content: `source 'https://rubygems.org'
-
-gem 'rails', '~> 7.0.0'
-gem 'pg', '>= 1.1'
-gem 'puma'
-gem "devise", "4.9.0"`,
+                    gem 'rails', '~> 7.0.0'
+                    gem 'pg', '>= 1.1'
+                    gem 'puma'
+                    gem "devise", "4.9.0"`,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { RubyGems: rubyFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -592,13 +712,13 @@ gem "devise", "4.9.0"`,
         {
           path: 'Gemfile',
           content: `gem 'rails', '7.0.0'
-gem "devise", "4.9.0"
-gem 'sidekiq'`,
+                    gem "devise", "4.9.0"
+                    gem 'sidekiq'`,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { RubyGems: rubyFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -613,17 +733,17 @@ gem 'sidekiq'`,
         {
           path: 'Gemfile',
           content: `source 'https://rubygems.org'
-ruby '3.2.0'
-# This is a comment
-gem 'rails', '7.0.0'
-group :development do
-gem 'byebug'
-end`,
+                    ruby '3.2.0'
+                    # This is a comment
+                    gem 'rails', '7.0.0'
+                    group :development do
+                    gem 'byebug'
+                    end`,
         },
       ];
 
       const manifestFiles: ManifestFileContents = { RubyGems: rubyFiles };
-      const result = await analysisService.getParsedManifestFileContents(
+      const result = await auditService.getParsedManifestFileContents(
         'test-user',
         'test-repo',
         'main',
@@ -637,74 +757,27 @@ end`,
 
   describe('Ecosystem Mapping', () => {
     it('should map ecosystem strings correctly', () => {
-      expect(analysisService.mapEcosystem('npm')).toBe(Ecosystem.NPM);
-      expect(analysisService.mapEcosystem('NPM')).toBe(Ecosystem.NPM);
-      expect(analysisService.mapEcosystem('php')).toBe(Ecosystem.COMPOSER);
-      expect(analysisService.mapEcosystem('PYPI')).toBe(Ecosystem.PYPI);
-      expect(analysisService.mapEcosystem('PUB')).toBe(Ecosystem.PUB);
-      expect(analysisService.mapEcosystem('maven')).toBe(Ecosystem.MAVEN);
-      expect(analysisService.mapEcosystem('RUBYGEMS')).toBe(Ecosystem.RUBYGEMS);
+      expect(auditService.mapEcosystem('npm')).toBe(Ecosystem.NPM);
+      expect(auditService.mapEcosystem('NPM')).toBe(Ecosystem.NPM);
+      expect(auditService.mapEcosystem('php')).toBe(Ecosystem.COMPOSER);
+      expect(auditService.mapEcosystem('PYPI')).toBe(Ecosystem.PYPI);
+      expect(auditService.mapEcosystem('PUB')).toBe(Ecosystem.PUB);
+      expect(auditService.mapEcosystem('maven')).toBe(Ecosystem.MAVEN);
+      expect(auditService.mapEcosystem('RUBYGEMS')).toBe(Ecosystem.RUBYGEMS);
+      expect(auditService.mapEcosystem('cargo')).toBe(Ecosystem.CARGO);
     });
 
     it('should return NULL for unknown ecosystems', () => {
-      expect(analysisService.mapEcosystem('unknown')).toBe(Ecosystem.NULL);
-      expect(analysisService.mapEcosystem('invalid')).toBe(Ecosystem.NULL);
+      expect(auditService.mapEcosystem('unknown')).toBe(Ecosystem.NULL);
+      expect(auditService.mapEcosystem('invalid')).toBe(Ecosystem.NULL);
     });
   });
 
   describe('Vulnerability Enrichment', () => {
     it('should enrich dependencies with vulnerabilities from OSV.dev', async () => {
-      const mockOSVResponse = {
-        data: {
-          results: [
-            {
-              vulns: [
-                {
-                  id: 'GHSA-xxxx-yyyy-zzzz',
-                },
-              ],
-            },
-          ],
-        },
-      };
-
-      const mockVulnDetails = {
-        data: {
-          id: 'GHSA-xxxx-yyyy-zzzz',
-          summary: 'Test vulnerability',
-          details: 'This is a test vulnerability',
-          severity: [
-            {
-              type: 'CVSS_V3',
-              score: 'CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H',
-            },
-          ],
-          affected: [
-            {
-              package: {
-                name: 'test-package',
-                ecosystem: 'npm',
-              },
-              ranges: [
-                {
-                  type: 'SEMVER',
-                  events: [{ introduced: '0' }, { fixed: '1.2.3' }],
-                },
-              ],
-            },
-          ],
-          references: [
-            {
-              type: 'WEB',
-              url: 'https://example.com/advisory',
-            },
-          ],
-        },
-      };
-
       // Mock axios for OSV.dev API
-      spyOn(axios, 'post').mockResolvedValue(mockOSVResponse);
-      spyOn(axios, 'get').mockResolvedValue(mockVulnDetails);
+      spyOn(axios, 'post').mockResolvedValue(auditMockOSVResponse);
+      spyOn(axios, 'get').mockResolvedValue(auditMockVulnDetails);
 
       const dependencies: DependencyGroups = {
         'package.json': [
@@ -718,7 +791,7 @@ end`,
       };
 
       const result =
-        await analysisService.enrichDependenciesWithVulnerabilities(
+        await auditService.enrichDependenciesWithVulnerabilities(
           dependencies,
         );
 
@@ -742,7 +815,7 @@ end`,
       };
 
       try {
-        await analysisService.enrichDependenciesWithVulnerabilities(
+        await auditService.enrichDependenciesWithVulnerabilities(
           dependencies,
         );
         expect(true).toBe(false); // Should not reach here
@@ -756,28 +829,7 @@ end`,
 
   describe('Transitive Dependencies', () => {
     it('should fetch transitive dependencies from deps.dev', async () => {
-      const mockDepsDevResponse = {
-        data: {
-          nodes: [
-            {
-              versionKey: {
-                system: 'NPM',
-                name: 'lodash',
-                version: '4.17.21',
-              },
-            },
-          ],
-          edges: [
-            {
-              fromNode: 0,
-              toNode: 1,
-              requirement: '^4.17.0',
-            },
-          ],
-        },
-      };
-
-      spyOn(axios, 'get').mockResolvedValue(mockDepsDevResponse);
+      spyOn(axios, 'get').mockResolvedValue(auditMockDepsDevResponse);
 
       const dependencies: DependencyGroups = {
         'package.json': [
@@ -791,7 +843,7 @@ end`,
       };
 
       const result =
-        await analysisService.getTransitiveDependencies(dependencies);
+        await auditService.getTransitiveDependencies(dependencies);
 
       expect(result['package.json']).toBeDefined();
       expect(result['package.json'][0].name).toBe('express');
@@ -813,7 +865,7 @@ end`,
       };
 
       const result =
-        await analysisService.getTransitiveDependencies(dependencies);
+        await auditService.getTransitiveDependencies(dependencies);
 
       // Should not throw but continue with empty transitive deps
       expect(result['package.json']).toBeDefined();
@@ -832,13 +884,13 @@ end`,
       };
 
       const result =
-        await analysisService.getTransitiveDependencies(dependencies);
+        await auditService.getTransitiveDependencies(dependencies);
 
       expect(result['package.json'][0].transitiveDependencies).toBeUndefined();
     });
   });
 
-  describe('File Analysis', () => {
+  describe('File Audit', () => {
     it('should analyze a package.json file', async () => {
       const fileDetails = {
         filename: 'package_json',
@@ -850,11 +902,9 @@ end`,
       };
 
       // Mock axios to avoid actual API calls
-      spyOn(axios, 'post').mockResolvedValue({
-        data: { results: [] },
-      });
+      spyOn(axios, 'post').mockResolvedValue(auditFileMockOsvResponse);
 
-      const result = await analysisService.analyseFile(fileDetails);
+      const result = await auditService.auditFile(fileDetails);
 
       expect(result.dependencies).toBeDefined();
     });
@@ -865,7 +915,7 @@ end`,
         content: 'some content',
       };
 
-      const result = await analysisService.analyseFile(fileDetails);
+      const result = await auditService.auditFile(fileDetails);
 
       expect(result.error).toContain('Unsupported file type');
       expect(Object.keys(result.dependencies).length).toBe(0);
@@ -881,14 +931,14 @@ end`,
         },
       ];
 
-      const result = analysisService.getCVSSSeverity(severity);
+      const result = auditService.getCVSSSeverity(severity);
 
       expect(result.cvss_v3).toBeDefined();
       expect(result.cvss_v3).not.toBe('unknown');
     });
 
     it('should handle empty severity array', () => {
-      const result = analysisService.getCVSSSeverity([]);
+      const result = auditService.getCVSSSeverity([]);
 
       expect(result.cvss_v3).toBe('unknown');
       expect(result.cvss_v4).toBe('unknown');
@@ -902,51 +952,25 @@ end`,
         },
       ];
 
-      const result = analysisService.getCVSSSeverity(severity);
+      const result = auditService.getCVSSSeverity(severity);
 
       expect(result).toBeDefined();
     });
   });
 
-  describe('Integration - Full Analysis Flow', () => {
-    it('should perform complete analysis on a repository', async () => {
+  describe('Integration - Full Audit Flow', () => {
+    it('should perform complete audit on a repository', async () => {
       // Mock GitHub API
-      spyOn(mockGithubService, 'getGithubApiResponse').mockResolvedValue({
-        data: {
-          tree: [
-            {
-              path: 'package.json',
-              type: 'blob',
-            },
-          ],
-        },
-        status: 200,
-        statusText: 'OK',
-        headers: {},
-        config: {} as any,
-      });
+      spyOn(mockGithubService, 'getGithubApiResponse').mockResolvedValue(auditIntegrationGithubTreeResponse);
 
       // Mock file content fetch
-      spyOn(analysisService as any, 'getAllManifestData').mockResolvedValue({
-        npm: [
-          {
-            path: 'package.json',
-            content: JSON.stringify({
-              dependencies: { express: '4.18.2' },
-            }),
-          },
-        ],
-      });
+      spyOn(auditService as any, 'getAllManifestData').mockResolvedValue(auditIntegrationManifestData);
 
       // Mock external APIs
-      spyOn(axios, 'post').mockResolvedValue({
-        data: { results: [] },
-      });
-      spyOn(axios, 'get').mockResolvedValue({
-        data: { nodes: [], edges: [] },
-      });
+      spyOn(axios, 'post').mockResolvedValue(auditIntegrationOsvEmptyResponse);
+      spyOn(axios, 'get').mockResolvedValue(auditIntegrationDepsDevEmptyResponse);
 
-      const result = await analysisService.analyseDependencies(
+      const result = await auditService.auditDependencies(
         'test-user',
         'test-repo',
         'main',
@@ -956,12 +980,12 @@ end`,
       expect(result.dependencies).toBeDefined();
     });
 
-    it('should handle complete analysis errors gracefully', async () => {
-      spyOn(analysisService as any, 'getAllManifestData').mockRejectedValue(
+    it('should handle complete audit errors gracefully', async () => {
+      spyOn(auditService as any, 'getAllManifestData').mockRejectedValue(
         new Error('GitHub API error'),
       );
 
-      const result = await analysisService.analyseDependencies(
+      const result = await auditService.auditDependencies(
         'test-user',
         'test-repo',
         'main',
@@ -974,13 +998,13 @@ end`,
 
   describe('Performance Configuration', () => {
     it('should allow configuring performance settings', () => {
-      analysisService.configurePerformance({
+      auditService.configurePerformance({
         concurrency: 5,
         batchSize: 50,
       });
 
-      // Performance config is private, but we can test it works by running an analysis
-      expect(analysisService).toBeDefined();
+      // Performance config is private, but we can test it works by running an audit
+      expect(auditService).toBeDefined();
     });
   });
 
@@ -1025,7 +1049,7 @@ end`,
         ],
       };
 
-      const result = analysisService.filterVulnerableTransitives(dependencies);
+      const result = auditService.filterVulnerableTransitives(dependencies);
 
       expect(
         result['package.json'][0].transitiveDependencies?.nodes,
@@ -1062,7 +1086,7 @@ end`,
         ],
       };
 
-      const result = analysisService.filterMainDependencies(dependencies);
+      const result = auditService.filterMainDependencies(dependencies);
 
       expect(result['package.json'].length).toBe(1);
       expect(result['package.json'][0].name).toBe('vulnerable-package');

@@ -12,8 +12,8 @@ npm install -g gitdepsec
 bun add -g gitdepsec
 
 # Or run without installing
-bunx gitdepsec analyse
-npx gitdepsec analyse
+bunx gitdepsec audit
+npx gitdepsec audit
 ```
 
 ## Usage
@@ -22,54 +22,54 @@ npx gitdepsec analyse
 
 ```bash
 # Analyze package.json in current directory
-gds analyse
+gds audit
 
 # Analyze specific file
-gds analyse -f package.json
-gds analyse -f requirements.txt
-gds analyse -f pom.xml
+gds audit -f package.json
+gds audit -f requirements.txt
+gds audit -f pom.xml
 
 # Analyze multiple files
-gds analyse -f package.json -f requirements.txt
+gds audit -f package.json -f requirements.txt
 ```
 
 ### Analyze GitHub Repository
 
 ```bash
 # Public repository
-gds analyse --repo owner/repo
+gds audit --repo owner/repo
 
 # Specific branch
-gds analyse --repo owner/repo --branch develop
+gds audit --repo owner/repo --branch develop
 
 # With GitHub token (for private repos or higher rate limits)
-gds analyse --repo owner/repo --token ghp_xxxxx
+gds audit --repo owner/repo --token ghp_xxxxx
 ```
 
 ### Output Formats
 
 ```bash
 # Default: colored table output
-gds analyse
+gds audit
 
 # JSON output (for piping/scripting)
-gds analyse --format json
+gds audit --format json
 
 # Markdown output
-gds analyse --format markdown
+gds audit --format markdown
 
 # Save to file
-gds analyse --output report.json --format json
+gds audit --output report.json --format json
 ```
 
 ### Include Transitive Dependencies
 
 ```bash
 # Transitive scanning is enabled by default
-gds analyse
+gds audit
 
 # Disable transitive (direct dependencies only)
-gds analyse --no-transitive
+gds audit --no-transitive
 ```
 
 ### Generate Fix Plan
@@ -112,7 +112,7 @@ export GDS_OUTPUT_FORMAT=table
 
 | Command         | Description                              |
 | --------------- | ---------------------------------------- |
-| `gds analyse`   | Analyze dependencies for vulnerabilities |
+| `gds audit`   | Analyze dependencies for vulnerabilities |
 | `gds fix`       | Generate fix recommendations             |
 | `gds init`      | Create configuration file                |
 | `gds --version` | Show version                             |
@@ -120,7 +120,7 @@ export GDS_OUTPUT_FORMAT=table
 
 ## CLI Options Reference
 
-### `gds analyse`
+### `gds audit`
 
 | Option                  | Description                                |
 | ----------------------- | ------------------------------------------ |
@@ -157,13 +157,13 @@ export GDS_OUTPUT_FORMAT=table
 
 ## Exit Codes
 
-For `gds analyse`:
+For `gds audit`:
 
 | Code | Description                       |
 | ---- | --------------------------------- |
 | 0    | Success, no vulnerabilities found |
 | 1    | Vulnerabilities found             |
-| 2    | Error during analysis             |
+| 2    | Error during audit             |
 
 For `gds fix`:
 
@@ -176,10 +176,10 @@ Use the CLI directly from your AI harness/tool and consume structured JSON outpu
 
 ```bash
 # Analyze local manifests as JSON
-gds analyse --format json
+gds audit --format json
 
 # Analyze a specific repo and save JSON output
-gds analyse --repo owner/repo --format json --output report.json
+gds audit --repo owner/repo --format json --output report.json
 
 # Generate fix plan as JSON
 gds fix --format json

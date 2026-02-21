@@ -1,7 +1,7 @@
-import { analyse, type AnalyseOptions, type AnalysisResult } from "./analyser.js";
+import { audit, type AuditOptions, type AuditResult } from "./auditor.js";
 import type { Dependency, DependencyGroups, Vulnerability } from "./types.js";
 
-export interface FixPlanOptions extends AnalyseOptions {
+export interface FixPlanOptions extends AuditOptions {
 }
 
 export interface FixAction {
@@ -139,9 +139,9 @@ function generateActions(dependencies: DependencyGroups): FixAction[] {
     return actions.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
 }
 
-export function buildFixPlan(analysisResult: AnalysisResult): FixPlan {
+export function buildFixPlan(auditResult: AuditResult): FixPlan {
     // Generate fix actions
-    const actions = generateActions(analysisResult.dependencies);
+    const actions = generateActions(auditResult.dependencies);
 
     // Calculate summary
     const fixableCount = actions.filter((a) => a.action === "upgrade").length;
@@ -185,7 +185,7 @@ export function buildFixPlan(analysisResult: AnalysisResult): FixPlan {
 
     return {
         summary: {
-            totalVulnerabilities: analysisResult.totalVulnerabilities,
+            totalVulnerabilities: auditResult.totalVulnerabilities,
             fixableCount,
             criticalCount,
             highCount,
@@ -198,7 +198,7 @@ export function buildFixPlan(analysisResult: AnalysisResult): FixPlan {
 }
 
 export async function generateFixPlan(options: FixPlanOptions): Promise<FixPlan> {
-    // First, run analysis
-    const analysisResult = await analyse(options);
-    return buildFixPlan(analysisResult);
+    // First, run audit
+    const auditResult = await audit(options);
+    return buildFixPlan(auditResult);
 }

@@ -1,16 +1,16 @@
 import fs from "fs";
 import path from "path";
 import chalk from "chalk";
-import { Analyser } from "../core/analyser.js";
+import { Auditor } from "../core/auditor.js";
 import { CLIProgress } from "../core/progress.js";
 import { loadConfig } from "../core/config.js";
 import {
-    formatAnalysisTable,
-    formatAnalysisJson,
-    formatAnalysisMarkdown,
+    formatAuditTable,
+    formatAuditJson,
+    formatAuditMarkdown,
 } from "../utils/formatters.js";
 
-interface AnalyseCommandOptions {
+interface AuditCommandOptions {
     file?: string[];
     repo?: string;
     branch?: string;
@@ -22,7 +22,7 @@ interface AnalyseCommandOptions {
     verbose?: boolean;
 }
 
-export async function analyseCommand(options: AnalyseCommandOptions): Promise<void> {
+export async function auditCommand(options: AuditCommandOptions): Promise<void> {
     const config = loadConfig();
     const includeTransitive = options.transitive ?? config.include_transitive ?? true;
     const progress = new CLIProgress({
@@ -34,8 +34,8 @@ export async function analyseCommand(options: AnalyseCommandOptions): Promise<vo
         // Determine token
         const token = options.token || config.github_token;
 
-        // Create analyser
-        const analyser = new Analyser({
+        // Create auditor
+        const auditor = new Auditor({
             token,
             onProgress: (step, pct) => progress.update(step, pct),
         });
@@ -52,7 +52,7 @@ export async function analyseCommand(options: AnalyseCommandOptions): Promise<vo
                 process.exit(2);
             }
 
-            result = await analyser.analyseFromRepo(
+            result = await auditor.auditFromRepo(
                 owner,
                 repo,
                 options.branch,
@@ -70,7 +70,7 @@ export async function analyseCommand(options: AnalyseCommandOptions): Promise<vo
                 }
             }
 
-            result = await analyser.analyseFromFiles(files, includeTransitive);
+            result = await auditor.auditFromFiles(files, includeTransitive);
         } else {
             // Default: analyze current directory
             const cwd = process.cwd();
@@ -85,7 +85,7 @@ export async function analyseCommand(options: AnalyseCommandOptions): Promise<vo
                 process.exit(2);
             }
 
-            result = await analyser.analyseFromFiles(foundFiles, includeTransitive);
+            result = await auditor.auditFromFiles(foundFiles, includeTransitive);
         }
 
         progress.stop();
@@ -96,13 +96,13 @@ export async function analyseCommand(options: AnalyseCommandOptions): Promise<vo
 
         switch (format) {
             case "json":
-                output = formatAnalysisJson(result);
+                output = formatAuditJson(result);
                 break;
             case "markdown":
-                output = formatAnalysisMarkdown(result);
+                output = formatAuditMarkdown(result);
                 break;
             default:
-                output = formatAnalysisTable(result);
+                output = formatAuditTable(result);
         }
 
         // Write to file or stdout
@@ -118,7 +118,7 @@ export async function analyseCommand(options: AnalyseCommandOptions): Promise<vo
             process.exit(1);
         }
     } catch (error) {
-        progress.fail(error instanceof Error ? error.message : "Analysis failed");
+        progress.fail(error instanceof Error ? error.message : "Audit failed");
         if (options.verbose && error instanceof Error) {
             console.error(chalk.dim(error.stack));
         }

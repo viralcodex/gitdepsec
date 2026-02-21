@@ -1,7 +1,7 @@
 {
   "name": "gitdepsec",
   "version": "1.0.0",
-  "description": "CLI tool for analyzing dependency vulnerabilities in your projects",
+  "description": "CLI tool for auditing dependency vulnerabilities in your projects",
   "keywords": [
     "security",
     "vulnerabilities",
@@ -14,7 +14,7 @@
     "osv",
     "cve"
   ],
-  "author": "",
+  "author": "Aviral Shukla",
   "license": "MIT",
   "type": "module",
   "main": "dist/index.js",
