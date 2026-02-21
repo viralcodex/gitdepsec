@@ -6,9 +6,9 @@ export const MANIFEST_FILES: { [key: string]: { file: string; icon: string } } =
   RubyGems: { file: "Gemfile", icon: "/ruby.svg" },
   Maven: { file: "pom.xml", icon: "/mvn.svg" },
   Pub: { file: "pubspec.yaml", icon: "/dart.svg" },
-  Gradle: { file: "build.gradle", icon: "gradle" },
-  cargo: { file: "Cargo.toml", icon: "cargo" },
-  Composer: { file: "composer.json", icon: "composer" },
+  Gradle: { file: "build.gradle", icon: "/gradle.svg" },
+  cargo: { file: "Cargo.toml", icon: "/rust.svg" },
+  Composer: { file: "composer.json", icon: "/composer.svg" },
 };
 
 export const PROGRESS_STEPS: { [key: string]: string } = {
