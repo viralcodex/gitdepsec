@@ -1,7 +1,7 @@
 import { Response } from "express";
 
 import { DependencyApiResponse, manifestFiles } from "../constants/model";
-import { getCachedAnalysis } from "../db/actions";
+import { getCachedAudit } from "../db/actions";
 
 import { sanitizeString } from "./utils";
 
@@ -36,7 +36,7 @@ export const validateFile = (file: Express.Multer.File | undefined, res: Respons
   }
 };
 
-export const validateAndReturnAnalysisCache = async (
+export const validateAndReturnAuditCache = async (
   username: string,
   repo: string,
   branch: string,
@@ -45,7 +45,7 @@ export const validateAndReturnAnalysisCache = async (
   username = sanitizeString(username);
   repo = sanitizeString(repo);
   branch = sanitizeString(branch);
-  const data = await getCachedAnalysis(username, repo, branch);
+  const data = await getCachedAudit(username, repo, branch);
 
   if (data.length === 0 || !data[0].data) {
     res.write(

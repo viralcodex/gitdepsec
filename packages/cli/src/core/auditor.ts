@@ -44,7 +44,7 @@ const MANIFEST_NAME_TO_ECOSYSTEM = new Map<string, string>(
     Object.entries(manifestFiles).map(([ecosystem, fileName]) => [fileName, ecosystem]),
 );
 
-export interface AnalyseOptions {
+export interface AuditOptions {
     files?: string[];
     repo?: string;
     branch?: string;
@@ -53,7 +53,7 @@ export interface AnalyseOptions {
     onProgress?: (step: string, progress: number) => void;
 }
 
-export interface AnalysisResult {
+export interface AuditResult {
     dependencies: DependencyGroups;
     errors?: string[];
     totalDependencies: number;
@@ -64,7 +64,7 @@ export interface AnalysisResult {
     lowCount: number;
 }
 
-export class Analyser {
+export class Auditor {
     private globalDependencyMap = new Map<string, Dependency>();
     private dependencyFileMapping = new Map<string, string[]>();
     private stepErrors = new Map<string, string[]>();
@@ -412,8 +412,8 @@ export class Analyser {
         }
     }
 
-    // Main analysis methods
-    async analyseFromRepo(owner: string, repo: string, branch?: string, includeTransitive = true): Promise<AnalysisResult> {
+    // Main audit methods
+    async auditFromRepo(owner: string, repo: string, branch?: string, includeTransitive = true): Promise<AuditResult> {
         this.resetState();
 
         this.progressService.progressUpdater(PROGRESS_STEPS[0], 0);
@@ -457,10 +457,10 @@ export class Analyser {
 
         this.progressService.progressUpdater(PROGRESS_STEPS[0], 100);
 
-        return this.analyseManifests(grouped, includeTransitive);
+        return this.auditManifests(grouped, includeTransitive);
     }
 
-    async analyseFromFiles(filePaths: string[], includeTransitive = true): Promise<AnalysisResult> {
+    async auditFromFiles(filePaths: string[], includeTransitive = true): Promise<AuditResult> {
         this.resetState();
 
         this.progressService.progressUpdater(PROGRESS_STEPS[0], 0);
@@ -486,10 +486,10 @@ export class Analyser {
 
         this.progressService.progressUpdater(PROGRESS_STEPS[0], 100);
 
-        return this.analyseManifests(grouped, includeTransitive);
+        return this.auditManifests(grouped, includeTransitive);
     }
 
-    private async analyseManifests(manifests: ManifestFiles, includeTransitive: boolean): Promise<AnalysisResult> {
+    private async auditManifests(manifests: ManifestFiles, includeTransitive: boolean): Promise<AuditResult> {
         this.progressService.progressUpdater(PROGRESS_STEPS[1], 0);
 
         // Parse all manifest files
@@ -809,17 +809,17 @@ export class Analyser {
 }
 
 // Convenience function for programmatic usage
-export async function analyse(options: AnalyseOptions): Promise<AnalysisResult> {
-    const analyser = new Analyser({
+export async function audit(options: AuditOptions): Promise<AuditResult> {
+    const auditor = new Auditor({
         token: options.token,
         onProgress: options.onProgress,
     });
 
     if (options.repo) {
         const [owner, repo] = options.repo.split("/");
-        return analyser.analyseFromRepo(owner, repo, options.branch, options.includeTransitive);
+        return auditor.auditFromRepo(owner, repo, options.branch, options.includeTransitive);
     } else if (options.files && options.files.length > 0) {
-        return analyser.analyseFromFiles(options.files, options.includeTransitive);
+        return auditor.auditFromFiles(options.files, options.includeTransitive);
     } else {
         // Default: look for manifest files in current directory
         const fs = await import("fs");
@@ -834,6 +834,6 @@ export async function analyse(options: AnalyseOptions): Promise<AnalysisResult> 
             throw new Error("No manifest files found in current directory");
         }
 
-        return analyser.analyseFromFiles(defaultFiles, options.includeTransitive);
+        return auditor.auditFromFiles(defaultFiles, options.includeTransitive);
     }
 }

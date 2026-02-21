@@ -104,7 +104,7 @@ App Router structure:
   page.tsx - Home/search
   [username]/
     [repo]/
-      page.tsx - Analysis results
+      page.tsx - Audit results
 ```
 
 ## API Integration

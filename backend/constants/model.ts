@@ -48,10 +48,10 @@ export interface TransitiveDependency {
 export interface Dependency {
   name: string;
   version: string;
+  ecosystem: Ecosystem;
   vulnerabilities?: Vulnerability[];
   dependencyType?: "DIRECT" | "INDIRECT" | "SELF";
   transitiveDependencies?: TransitiveDependency;
-  ecosystem: Ecosystem;
 }
 
 export interface DepsDevDependency {
@@ -115,6 +115,12 @@ export interface MavenDependency {
   [key: string]: unknown;
 }
 
+export interface RustDependency {
+  name: string;
+  version: string;
+  source: 'crates' | 'git' | 'path' | 'workspace';
+}
+
 export interface OSVQuery {
   package: { name: string; ecosystem: Ecosystem };
   version: string;
@@ -157,7 +163,7 @@ export const manifestFiles: { [ecosystem: string]: string } = {
   PiPY: "requirements.txt",
   RubyGems: "Gemfile",
   Maven: "pom.xml",
-  gradle: "build.gradle",
+  Gradle: "build.gradle",
   rust: "Cargo.toml",
   php: "composer.json",
   Pub: "pubspec.yaml",
@@ -253,7 +259,7 @@ export interface QuickWin {
   estimatedTime?: string;
 }
 
-export interface ParallelAnalysisResults {
+export interface ParallelAuditResults {
   priorities: PrioritizedVulnerability[];
   transitiveInsights: TransitiveInsight[];
   conflicts: ConflictDetection[];

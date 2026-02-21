@@ -86,7 +86,7 @@ export class CLIProgress {
     }
 }
 
-// Simple progress service for the analyser (compatible with backend interface)
+// Simple progress service for the auditor (compatible with backend interface)
 export class ProgressService {
     private callback: ProgressCallback | null = null;
 

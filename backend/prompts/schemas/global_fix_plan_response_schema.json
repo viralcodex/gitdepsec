@@ -13,7 +13,7 @@
           "type": "array",
           "items": { "type": "string" }
         },
-        "critical_path_analysis": {
+        "critical_path_audit": {
           "type": "array",
           "items": {
             "type": "object",
@@ -59,7 +59,7 @@
       "type": "object",
       "properties": {
         "assessment": { "type": "string" },
-        "breaking_change_analysis": { "type": "string" },
+        "breaking_change_audit": { "type": "string" },
         "testing_strategy": {
           "type": "object",
           "properties": {

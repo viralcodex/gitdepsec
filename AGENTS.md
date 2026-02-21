@@ -10,7 +10,7 @@ Before working on any feature, read the relevant skill files from `.agents/skill
 | Backend/Node.js code | `nodejs-backend-patterns/` |
 | Fix plan features | `fix-plan-generation.md` |
 | Database schema, Drizzle ORM | `database-schema.md` |
-| Dependency analysis | `analyze-dependencies.md` |
+| Dependency audit | `audit-dependencies.md` |
 | Writing tests | `testing.md` |
 
 ## Project Structure

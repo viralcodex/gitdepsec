@@ -2,15 +2,15 @@
  * GitDepSec core exports.
  *
  * The primary interface for AI harnesses is the CLI command output
- * (`gds analyse --format json` / `gds fix --format json`).
+ * (`gds audit --format json` / `gds fix --format json`).
  */
 
 export {
-  analyse,
-  Analyser,
-  type AnalyseOptions,
-  type AnalysisResult,
-} from "./core/analyser.js";
+  audit,
+  Auditor,
+  type AuditOptions,
+  type AuditResult,
+} from "./core/auditor.js";
 
 export {
   generateFixPlan,

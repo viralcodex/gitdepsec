@@ -72,7 +72,7 @@ const MainContent = () => {
       return;
     }
 
-    //url analysis
+    //url audit
     if (debouncedUrl && !file && loadedRepoKey) {
       const branchParam = selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : "";
       router.push(`/${loadedRepoKey}${branchParam}`);
@@ -156,10 +156,10 @@ const MainContent = () => {
             className="font-ui-heading sm:p-6 px-5 py-2.5 cursor-pointer bg-white text-black border-[3px] border-black text-base font-semibold transition-all hover:bg-gray-100 sm:text-lg disabled:cursor-not-allowed disabled:opacity-50 enabled:active:shadow-none"
             type="submit"
             disabled={isDisabled()}
-            aria-label="Analyse repository dependencies"
+            aria-label="Audit repository dependencies"
           >
             <Search className="w-4 h-4 sm:w-5 sm:h-5 mr-1.5" />
-            Analyse
+            Audit
           </Button>
           <Button
             className="font-ui-heading sm:p-6 px-5 py-2.5 cursor-pointer bg-black text-white border-[3px] border-black text-base font-semibold transition-all hover:bg-accent-foreground sm:text-lg active:shadow-none"
