@@ -2,18 +2,21 @@
 
 A powerful CLI tool for analyzing dependency vulnerabilities in your projects. Supports npm, PyPI, Maven, RubyGems, Composer, and Pub.
 
+[![npm version](https://img.shields.io/npm/v/@avrl/gitdepsec.svg)](https://www.npmjs.com/package/@avrl/gitdepsec)
+[![npm provenance](https://img.shields.io/badge/npm-provenance-brightgreen)](https://docs.npmjs.com/generating-provenance-statements)
+
 ## Installation
 
 ```bash
 # Using npm
-npm install -g gitdepsec
+npm install -g @avrl/gitdepsec
 
 # Using bun
-bun add -g gitdepsec
+bun add -g @avrl/gitdepsec
 
 # Or run without installing
-bunx gitdepsec audit
-npx gitdepsec audit
+npx @avrl/gitdepsec audit
+bunx @avrl/gitdepsec audit
 ```
 
 ## Usage
