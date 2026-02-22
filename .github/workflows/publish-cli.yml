@@ -24,6 +24,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -57,17 +58,17 @@ jobs:
             echo "⏭️ Version unchanged ($LOCAL_VERSION), skipping publish"
           fi
 
-      - name: Publish to npm (OIDC Trusted Publishing)
+      - name: Publish to npm
         if: steps.version-check.outputs.should_publish == 'true'
         working-directory: packages/cli
-        run: |
-          npm config set //registry.npmjs.org/:_authToken ""
-          npm publish --access public --provenance
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Summary
         run: |
           if [ "${{ steps.version-check.outputs.should_publish }}" == "true" ]; then
-            echo "### ✅ Published gitdepsec@${{ steps.version-check.outputs.local_version }} to npm" >> $GITHUB_STEP_SUMMARY
+            echo "### ✅ Published @avrl/gitdepsec@${{ steps.version-check.outputs.local_version }} to npm" >> $GITHUB_STEP_SUMMARY
           else
             echo "### ⏭️ Skipped publishing (version ${{ steps.version-check.outputs.local_version }} already exists)" >> $GITHUB_STEP_SUMMARY
           fi
