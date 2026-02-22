@@ -1,6 +1,6 @@
 {
   "name": "@avrl/gitdepsec",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "CLI tool for analyzing dependency vulnerabilities in your projects",
   "keywords": [
     "security",
