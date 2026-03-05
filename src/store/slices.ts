@@ -340,14 +340,14 @@ export const createFixPlanSlice: StateCreator<AppStore, [], [], FixPlanState> = 
     set((state) =>
       ecosystem
         ? {
-            ecosystemProgress: {
-              ...state.ecosystemProgress,
-              [ecosystem]: {
-                phase,
-                progress: state.ecosystemProgress[ecosystem]?.progress || 0,
-              },
+          ecosystemProgress: {
+            ...state.ecosystemProgress,
+            [ecosystem]: {
+              phase,
+              progress: state.ecosystemProgress[ecosystem]?.progress || 0,
             },
-          }
+          },
+        }
         : { currentFixPlanPhase: phase },
     ),
 
@@ -357,14 +357,14 @@ export const createFixPlanSlice: StateCreator<AppStore, [], [], FixPlanState> = 
     set((state) =>
       ecosystem
         ? {
-            ecosystemProgress: {
-              ...state.ecosystemProgress,
-              [ecosystem]: {
-                phase: state.ecosystemProgress[ecosystem]?.phase || null,
-                progress,
-              },
+          ecosystemProgress: {
+            ...state.ecosystemProgress,
+            [ecosystem]: {
+              phase: state.ecosystemProgress[ecosystem]?.phase || null,
+              progress,
             },
-          }
+          },
+        }
         : { fixPlanProgress: progress },
     ),
 

@@ -138,14 +138,14 @@ export interface SavedHistoryState {
 
 export interface AppStore
   extends
-    RepoState,
-    FileState,
-    ErrorState,
-    GraphState,
-    DiagramState,
-    FixPlanState,
-    UIState,
-    SavedHistoryState {
+  RepoState,
+  FileState,
+  ErrorState,
+  GraphState,
+  DiagramState,
+  FixPlanState,
+  UIState,
+  SavedHistoryState {
   clearForm: () => void;
   resetNavigationState: () => void;
 }
