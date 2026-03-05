@@ -1,5 +1,5 @@
 import { FIX_PLAN_PROPERTY_ORDER, PHASE_STEP_MAP } from "@/constants/constants";
-import { GlobalFixPlanSSEMessage } from "@/constants/model";
+import { EcosystemFixPlansSSEMessage } from "@/constants/model";
 import { getFixPlanSSE } from "@/lib/api";
 import { store, useErrorState, useFixPlanState, useUIState } from "@/store/app-store";
 import { useCallback, useEffect, useRef } from "react";
@@ -15,11 +15,9 @@ export const useFixPlanGeneration = ({
   branch?: string;
 }) => {
   const {
-    setGlobalFixPlan,
     setEcosystemFixPlan,
     setCurrentFixPlanRepoKey,
     updatePartialFixPlan,
-    clearPartialFixPlan,
     setIsFixPlanLoading,
     setCurrentFixPlanPhase,
     setCurrentFixPlanStep,
@@ -51,7 +49,7 @@ export const useFixPlanGeneration = ({
 
   // Helper to order and update partial fix plan
   const updateOrderedPartialPlan = useCallback(
-    (plan: Record<string, unknown>, ecosystem?: string) => {
+    (plan: Record<string, unknown>, ecosystem: string) => {
       const orderedUpdate: Record<string, unknown> = {};
       FIX_PLAN_PROPERTY_ORDER.forEach((key) => {
         if (plan[key]) orderedUpdate[key] = plan[key];
@@ -106,55 +104,16 @@ export const useFixPlanGeneration = ({
     setIsFixPlanLoading(false);
   }, [setIsFixPlanLoading]);
 
-  const onGlobalFixPlanMessage = useCallback(
-    (message: GlobalFixPlanSSEMessage) => {
-      if (!message?.globalFixPlan) return;
+  const onEcosystemFixPlansMessage = useCallback(
+    (message: EcosystemFixPlansSSEMessage) => {
+      if (!message?.ecosystemFixPlans) return;
 
-      const fixPlanData = message.globalFixPlan;
-
-      // Check if response is ecosystem-keyed (new format)
-      const isEcosystemBased =
-        typeof fixPlanData === "object" &&
-        fixPlanData !== null &&
-        Object.keys(fixPlanData).some((key) => {
-          const value = fixPlanData[key];
-          return (
-            value &&
-            typeof value === "object" &&
-            ("executive_summary" in value || "dependency_intelligence" in value)
-          );
-        });
-
-      if (isEcosystemBased) {
-        // New format: { npm: {...}, PyPI: {...} }
-        const ecosystemPlans = fixPlanData as Record<string, Record<string, unknown>>;
-        const ecosystemEntries = Object.entries(ecosystemPlans);
-
-        ecosystemEntries.forEach(([ecosystem, plan]) => {
-          setEcosystemFixPlan(ecosystem, JSON.stringify(plan, null, 2));
-          updateOrderedPartialPlan(plan, ecosystem);
-        });
-
-        // If single ecosystem, also set as global for backward compatibility
-        if (ecosystemEntries.length === 1) {
-          const [, singlePlan] = ecosystemEntries[0];
-          setGlobalFixPlan(JSON.stringify(singlePlan, null, 2));
-          updateOrderedPartialPlan(singlePlan);
-        }
-      } else {
-        // Legacy format: single global fix plan
-        const globalPlan =
-          typeof fixPlanData === "object"
-            ? JSON.stringify(fixPlanData, null, 2)
-            : String(fixPlanData);
-
-        setGlobalFixPlan(globalPlan);
-        if (typeof fixPlanData === "object") {
-          updateOrderedPartialPlan(fixPlanData as Record<string, unknown>);
-        }
-      }
+      Object.entries(message.ecosystemFixPlans).forEach(([ecosystem, plan]) => {
+        setEcosystemFixPlan(ecosystem, JSON.stringify(plan, null, 2));
+        updateOrderedPartialPlan(plan, ecosystem);
+      });
     },
-    [setGlobalFixPlan, setEcosystemFixPlan, updateOrderedPartialPlan],
+    [setEcosystemFixPlan, updateOrderedPartialPlan],
   );
 
   const onProgress = useCallback(
@@ -188,7 +147,7 @@ export const useFixPlanGeneration = ({
           partialUpdate.dependency_intelligence = depIntel;
         }
 
-        if (Object.keys(partialUpdate).length > 0) {
+        if (ecosystem && Object.keys(partialUpdate).length > 0) {
           updatePartialFixPlan(partialUpdate, ecosystem);
         }
       }
@@ -202,7 +161,7 @@ export const useFixPlanGeneration = ({
       const { graphData, isFixPlanLoading, selectedBranch, currentFixPlanRepoKey } = state;
       const repoData = currentFixPlanRepoKey ? state.fixPlansByRepo[currentFixPlanRepoKey] : null;
       const hasExistingFixPlan = Boolean(
-        repoData?.globalFixPlan?.trim() || Object.keys(repoData?.ecosystemFixPlans || {}).length,
+        Object.keys(repoData?.ecosystemFixPlans || {}).length,
       );
 
       setFixPlanDialogOpen(true);
@@ -227,8 +186,6 @@ export const useFixPlanGeneration = ({
       setFixPlanError({});
       // Clear old data and reset state BEFORE setting loading
       // This ensures skeleton shows immediately
-      setGlobalFixPlan("");
-      clearPartialFixPlan();
       resetFixPlanState();
       setError("");
       setIsFixPlanLoading(true);
@@ -246,7 +203,7 @@ export const useFixPlanGeneration = ({
           selectedBranch ?? branch!,
           onError,
           onComplete,
-          onGlobalFixPlanMessage,
+          onEcosystemFixPlansMessage,
           onProgress,
         );
       } catch (error) {
@@ -269,8 +226,6 @@ export const useFixPlanGeneration = ({
     [
       setFixPlanDialogOpen,
       setFixPlanError,
-      setGlobalFixPlan,
-      clearPartialFixPlan,
       resetFixPlanState,
       setIsFixPlanLoading,
       setError,
@@ -279,7 +234,7 @@ export const useFixPlanGeneration = ({
       branch,
       onError,
       onComplete,
-      onGlobalFixPlanMessage,
+      onEcosystemFixPlansMessage,
       onProgress,
     ],
   );

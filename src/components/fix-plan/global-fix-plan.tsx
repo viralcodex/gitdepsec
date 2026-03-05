@@ -4,26 +4,25 @@ import UnifiedFixPlanComponent from "./unified-fix-plan";
 import { useFixPlanState } from "@/store/app-store";
 
 interface GlobalFixPlanProps {
-  globalFixPlan?: string;
+  fixPlan?: string;
   isFixPlanLoading?: boolean;
-  ecosystem?: string; // Optional ecosystem for multi-ecosystem support
+  ecosystem: string;
 }
 
 const GlobalFixPlan = (props: GlobalFixPlanProps) => {
-  const { globalFixPlan, isFixPlanLoading, ecosystem } = props;
-  // Access appropriate partial fix plan from store
-  const { partialFixPlan, ecosystemPartialFixPlans } = useFixPlanState();
-  const partialFixPlanData = ecosystem ? ecosystemPartialFixPlans[ecosystem] : partialFixPlan;
+  const { fixPlan, isFixPlanLoading, ecosystem } = props;
+  const { ecosystemPartialFixPlans } = useFixPlanState();
+  const partialFixPlanData = ecosystemPartialFixPlans[ecosystem];
 
   // Parse the unified fix plan from JSON string
   const parsedFixPlan = useMemo<UnifiedFixPlan | null>(() => {
-    if (!globalFixPlan) return null;
+    if (!fixPlan) return null;
 
     try {
       // Check if it's already an object or needs parsing
-      if (typeof globalFixPlan === "string") {
+      if (typeof fixPlan === "string") {
         // Clean up markdown formatting if present
-        let cleanedData = globalFixPlan;
+        let cleanedData = fixPlan;
 
         // Remove markdown code fences if present
         if (cleanedData.includes("```json")) {
@@ -41,12 +40,12 @@ const GlobalFixPlan = (props: GlobalFixPlanProps) => {
         }
         return parsed as UnifiedFixPlan;
       }
-      return globalFixPlan as UnifiedFixPlan;
+      return fixPlan as UnifiedFixPlan;
     } catch (error) {
-      console.error("Error parsing globalFixPlan:", error);
+      console.error("Error parsing fixPlan:", error);
       return null;
     }
-  }, [globalFixPlan]);
+  }, [fixPlan]);
 
   return (
     <UnifiedFixPlanComponent

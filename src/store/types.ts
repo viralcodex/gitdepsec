@@ -82,10 +82,8 @@ export interface DiagramState {
 }
 
 export interface FixPlanCacheEntry {
-  globalFixPlan: string;
   isFixPlanGenerated: boolean;
   timestamp: number;
-  // New: Support for per-ecosystem fix plans
   ecosystemFixPlans?: Record<string, string>;
   ecosystemPartialFixPlans?: Record<string, Partial<Record<string, unknown>>>;
   hasMultipleEcosystems?: boolean;
@@ -94,20 +92,16 @@ export interface FixPlanCacheEntry {
 export interface FixPlanState {
   fixPlansByRepo: Record<string, FixPlanCacheEntry>;
   currentFixPlanRepoKey: string | null;
-  partialFixPlan: Partial<Record<string, unknown>>;
   isFixPlanLoading: boolean;
   currentFixPlanPhase: string | null;
   currentFixPlanStep: string | null;
   fixPlanProgress: number;
-  // New: Per-ecosystem progress tracking
   ecosystemProgress: Record<string, { phase: string | null; progress: number }>;
   selectedEcosystem: string | null;
-  setGlobalFixPlan: (plan: string, repoKey?: string) => void;
-  // New: Set fix plan for specific ecosystem
   setEcosystemFixPlan: (ecosystem: string, plan: string, repoKey?: string) => void;
   setCurrentFixPlanRepoKey: (repoKey: string | null) => void;
-  updatePartialFixPlan: (tabData: Partial<Record<string, unknown>>, ecosystem?: string) => void;
-  clearPartialFixPlan: (ecosystem?: string) => void;
+  updatePartialFixPlan: (tabData: Partial<Record<string, unknown>>, ecosystem: string) => void;
+  clearPartialFixPlan: (ecosystem: string) => void;
   setIsFixPlanLoading: (loading: boolean) => void;
   setCurrentFixPlanPhase: (phase: string | null, ecosystem?: string) => void;
   setCurrentFixPlanStep: (step: string | null) => void;

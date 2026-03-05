@@ -60,7 +60,7 @@ const Page = () => {
   const { fileHeaderOpen, isFixPlanDialogOpen, setFileHeaderOpen, setFixPlanDialogOpen } =
     useUIState();
   const { selectedNode, setSelectedNode, resetDiagramState } = useDiagramState();
-  const { globalFixPlan, ecosystemFixPlans } = useFixPlanData();
+  const { ecosystemFixPlans } = useFixPlanData();
   const { defaultBranch, selectedBranch, repoBranchCache } = useRepoState();
 
   const repoKey = `${username}/${repo}`;
@@ -155,7 +155,7 @@ const Page = () => {
       // Get the appropriate fix plan data
       const planData = hasMultipleEcosystems
         ? ecosystemFixPlans[ecosystemOptions[0]]
-        : globalFixPlan || ecosystemFixPlans[ecosystemOptions[0]];
+        : ecosystemFixPlans[ecosystemOptions[0]];
 
       if (!planData) {
         toast.error("No fix plan available to download");

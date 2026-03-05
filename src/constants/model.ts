@@ -125,8 +125,8 @@ export interface FixPlanSSEMessage {
   progress?: string;
 }
 
-export interface GlobalFixPlanSSEMessage {
-  globalFixPlan?: string | Record<string, unknown>; // Support both legacy string and unified object structures
+export interface EcosystemFixPlansSSEMessage {
+  ecosystemFixPlans?: Record<string, Record<string, unknown>>;
   progress?: string;
 }
 

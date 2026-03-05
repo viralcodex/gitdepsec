@@ -12,7 +12,6 @@ import {
   createSavedHistorySlice,
 } from "./slices";
 import {
-  EMPTY_OBJECT,
   EMPTY_ECOSYSTEM_PARTIAL,
   EMPTY_ECOSYSTEM_FIXES,
   EMPTY_ECOSYSTEM_PROGRESS,
@@ -172,8 +171,6 @@ export const useFixPlanState = createSelector((s) => {
   const repoData = repoKey ? s.fixPlansByRepo[repoKey] : null;
 
   return {
-    globalFixPlan: repoData?.globalFixPlan || "",
-    partialFixPlan: s.partialFixPlan || EMPTY_OBJECT,
     ecosystemPartialFixPlans: repoData?.ecosystemPartialFixPlans || EMPTY_ECOSYSTEM_PARTIAL,
     ecosystemFixPlans: repoData?.ecosystemFixPlans || EMPTY_ECOSYSTEM_FIXES,
     hasMultipleEcosystems: repoData?.hasMultipleEcosystems || false,
@@ -187,7 +184,6 @@ export const useFixPlanState = createSelector((s) => {
     currentFixPlanRepoKey: s.currentFixPlanRepoKey,
     fixPlansByRepo: s.fixPlansByRepo,
 
-    setGlobalFixPlan: s.setGlobalFixPlan,
     setEcosystemFixPlan: s.setEcosystemFixPlan,
     setCurrentFixPlanRepoKey: s.setCurrentFixPlanRepoKey,
     updatePartialFixPlan: s.updatePartialFixPlan,
@@ -213,9 +209,7 @@ export const useFixPlanData = createSelector((s) => {
   const repoData = repoKey ? s.fixPlansByRepo[repoKey] : null;
 
   return {
-    globalFixPlan: repoData?.globalFixPlan || "",
     ecosystemFixPlans: repoData?.ecosystemFixPlans || {},
-    partialFixPlan: s.partialFixPlan || EMPTY_OBJECT,
     isGenerated: repoData?.isFixPlanGenerated || false,
   };
 });

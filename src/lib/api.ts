@@ -3,7 +3,7 @@ import {
   ManifestFileContentsApiResponse,
   ProgressSSE,
   Vulnerability,
-  GlobalFixPlanSSEMessage,
+  EcosystemFixPlansSSEMessage,
   VulnerabilitySummaryResponse,
 } from "@/constants/model";
 import { encryptData, getNewFileName, getSessionId } from "./utils";
@@ -377,7 +377,7 @@ export async function getFixPlanSSE(
   branch: string,
   onError: (error: string, isCritical?: boolean) => void,
   onComplete: () => void,
-  onGlobalFixPlanMessage: (data: GlobalFixPlanSSEMessage) => void,
+  onEcosystemFixPlansMessage: (data: EcosystemFixPlansSSEMessage) => void,
   onProgress?: (data: {
     step?: string;
     progress?: string | number;
@@ -395,6 +395,33 @@ export async function getFixPlanSSE(
 
   const eventSource = new EventSource(url.toString());
 
+  const FIX_PLAN_PROGRESS_STEPS = new Set([
+    "preprocessing_start",
+    "preprocessing_complete",
+    "parallel_audit_start",
+    "parallel_audit_complete",
+    "intelligence_start",
+    "intelligence_complete",
+    "batch_start",
+    "batch_processing_start",
+    "batch_processing",
+    "batch_processing_complete",
+    "batch_complete",
+    "synthesis_start",
+    "synthesis_executive_complete",
+    "synthesis_intelligence_start",
+    "synthesis_intelligence_complete",
+    "synthesis_smart_actions_start",
+    "synthesis_smart_actions_complete",
+    "synthesis_phases_start",
+    "synthesis_phases_complete",
+    "synthesis_risk_start",
+    "synthesis_risk_complete",
+    "synthesis_complete",
+    "enrichment_start",
+    "enrichment_complete",
+  ]);
+
   eventSource.onmessage = (event: MessageEvent) => {
     try {
       const data = JSON.parse(event.data);
@@ -406,45 +433,23 @@ export async function getFixPlanSSE(
         case "global_planning_start":
           break;
         case "global_planning_complete":
-          onGlobalFixPlanMessage((data.data as GlobalFixPlanSSEMessage) ?? {});
+          onEcosystemFixPlansMessage((data.data as EcosystemFixPlansSSEMessage) ?? {});
           break;
         case "global_planning_error":
           onError(data.error || data.details || data.progress || "Fix plan generation failed", true);
           eventSource.close();
           break;
-        // New 5-phase architecture steps
-        case "preprocessing_start":
-        case "preprocessing_complete":
-        case "parallel_audit_start":
-        case "parallel_audit_complete":
-        case "intelligence_start":
-        case "intelligence_complete":
-        case "batch_start":
-        case "batch_processing":
-        case "batch_processing_complete":
-        case "batch_complete":
-        case "synthesis_start":
-        case "synthesis_executive_complete":
-        case "synthesis_intelligence_start":
-        case "synthesis_intelligence_complete":
-        case "synthesis_phases_start":
-        case "synthesis_phases_complete":
-        case "synthesis_risk_start":
-        case "synthesis_risk_complete":
-        case "synthesis_complete":
-        case "enrichment_start":
-        case "enrichment_complete":
-          // Progress updates - pass all data to onProgress callback
-          if (onProgress) {
+        case "audit_complete":
+          onComplete();
+          break;
+        default:
+          if (onProgress && FIX_PLAN_PROGRESS_STEPS.has(data.step)) {
             onProgress({
               step: data.step,
               progress: data.progress,
               data: data.data,
             });
           }
-          break;
-        case "audit_complete":
-          onComplete();
           break;
       }
     } catch (parseError) {

@@ -255,7 +255,14 @@ class AgentsService {
     // Single ecosystem - use current instance
     if (ecosystems.length === 1) {
       const ecosystem = ecosystems[0];
-      const result = await this.generateUnifiedFixPlan(progressCallback);
+      const taggedCallback = (step: string, message: string, data?: Record<string, unknown>) => {
+        progressCallback(step, message, {
+          ecosystem,
+          ...data,
+        });
+      };
+
+      const result = await this.generateUnifiedFixPlan(taggedCallback);
       return { [ecosystem]: result };
     }
 

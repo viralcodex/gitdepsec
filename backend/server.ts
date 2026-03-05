@@ -525,7 +525,7 @@ app.get("/fixPlan", fixPlanRateLimiter, (req: Request, res: Response) => {
           step: "global_planning_complete",
           progress: "Fix plan generation completed!",
           data: {
-            globalFixPlan: response,
+            ecosystemFixPlans: response,
           },
         })}\n\n`,
       );
