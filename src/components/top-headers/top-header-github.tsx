@@ -114,14 +114,14 @@ const TopHeaderGithub = (props: TopHeaderProps) => {
           <SaveAuditHistory data={result} addButtonRef={addButtonRef} />
           <HeaderToggle from="github" setIsFileHeaderOpen={setFileHeaderOpen} />
           <Input
-            className="sm:w-[65%] h-14 border"
+            className="sm:w-[65%] min-w-0 h-14 border"
             placeholder="https://github.com/username/repo"
             value={inputUrl}
             onChange={handleInputChange}
             aria-label="GitHub repository URL"
           />
-          <div className="sm:w-[35%] h-14">
-            <Dropdown className="shadow-none border-input border text-sm px-3 overflow-x-auto" />
+          <div className="sm:w-[35%] min-w-0 h-14">
+            <Dropdown className="w-full min-w-0 shadow-none border-input border text-sm px-3" />
           </div>
           <ButtonGroup className="sm:flex-row" role="group" aria-label="Repository actions">
             <Tooltip>

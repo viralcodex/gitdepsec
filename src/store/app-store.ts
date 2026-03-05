@@ -52,6 +52,7 @@ export const store = create<AppStore>()(
           hasMore: state.hasMore,
           totalBranches: state.totalBranches,
           currentUrl: state.currentUrl,
+          repoBranchCache: state.repoBranchCache,
           savedHistoryItems: state.savedHistoryItems,
           fixPlansByRepo: state.fixPlansByRepo,
           currentFixPlanRepoKey: state.currentFixPlanRepoKey,
@@ -110,6 +111,7 @@ export const useRepoState = createSelector((s) => ({
   page: s.page,
   currentUrl: s.currentUrl,
   loadedRepoKey: s.loadedRepoKey,
+  repoBranchCache: s.repoBranchCache,
   setBranches: s.setBranches,
   setSelectedBranch: s.setSelectedBranch,
   setDefaultBranch: s.setDefaultBranch,
@@ -119,7 +121,7 @@ export const useRepoState = createSelector((s) => ({
   setTotalBranches: s.setTotalBranches,
   setPage: s.setPage,
   setCurrentUrl: s.setCurrentUrl,
-  setLoadedRepoKey: s.setLoadedRepoKey,
+  upsertRepoBranchCache: s.upsertRepoBranchCache,
   resetRepoState: s.resetRepoState,
 }));
 

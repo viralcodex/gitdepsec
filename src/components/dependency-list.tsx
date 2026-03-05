@@ -67,7 +67,7 @@ export function AppSidebar({ dependencies, isLoading, ...props }: AppSidebarProp
         </div>
       </SidebarHeader>
       <SidebarContent className="rounded-b-lg">
-        <Command className="p-2 border-t-1 border-accent ">
+        <Command className="p-2 border-t border-accent ">
           <CommandInput
             placeholder="Select Dependency..."
             className="h-full"

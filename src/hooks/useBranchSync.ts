@@ -2,35 +2,65 @@ import { useEffect, useRef } from "react";
 import { useRepoState } from "@/store/app-store";
 
 interface UseBranchSyncProps {
-  branchParam: string;
+  branchParam: string | null;
+  repoKey?: string;
 }
 
-/**
- * Synchronizes the selected branch in the store with the URL parameter.
- * - If URL has a valid branch param, selects it
- * - If no branch param, auto-selects the first available branch (once)
- */
-export const useBranchSync = ({ branchParam }: UseBranchSyncProps) => {
-  const { branches, setSelectedBranch } = useRepoState();
-  const hasInitialized = useRef(false);
+export const useBranchSync = ({ branchParam, repoKey }: UseBranchSyncProps) => {
+  const { branches, selectedBranch, setSelectedBranch, repoBranchCache } = useRepoState();
+  const hasInitializedRef = useRef(false);
+  const lastUrlBranchRef = useRef<string | null>(null);
+
+  const syncBranchIfNeeded = (nextBranch: string | null) => {
+    if (!nextBranch || !branches.includes(nextBranch) || selectedBranch === nextBranch) {
+      return;
+    }
+    setSelectedBranch(nextBranch);
+  };
+
+  useEffect(() => {
+    hasInitializedRef.current = false;
+    lastUrlBranchRef.current = null;
+  }, [repoKey]);
 
   useEffect(() => {
     if (branches.length === 0) return;
 
-    // Case 1: URL has a branch parameter - sync to it if valid
     if (branchParam && branches.includes(branchParam)) {
-      setSelectedBranch(branchParam);
-      hasInitialized.current = true;
+      const shouldSyncFromUrl =
+        !hasInitializedRef.current || lastUrlBranchRef.current !== branchParam;
+
+      if (shouldSyncFromUrl) {
+        syncBranchIfNeeded(branchParam);
+      }
+
+      hasInitializedRef.current = true;
+      lastUrlBranchRef.current = branchParam;
       return;
     }
 
-    // Case 2: No URL param AND first time - auto-select first branch
-    if (!branchParam && !hasInitialized.current) {
-      setSelectedBranch(branches[0]);
-      hasInitialized.current = true;
+    if (selectedBranch && branches.includes(selectedBranch)) {
+      hasInitializedRef.current = true;
       return;
     }
-  }, [branchParam, branches, setSelectedBranch]);
+
+    if (!hasInitializedRef.current && repoKey) {
+      const cachedEntry = repoBranchCache[repoKey];
+      const cachedBranch = cachedEntry?.selectedBranch || cachedEntry?.defaultBranch;
+
+      if (cachedBranch && branches.includes(cachedBranch)) {
+        syncBranchIfNeeded(cachedBranch);
+        hasInitializedRef.current = true;
+        return;
+      }
+    }
+
+    if (!hasInitializedRef.current && branches[0]) {
+      syncBranchIfNeeded(branches[0]);
+      hasInitializedRef.current = true;
+      return;
+    }
+  }, [branchParam, branches, selectedBranch, setSelectedBranch, repoBranchCache, repoKey]);
 };
 
 export default useBranchSync;
