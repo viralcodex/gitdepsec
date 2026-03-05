@@ -123,7 +123,7 @@ const FixPlanCard = (props: FixPlanCardProps) => {
                 <ServerError
                   title="Fix Plan Generation Failed"
                   message={globalError}
-                  size="md"                  
+                  size="md"
                   primaryAction={{
                     label: "Try Again",
                     icon: <RefreshCcw className="w-4 h-4" />,

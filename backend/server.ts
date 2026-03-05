@@ -377,7 +377,7 @@ app.post("/aiVulnSummary", aiRateLimiter, (req: Request, res: Response) => {
     console.log("Received aiVulnSummary request for:", vulnerabilities.name, "@", vulnerabilities.version);
     try {
       // Get credentials from session store
-      const { apiKey, model } = getSessionCredentials(sessionId);      
+      const { apiKey, model } = getSessionCredentials(sessionId);
       const service = getAiService(aiService, model, apiKey);
 
       console.log("Calling generateVulnerabilitySummary...");
