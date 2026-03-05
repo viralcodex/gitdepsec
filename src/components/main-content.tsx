@@ -9,13 +9,13 @@ import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { useRepoState, useErrorState, useFileState } from "@/store/app-store";
 import { store } from "@/store/app-store";
-import { useRepoData } from "@/hooks/useRepoData";
+import { useRepoData } from "../hooks/useRepoData";
 import useFileUpload from "@/hooks/useFileUpload";
 import { AlertTriangle, Search, RotateCcw } from "lucide-react";
 import { cn, getRepoKeyFromUrl } from "@/lib/utils";
 
 const MainContent = () => {
-  const { branches, selectedBranch, loadingBranches, loadedRepoKey } = useRepoState();
+  const { branches, selectedBranch, loadingBranches, repoBranchCache } = useRepoState();
 
   const { branchError, setBranchError } = useErrorState();
   const { inputFile: file, setInputFile: setFile } = useFileUpload();
@@ -34,8 +34,8 @@ const MainContent = () => {
   }, [inputUrl]);
 
   const shouldShowBranches = useMemo(() => {
-    return currentRepoKey === loadedRepoKey;
-  }, [currentRepoKey, loadedRepoKey]);
+    return Boolean(currentRepoKey && repoBranchCache[currentRepoKey]);
+  }, [currentRepoKey, repoBranchCache]);
 
   // Debounce the URL input
   useEffect(() => {
@@ -73,9 +73,9 @@ const MainContent = () => {
     }
 
     //url audit
-    if (debouncedUrl && !file && loadedRepoKey) {
+    if (debouncedUrl && !file && currentRepoKey) {
       const branchParam = selectedBranch ? `?branch=${encodeURIComponent(selectedBranch)}` : "";
-      router.push(`/${loadedRepoKey}${branchParam}`);
+      router.push(`/${currentRepoKey}${branchParam}`);
     }
   };
 

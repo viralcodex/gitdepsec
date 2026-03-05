@@ -61,11 +61,13 @@ const Page = () => {
     useUIState();
   const { selectedNode, setSelectedNode, resetDiagramState } = useDiagramState();
   const { globalFixPlan, ecosystemFixPlans } = useFixPlanData();
-  const { defaultBranch } = useRepoState();
+  const { defaultBranch, selectedBranch, repoBranchCache } = useRepoState();
 
-  // Use defaultBranch from store when URL param is null
-  // Convert null to undefined to match hook parameter types
-  const branch = branchParam || defaultBranch || "";
+  const repoKey = `${username}/${repo}`;
+  const repoCache = repoBranchCache[repoKey];
+  const activeSelectedBranch = repoCache?.selectedBranch ?? selectedBranch;
+  const activeDefaultBranch = repoCache?.defaultBranch ?? defaultBranch;
+  const branch = branchParam || activeSelectedBranch || activeDefaultBranch || "";
 
   // Custom hooks
   const { generateFixPlan } = useFixPlanGeneration({ username, repo, branch });
@@ -75,7 +77,7 @@ const Page = () => {
     username,
     repo,
   });
-  useBranchSync({ branchParam: branch });
+  useBranchSync({ branchParam, repoKey });
   useGraph(username, repo, branch, file, forceRefresh);
   useRepoData(inputUrl);
   const [selectedEcosystem, setSelectedEcosystem] = useState<string | undefined>(

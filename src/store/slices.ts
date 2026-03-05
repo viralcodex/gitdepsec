@@ -17,6 +17,45 @@ import {
 } from "@/constants/model";
 import { deepMergeFixPlanData, hasFixPlanChanged, orderFixPlanData } from "@/lib/fixPlanUtils";
 
+const REPO_BRANCH_CACHE_LIMIT = 10;
+
+const createRepoBranchCacheFallback = (s: RepoState, repoKey: string) => ({
+  branches: s.repoBranchCache[repoKey]?.branches ?? s.branches,
+  selectedBranch: s.repoBranchCache[repoKey]?.selectedBranch ?? s.selectedBranch,
+  defaultBranch: s.repoBranchCache[repoKey]?.defaultBranch ?? s.defaultBranch,
+  hasMore: s.repoBranchCache[repoKey]?.hasMore ?? s.hasMore,
+  totalBranches: s.repoBranchCache[repoKey]?.totalBranches ?? s.totalBranches,
+  page: s.repoBranchCache[repoKey]?.page ?? s.page,
+});
+
+const withBoundedRepoBranchCache = (
+  cache: RepoState["repoBranchCache"],
+  repoKey: string,
+  nextEntry: Partial<RepoState["repoBranchCache"][string]>,
+) => {
+  const { [repoKey]: existing, ...rest } = cache;
+  const mergedEntry = {
+    branches: existing?.branches ?? [],
+    selectedBranch: existing?.selectedBranch ?? null,
+    defaultBranch: existing?.defaultBranch ?? null,
+    hasMore: existing?.hasMore ?? false,
+    totalBranches: existing?.totalBranches ?? 0,
+    page: existing?.page ?? 1,
+    ...nextEntry,
+  };
+
+  const reordered = { ...rest, [repoKey]: mergedEntry };
+  const keys = Object.keys(reordered);
+
+  if (keys.length <= REPO_BRANCH_CACHE_LIMIT) {
+    return reordered;
+  }
+
+  const oldestKey = keys[0];
+  const { [oldestKey]: _, ...bounded } = reordered;
+  return bounded;
+};
+
 export const createRepoSlice: StateCreator<AppStore, [], [], RepoState> = (set) => ({
   branches: [],
   selectedBranch: null,
@@ -27,22 +66,88 @@ export const createRepoSlice: StateCreator<AppStore, [], [], RepoState> = (set) 
   page: 1,
   currentUrl: null,
   loadedRepoKey: null,
-  setBranches: (branches) => set({ branches }),
-  setSelectedBranch: (branch) => set({ selectedBranch: branch }),
-  setDefaultBranch: (branch) => set({ defaultBranch: branch }),
+  repoBranchCache: {},
+  setBranches: (branches) =>
+    set((s) => {
+      const repoKey = s.loadedRepoKey;
+      if (!repoKey) return { branches };
+
+      return {
+        branches,
+        repoBranchCache: withBoundedRepoBranchCache(s.repoBranchCache, repoKey, {
+          ...createRepoBranchCacheFallback(s, repoKey),
+          branches,
+        }),
+      };
+    }),
+  setSelectedBranch: (branch) =>
+    set((s) => {
+      const repoKey = s.loadedRepoKey;
+      if (!repoKey) return { selectedBranch: branch };
+
+      return {
+        selectedBranch: branch,
+        repoBranchCache: withBoundedRepoBranchCache(s.repoBranchCache, repoKey, {
+          ...createRepoBranchCacheFallback(s, repoKey),
+          selectedBranch: branch,
+        }),
+      };
+    }),
+  setDefaultBranch: (branch) =>
+    set((s) => {
+      const repoKey = s.loadedRepoKey;
+      if (!repoKey) return { defaultBranch: branch };
+
+      return {
+        defaultBranch: branch,
+        repoBranchCache: withBoundedRepoBranchCache(s.repoBranchCache, repoKey, {
+          ...createRepoBranchCacheFallback(s, repoKey),
+          defaultBranch: branch,
+        }),
+      };
+    }),
   setLoadingBranches: (loading) => set({ loadingBranches: loading }),
   loadNextPage: () =>
     set((s) => {
       if (s.hasMore && !s.loadingBranches) {
-        return { page: s.page + 1 };
+        const nextPage = s.page + 1;
+        const repoKey = s.loadedRepoKey;
+        if (!repoKey) {
+          return { page: nextPage };
+        }
+
+        return {
+          page: nextPage,
+          repoBranchCache: withBoundedRepoBranchCache(s.repoBranchCache, repoKey, {
+            ...createRepoBranchCacheFallback(s, repoKey),
+            page: nextPage,
+          }),
+        };
       }
       return {};
     }),
   setHasMore: (hasMore) => set({ hasMore }),
   setTotalBranches: (total) => set({ totalBranches: total }),
-  setPage: (page) => set({ page }),
+  setPage: (page) =>
+    set((s) => {
+      const repoKey = s.loadedRepoKey;
+      if (!repoKey) {
+        return { page };
+      }
+
+      return {
+        page,
+        repoBranchCache: withBoundedRepoBranchCache(s.repoBranchCache, repoKey, {
+          ...createRepoBranchCacheFallback(s, repoKey),
+          page,
+        }),
+      };
+    }),
   setCurrentUrl: (url) => set({ currentUrl: url }),
-  setLoadedRepoKey: (key) => set({ loadedRepoKey: key }),
+  upsertRepoBranchCache: (repoKey, entry) =>
+    set((s) => ({
+      repoBranchCache: withBoundedRepoBranchCache(s.repoBranchCache, repoKey, entry),
+    })),
   resetRepoState: () =>
     set({
       branches: [],

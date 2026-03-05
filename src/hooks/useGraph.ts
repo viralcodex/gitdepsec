@@ -12,7 +12,7 @@ import {
   Vulnerability,
 } from "@/constants/model";
 import { CACHE_TTL, MANIFEST_FILES } from "@/constants/constants";
-import { store, useErrorState, useGraphState, useRepoState } from "@/store/app-store";
+import { store, useErrorState, useGraphState } from "@/store/app-store";
 import toast from "react-hot-toast";
 
 export const useGraph = (
@@ -25,7 +25,6 @@ export const useGraph = (
   const { setError, setManifestError } = useErrorState();
   const { dependencies, setDependencies, setManifestData, setGraphData, setLoading } =
     useGraphState();
-  const { setBranches } = useRepoState();
 
   const fetchDependencies = useCallback(
     async (
@@ -255,7 +254,6 @@ export const useGraph = (
         console.log("Cache hit - using fresh cached data");
         setGraphData(matchingItem.graphData, currentRepoKey);
         setDependencies(matchingItem.dependencies);
-        setBranches(matchingItem.branches || []);
         setLoading(false);
         return true;
       }
@@ -265,7 +263,6 @@ export const useGraph = (
     branch,
     forceRefresh,
     repo,
-    setBranches,
     setDependencies,
     setGraphData,
     setLoading,

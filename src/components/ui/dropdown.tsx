@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Check, ChevronsUpDown, Loader } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,7 @@ import { useErrorState, useRepoState } from "@/store/app-store";
 
 interface DropdownProps {
   className?: string;
+  contentClassName?: string;
   isBranchDropdown?: boolean;
   ecosystems?: string[];
   selectedEcosystem?: string;
@@ -25,6 +26,7 @@ interface DropdownProps {
 
 export function Dropdown({
   className,
+  contentClassName,
   isBranchDropdown = true,
   ecosystems = [],
   selectedEcosystem,
@@ -32,31 +34,30 @@ export function Dropdown({
   shouldShowBranches = true,
 }: DropdownProps) {
   const [open, setOpen] = useState(false);
-  const [shouldOpen, setShouldOpen] = useState(false);
   const { branches, selectedBranch, loadingBranches, hasMore, loadNextPage, setSelectedBranch } =
     useRepoState();
   const { setError } = useErrorState();
 
-  // Effect to determine if the dropdown should open
-  useEffect(() => {
-    const items = isBranchDropdown ? branches : ecosystems;
-    if (isBranchDropdown && !shouldShowBranches) {
-      setShouldOpen(false);
-      setOpen(false);
-      return;
-    }
-    if (items.length) {
-      setShouldOpen(true);
-    } else {
-      setShouldOpen(false);
-      setOpen(false);
-    }
-  }, [branches, ecosystems, isBranchDropdown, shouldShowBranches, setError]);
+  const availableItems = isBranchDropdown ? branches : ecosystems;
+  const canOpen = isBranchDropdown ? shouldShowBranches && availableItems.length > 0 : availableItems.length > 0;
+  const isDisabled = isBranchDropdown ? loadingBranches || !canOpen : !canOpen;
+  const isBranchUnavailable = isBranchDropdown && (!branches.length || !shouldShowBranches);
+  const isEcosystemUnavailable = !isBranchDropdown && !ecosystems.length;
+  const triggerLabel = isBranchDropdown
+    ? loadingBranches
+      ? "Loading..."
+      : !shouldShowBranches
+        ? "Select Branch..."
+        : selectedBranch || "Select Branch..."
+    : selectedEcosystem || "Select ecosystem";
 
   const handleOpenChange = (nextOpen: boolean) => {
     // Only block for loading if it's a branch dropdown
-    if (isBranchDropdown && loadingBranches) return;
-    if (nextOpen && !shouldOpen) {
+    if (isBranchDropdown && loadingBranches) {
+      return;
+    }
+
+    if (nextOpen && !canOpen) {
       if (isBranchDropdown) {
         setError("Please enter a valid GitHub repository URL first.");
       }
@@ -70,11 +71,20 @@ export function Dropdown({
     const { scrollTop, scrollHeight, clientHeight } = e.currentTarget;
     const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
 
-    // Trigger pagination when user is near the bottom (within 100px)
+    // Trigger pagination when user is near the bottom.
     if (distanceFromBottom <= 500 && hasMore && !loadingBranches) {
-      console.log("Triggering loadNextPage");
       loadNextPage();
     }
+  };
+
+  const handleBranchSelect = (value: string) => {
+    setSelectedBranch(value);
+    setOpen(false);
+  };
+
+  const handleEcosystemSelect = (value: string) => {
+    onEcosystemChange?.(value);
+    setOpen(false);
   };
 
   return (
@@ -85,29 +95,29 @@ export function Dropdown({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          disabled={isBranchDropdown ? loadingBranches || !shouldOpen : !shouldOpen}
+          disabled={isDisabled}
           className={cn(
-            "sm:h-14 text-md w-full text-input justify-between overflow-y-hidden overflow-x-scroll scrollbar-background-hidden border-[3px] border-black px-3 sm:px-4 transition-transform hover:text-secondary-foreground hover:bg-gray-300 max-sm:w-full group",
-            isBranchDropdown && (!branches || branches.length === 0 || !shouldShowBranches)
-              ? "opacity-60 cursor-not-allowed"
-              : "",
-            !isBranchDropdown && !ecosystems.length ? "opacity-60 cursor-not-allowed" : "",
+            "sm:h-14 min-w-0 text-md w-full text-input justify-between overflow-hidden border-[3px] border-black px-3 sm:px-4 transition-transform hover:text-secondary-foreground hover:bg-gray-300 max-sm:w-full group",
+            isBranchUnavailable ? "opacity-60 cursor-not-allowed" : "",
+            isEcosystemUnavailable ? "opacity-60 cursor-not-allowed" : "",
             className,
           )}
         >
-          {isBranchDropdown
-            ? loadingBranches
-              ? "Loading branches..."
-              : !shouldShowBranches
-                ? "Select Branch..."
-                : selectedBranch || "Select Branch..."
-            : selectedEcosystem || "Select ecosystem"}
+          <span className="min-w-0 flex-1 truncate text-left">
+            {triggerLabel}
+          </span>
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className={cn("p-0 border-black border-[3px]", className)}>
-        <Command className="max-h-100 rounded-md">
-          {!ecosystems && (
+      <PopoverContent
+        className={cn(
+          "p-0 border-black border-[3px] w-(--radix-popover-trigger-width) max-w-(--radix-popover-trigger-width)! overflow-hidden",
+          contentClassName,
+          className
+        )}
+      >
+        <Command className="max-h-100 rounded-md overflow-hidden w-full">
+          {isBranchDropdown && (
             <CommandInput
               placeholder={isBranchDropdown ? "Search Branch..." : "Search Ecosystem..."}
               className="h-9"
@@ -122,15 +132,12 @@ export function Dropdown({
               !branches.length && !loadingBranches ? (
                 <CommandEmpty>No branch found</CommandEmpty>
               ) : (
-                <CommandGroup className="">
+                <CommandGroup>
                   {branches.map((branch) => (
                     <CommandItem
                       key={branch}
                       value={branch}
-                      onSelect={(value: string) => {
-                        setSelectedBranch(value);
-                        setOpen(false);
-                      }}
+                      onSelect={handleBranchSelect}
                       className="whitespace-normal break-all cursor-pointer"
                     >
                       {branch}
@@ -144,49 +151,44 @@ export function Dropdown({
                   ))}
                   {/* Loading indicator for pagination */}
                   {loadingBranches && branches.length > 0 && (
-                    <CommandItem disabled className="justify-center">
-                      <div className="flex items-center gap-2">
-                        <Loader className="h-4 w-4 animate-spin" />
-                      </div>
+                    <CommandItem disabled className="justify-center p-0 m-0">
+                      <Loader className="h-4 w-4 animate-spin" />
                     </CommandItem>
                   )}
                 </CommandGroup>
               )
             ) : // Ecosystem dropdown mode
-            !ecosystems.length ? (
-              <CommandEmpty>No ecosystem found</CommandEmpty>
-            ) : (
-              <CommandGroup className="m-2">
-                {ecosystems.map((ecosystem) => (
-                  <CommandItem
-                    key={ecosystem}
-                    value={ecosystem}
-                    onSelect={(value: string) => {
-                      onEcosystemChange?.(value);
-                      setOpen(false);
-                    }}
-                    className="whitespace-normal break-all cursor-pointer"
-                  >
-                    {ecosystem}
-                    <Check
-                      className={cn(
-                        "ml-auto",
-                        selectedEcosystem === ecosystem ? "opacity-100" : "opacity-0",
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            )}
+              !ecosystems.length ? (
+                <CommandEmpty>No ecosystem found</CommandEmpty>
+              ) : (
+                <CommandGroup className="m-2">
+                  {ecosystems.map((ecosystem) => (
+                    <CommandItem
+                      key={ecosystem}
+                      value={ecosystem}
+                      onSelect={handleEcosystemSelect}
+                      className="whitespace-normal break-all cursor-pointer"
+                    >
+                      {ecosystem}
+                      <Check
+                        className={cn(
+                          "ml-auto",
+                          selectedEcosystem === ecosystem ? "opacity-100" : "opacity-0",
+                        )}
+                      />
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              )}
           </CommandList>
           {isBranchDropdown && (
             <div>
               {!hasMore && branches.length > 0 ? (
-                <div className="p-2 text-center text-xs text-accent border-t">
+                <div className="p-2 text-center text-xs text-accent border-t truncate">
                   All {branches.length} branches loaded
                 </div>
               ) : (
-                <div className="p-2 text-center text-xs text-accent border-t">
+                <div className="p-2 text-center text-xs text-accent border-t truncate">
                   Scroll to load more branches...
                 </div>
               )}

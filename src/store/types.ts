@@ -16,6 +16,7 @@ export interface RepoState {
   page: number;
   currentUrl: string | null;
   loadedRepoKey: string | null;
+  repoBranchCache: Record<string, RepoBranchCacheEntry>;
   setBranches: (branches: string[]) => void;
   setSelectedBranch: (branch: string | null) => void;
   setDefaultBranch: (branch: string | null) => void;
@@ -25,8 +26,17 @@ export interface RepoState {
   setTotalBranches: (total: number) => void;
   setPage: (page: number) => void;
   setCurrentUrl: (url: string | null) => void;
-  setLoadedRepoKey: (key: string | null) => void;
+  upsertRepoBranchCache: (repoKey: string, entry: Partial<RepoBranchCacheEntry>) => void;
   resetRepoState: () => void;
+}
+
+export interface RepoBranchCacheEntry {
+  branches: string[];
+  selectedBranch: string | null;
+  defaultBranch: string | null;
+  hasMore: boolean;
+  totalBranches: number;
+  page: number;
 }
 
 export interface FileState {
