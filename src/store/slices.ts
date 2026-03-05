@@ -224,7 +224,6 @@ export const createDiagramSlice: StateCreator<AppStore, [], [], DiagramState> = 
 export const createFixPlanSlice: StateCreator<AppStore, [], [], FixPlanState> = (set) => ({
   fixPlansByRepo: {},
   currentFixPlanRepoKey: null,
-  partialFixPlan: {},
   isFixPlanLoading: false,
   currentFixPlanPhase: null,
   currentFixPlanStep: null,
@@ -233,24 +232,6 @@ export const createFixPlanSlice: StateCreator<AppStore, [], [], FixPlanState> = 
   selectedEcosystem: null,
 
   setCurrentFixPlanRepoKey: (repoKey) => set({ currentFixPlanRepoKey: repoKey }),
-
-  setGlobalFixPlan: (plan, repoKey) =>
-    set((state) => {
-      const key = repoKey || state.currentFixPlanRepoKey;
-      if (!key) return state;
-
-      return {
-        fixPlansByRepo: {
-          ...state.fixPlansByRepo,
-          [key]: {
-            ...state.fixPlansByRepo[key],
-            globalFixPlan: plan,
-            isFixPlanGenerated: Boolean(plan?.trim()),
-            timestamp: Date.now(),
-          },
-        },
-      };
-    }),
 
   setEcosystemFixPlan: (ecosystem, plan, repoKey) =>
     set((state) => {
@@ -282,42 +263,32 @@ export const createFixPlanSlice: StateCreator<AppStore, [], [], FixPlanState> = 
   updatePartialFixPlan: (tabData, ecosystem) =>
     set((state) => {
       if (!tabData || Object.keys(tabData).length === 0) return state;
+      const key = state.currentFixPlanRepoKey;
+      if (!key) return state;
 
-      if (ecosystem) {
-        const key = state.currentFixPlanRepoKey;
-        if (!key) return state;
+      const currentEntry = state.fixPlansByRepo[key] || {};
+      const ecosystemPartialFixPlans = currentEntry.ecosystemPartialFixPlans || {};
+      const currentPlan = ecosystemPartialFixPlans[ecosystem] || {};
+      const merged = deepMergeFixPlanData(currentPlan, tabData);
 
-        const currentEntry = state.fixPlansByRepo[key] || {};
-        const ecosystemPartialFixPlans = currentEntry.ecosystemPartialFixPlans || {};
-        const currentPlan = ecosystemPartialFixPlans[ecosystem] || {};
-        const merged = deepMergeFixPlanData(currentPlan, tabData);
+      if (!hasFixPlanChanged(currentPlan, merged)) return state;
 
-        if (!hasFixPlanChanged(currentPlan, merged)) return state;
-
-        return {
-          fixPlansByRepo: {
-            ...state.fixPlansByRepo,
-            [key]: {
-              ...currentEntry,
-              ecosystemPartialFixPlans: {
-                ...ecosystemPartialFixPlans,
-                [ecosystem]: orderFixPlanData(merged),
-              },
+      return {
+        fixPlansByRepo: {
+          ...state.fixPlansByRepo,
+          [key]: {
+            ...currentEntry,
+            ecosystemPartialFixPlans: {
+              ...ecosystemPartialFixPlans,
+              [ecosystem]: orderFixPlanData(merged),
             },
           },
-        };
-      }
-      // Global partial fix plan (backward compatibility)
-      const merged = deepMergeFixPlanData(state.partialFixPlan, tabData);
-      if (!hasFixPlanChanged(state.partialFixPlan, merged)) return state;
-
-      return { partialFixPlan: orderFixPlanData(merged) };
+        },
+      };
     }),
 
   clearPartialFixPlan: (ecosystem) =>
     set((state) => {
-      if (!ecosystem) return { partialFixPlan: {} };
-
       const key = state.currentFixPlanRepoKey;
       if (!key) return state;
 
@@ -340,14 +311,14 @@ export const createFixPlanSlice: StateCreator<AppStore, [], [], FixPlanState> = 
     set((state) =>
       ecosystem
         ? {
-            ecosystemProgress: {
-              ...state.ecosystemProgress,
-              [ecosystem]: {
-                phase,
-                progress: state.ecosystemProgress[ecosystem]?.progress || 0,
-              },
+          ecosystemProgress: {
+            ...state.ecosystemProgress,
+            [ecosystem]: {
+              phase,
+              progress: state.ecosystemProgress[ecosystem]?.progress || 0,
             },
-          }
+          },
+        }
         : { currentFixPlanPhase: phase },
     ),
 
@@ -357,14 +328,14 @@ export const createFixPlanSlice: StateCreator<AppStore, [], [], FixPlanState> = 
     set((state) =>
       ecosystem
         ? {
-            ecosystemProgress: {
-              ...state.ecosystemProgress,
-              [ecosystem]: {
-                phase: state.ecosystemProgress[ecosystem]?.phase || null,
-                progress,
-              },
+          ecosystemProgress: {
+            ...state.ecosystemProgress,
+            [ecosystem]: {
+              phase: state.ecosystemProgress[ecosystem]?.phase || null,
+              progress,
             },
-          }
+          },
+        }
         : { fixPlanProgress: progress },
     ),
 
@@ -374,7 +345,6 @@ export const createFixPlanSlice: StateCreator<AppStore, [], [], FixPlanState> = 
     set((state) => {
       const key = state.currentFixPlanRepoKey;
       const baseReset = {
-        partialFixPlan: {},
         isFixPlanLoading: false,
         currentFixPlanPhase: null,
         currentFixPlanStep: null,

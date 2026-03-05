@@ -377,7 +377,7 @@ app.post("/aiVulnSummary", aiRateLimiter, (req: Request, res: Response) => {
     console.log("Received aiVulnSummary request for:", vulnerabilities.name, "@", vulnerabilities.version);
     try {
       // Get credentials from session store
-      const { apiKey, model } = getSessionCredentials(sessionId);      
+      const { apiKey, model } = getSessionCredentials(sessionId);
       const service = getAiService(aiService, model, apiKey);
 
       console.log("Calling generateVulnerabilitySummary...");
@@ -525,7 +525,7 @@ app.get("/fixPlan", fixPlanRateLimiter, (req: Request, res: Response) => {
           step: "global_planning_complete",
           progress: "Fix plan generation completed!",
           data: {
-            globalFixPlan: response,
+            ecosystemFixPlans: response,
           },
         })}\n\n`,
       );

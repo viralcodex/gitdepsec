@@ -3,7 +3,7 @@ import { Download, RefreshCcw, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import Image from "next/image";
-import { useErrorState, useFixPlanData, useFixPlanProgress, useFixPlanState } from "@/store/app-store";
+import { useErrorState, useFixPlanProgress, useFixPlanState } from "@/store/app-store";
 import { useMemo } from "react";
 import FixPlanProgress from "./fix-plan-progress";
 import GlobalFixPlan from "./global-fix-plan";
@@ -20,7 +20,6 @@ interface FixPlanCardProps {
 const FixPlanCard = (props: FixPlanCardProps) => {
   const { onClose, onDownload, regenerateFixPlan, ecosystemOptions } = props;
 
-  const { globalFixPlan } = useFixPlanData();
   const { fixPlanError } = useErrorState();
   const {
     isLoading: isFixPlanLoading,
@@ -48,8 +47,9 @@ const FixPlanCard = (props: FixPlanCardProps) => {
 
   // Check if fix plan is complete
   const fixPlanComplete = useMemo(() => {
-    if (globalFixPlan) return true;
-    if (!shouldShowEcosystemTabs || !ecosystemOptions) return false;
+    if (!ecosystemOptions || ecosystemOptions.length === 0) {
+      return Object.keys(ecosystemFixPlans).length > 0;
+    }
 
     return ecosystemOptions.every((ecosystem) => {
       const plan = ecosystemFixPlans[ecosystem];
@@ -57,7 +57,6 @@ const FixPlanCard = (props: FixPlanCardProps) => {
       return Boolean(plan) || progress === 100;
     });
   }, [
-    globalFixPlan,
     ecosystemFixPlans,
     ecosystemProgress,
     shouldShowEcosystemTabs,
@@ -124,7 +123,7 @@ const FixPlanCard = (props: FixPlanCardProps) => {
                 <ServerError
                   title="Fix Plan Generation Failed"
                   message={globalError}
-                  size="md"                  
+                  size="md"
                   primaryAction={{
                     label: "Try Again",
                     icon: <RefreshCcw className="w-4 h-4" />,
@@ -173,7 +172,7 @@ const FixPlanCard = (props: FixPlanCardProps) => {
                         />
                       )}
                       <GlobalFixPlan
-                        globalFixPlan={ecosystemFixPlan}
+                        fixPlan={ecosystemFixPlan}
                         ecosystem={ecosystem}
                         isFixPlanLoading={isEcosystemLoading}
                       />
@@ -188,8 +187,11 @@ const FixPlanCard = (props: FixPlanCardProps) => {
                   currentPhase={currentFixPlanPhase || ""}
                   progress={fixPlanProgress}
                 />
-                {/* UNIFIED GLOBAL FIX PLAN */}
-                <GlobalFixPlan globalFixPlan={globalFixPlan} isFixPlanLoading={isFixPlanLoading} />
+                <GlobalFixPlan
+                  fixPlan={activeEcosystem ? ecosystemFixPlans[activeEcosystem] : undefined}
+                  ecosystem={activeEcosystem || ecosystemOptions?.[0] || "default"}
+                  isFixPlanLoading={isFixPlanLoading}
+                />
               </>
             )}
           </div>

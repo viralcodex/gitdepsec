@@ -1,236 +1,105 @@
 "use client";
 
-import { useEffect, useCallback, useRef } from "react";
+import { useEffect, useCallback } from "react";
 import { getRepoBranches } from "@/lib/api";
 import { verifyUrl, getRepoKeyFromUrl } from "@/lib/utils";
 import { useErrorState, useRepoState, store } from "@/store/app-store";
 import { HistoryItem } from "@/constants/model";
 import { DEFAULT_BRANCH_NAMES } from "@/constants/constants";
 
-const PAGE_SIZE = 100;
-
 export const useRepoData = (url: string | null) => {
-  const { page, setLoadingBranches, resetRepoState, upsertRepoBranchCache } = useRepoState();
+  const pageSize = 100;
+  const { page, loadedRepoKey, setLoadingBranches, resetRepoState } = useRepoState();
+
   const { setBranchError } = useErrorState();
-  const latestRequestIdRef = useRef(0);
-
-  const ensureDefaultBranchFirst = (branches: string[], defaultBranch: string | null) => {
-    if (!defaultBranch) return branches;
-    if (!branches.includes(defaultBranch)) return branches;
-
-    return [defaultBranch, ...branches.filter((branch) => branch !== defaultBranch)];
-  };
-
-  const buildBranchList = ({
-    currentPage,
-    currentBranches,
-    fetchedBranches,
-    defaultBranch,
-  }: {
-    currentPage: number;
-    currentBranches: string[];
-    fetchedBranches: string[];
-    defaultBranch?: string | null;
-  }) => {
-    if (currentPage > 1) {
-      return Array.from(new Set([...currentBranches, ...fetchedBranches]));
-    }
-
-    if (defaultBranch && !fetchedBranches.includes(defaultBranch)) {
-      return [defaultBranch, ...fetchedBranches];
-    }
-
-    return fetchedBranches;
-  };
-
-  const findCachedHistoryItem = (repoKey: string) => {
-    const historyItems = store.getState().savedHistoryItems;
-    const matchingItems = Object.values(historyItems)
-      .flat()
-      .filter((item) => `${item.username}/${item.repo}` === repoKey);
-
-    return (
-      matchingItems.find((item) => DEFAULT_BRANCH_NAMES.includes(item.branch.toLowerCase())) ||
-      matchingItems[0]
-    );
-  };
-
-  const syncBranchState = useCallback(
-    ({
-      repoKey,
-      branches,
-      selectedBranch,
-      defaultBranch,
-      hasMore,
-      totalBranches,
-      currentPage,
-    }: {
-      repoKey: string;
-      branches: string[];
-      selectedBranch: string | null;
-      defaultBranch: string | null;
-      hasMore: boolean;
-      totalBranches: number;
-      currentPage: number;
-    }) => {
-      const orderedBranches = ensureDefaultBranchFirst(branches, defaultBranch);
-
-      store.setState({
-        branches: orderedBranches,
-        selectedBranch,
-        defaultBranch,
-        loadedRepoKey: repoKey,
-        loadingBranches: false,
-        branchError: "",
-        hasMore,
-        totalBranches,
-        page: currentPage,
-      });
-
-      upsertRepoBranchCache(repoKey, {
-        branches: orderedBranches,
-        selectedBranch,
-        defaultBranch,
-        hasMore,
-        totalBranches,
-        page: currentPage,
-      });
-    },
-    [upsertRepoBranchCache],
-  );
-
-  const hydrateFromCache = useCallback(
-    (
-      repoKey: string,
-      branches: string[],
-      selectedBranch: string | null | undefined,
-      defaultBranch: string | null | undefined,
-      hasMore: boolean,
-    ) => {
-      const normalizedDefaultBranch =
-        defaultBranch ??
-        branches.find((branch) => DEFAULT_BRANCH_NAMES.includes(branch.toLowerCase())) ??
-        null;
-
-      syncBranchState({
-        repoKey,
-        branches,
-        selectedBranch: selectedBranch ?? normalizedDefaultBranch,
-        defaultBranch: normalizedDefaultBranch,
-        hasMore,
-        totalBranches: branches.length,
-        currentPage: 1,
-      });
-    },
-    [syncBranchState],
-  );
 
   const updateCacheBranches = useCallback(
     (cachedItem: HistoryItem | undefined, branchList: string[]) => {
       if (!cachedItem) return;
 
       const historyItems = store.getState().savedHistoryItems;
-      const dateKey = Object.keys(historyItems).find((key) =>
-        historyItems[key].some(
+
+      const dateKey = Object.keys(historyItems).find((dateKey) =>
+        historyItems[dateKey].some(
           (item) => item.username === cachedItem.username && item.repo === cachedItem.repo,
         ),
       );
 
-      if (!dateKey) return;
+      if (dateKey) {
+        const itemIndex = historyItems[dateKey].findIndex(
+          (item) => item.username === cachedItem.username && item.repo === cachedItem.repo,
+        );
 
-      const itemIndex = historyItems[dateKey].findIndex(
-        (item) => item.username === cachedItem.username && item.repo === cachedItem.repo,
-      );
-
-      if (itemIndex === -1) return;
-
-      store.setState((prev) => ({
-        savedHistoryItems: {
-          ...prev.savedHistoryItems,
-          [dateKey]: prev.savedHistoryItems[dateKey].map((item, idx) =>
-            idx === itemIndex ? { ...item, branches: branchList } : item,
-          ),
-        },
-      }));
+        if (itemIndex !== -1) {
+          store.setState((prev) => ({
+            savedHistoryItems: {
+              ...prev.savedHistoryItems,
+              [dateKey]: prev.savedHistoryItems[dateKey].map((item, idx) =>
+                idx === itemIndex ? { ...item, branches: branchList } : item,
+              ),
+            },
+          }));
+        }
+      }
     },
     [],
   );
 
   const fetchBranches = useCallback(
-    async (repoKey: string, forcePage?: number) => {
+    async (graphRepoKey: string) => {
       if (!url) return;
-      const requestId = ++latestRequestIdRef.current;
-      const isStaleRequest = () => requestId !== latestRequestIdRef.current;
 
-      const context = verifyUrl(url, setBranchError);
-      if (!context) {
-        if (!isStaleRequest()) {
-          setLoadingBranches(false);
-        }
+      const result = verifyUrl(url, setBranchError);
+      if (!result) {
+        setLoadingBranches(false);
+        return;
+      }
+      const { sanitizedUsername, sanitizedRepo } = result;
+
+      const historyItems = store.getState().savedHistoryItems;
+
+      /**
+       * Always find the cached item so we can update it later
+       * Match by repo only (not branch) since branches list is same for any username/repo key
+       * Prioritize finding an item with a default branch name for better UX
+       */
+      const matchingItems = Object.values(historyItems)
+        .flat()
+        .filter((item) => {
+          const itemRepoKey = `${item.username}/${item.repo}`;
+          return itemRepoKey === `${sanitizedUsername}/${sanitizedRepo}`;
+        });
+
+      // Try to find one with a common default branch name first
+      const cachedItem =
+        matchingItems.find((item) => DEFAULT_BRANCH_NAMES.includes(item.branch.toLowerCase())) ||
+        matchingItems[0]; // Fall back to first match if no default found
+
+      // Only use cache for page 1 - pagination should always fetch from API
+      if (page === 1 && cachedItem && cachedItem.branches && cachedItem.branches.length > 0) {
+        const hasFullPage = cachedItem.branches.length >= pageSize;
+        store.setState({
+          branches: cachedItem.branches,
+          selectedBranch: cachedItem.branch || null,
+          defaultBranch: cachedItem.branch || null,
+          loadedRepoKey: graphRepoKey,
+          loadingBranches: false,
+          branchError: "",
+          hasMore: hasFullPage,
+          totalBranches: cachedItem.branches.length,
+        });
         return;
       }
 
-      const { sanitizedUsername, sanitizedRepo } = context;
-      const currentPage = forcePage ?? store.getState().repoBranchCache[repoKey]?.page ?? 1;
-      const isFirstPage = currentPage === 1;
-      const repoCacheEntry = store.getState().repoBranchCache[repoKey];
-      const cachedHistoryItem = findCachedHistoryItem(repoKey);
+      // If not in cache (or page > 1), fetch from API
+      setLoadingBranches(true);
 
-      const hydrateCachedBranches = () => {
-        if (!isFirstPage) return false;
-
-        if (repoCacheEntry?.branches?.length) {
-          if (isStaleRequest()) return true;
-          hydrateFromCache(
-            repoKey,
-            repoCacheEntry.branches,
-            repoCacheEntry.selectedBranch,
-            repoCacheEntry.defaultBranch,
-            repoCacheEntry.hasMore,
-          );
-          return true;
-        }
-
-        if (cachedHistoryItem?.branches?.length) {
-          if (isStaleRequest()) return true;
-          hydrateFromCache(
-            repoKey,
-            cachedHistoryItem.branches,
-            cachedHistoryItem.branch,
-            null,
-            cachedHistoryItem.branches.length >= PAGE_SIZE,
-          );
-          return true;
-        }
-
-        return false;
-      };
-
-      if (hydrateCachedBranches()) {
-        return;
-      }
-
-      if (!isStaleRequest()) {
-        setLoadingBranches(true);
-      }
-
-      let branchesResponse;
-      try {
-        branchesResponse = await getRepoBranches(
-          sanitizedUsername,
-          sanitizedRepo,
-          currentPage,
-          PAGE_SIZE,
-        );
-      } catch {
-        if (!isStaleRequest()) {
-          setBranchError("Failed to fetch branches. Please try again.");
-          setLoadingBranches(false);
-        }
-        return;
-      }
-
-      if (isStaleRequest()) return;
+      const branchesResponse = await getRepoBranches(
+        sanitizedUsername,
+        sanitizedRepo,
+        page,
+        pageSize,
+      );
 
       if (branchesResponse.error) {
         setBranchError(branchesResponse.error);
@@ -238,42 +107,46 @@ export const useRepoData = (url: string | null) => {
         return;
       }
 
-      const fetchedBranches = branchesResponse.branches || [];
-      const currentState = store.getState();
-      const branchList = buildBranchList({
-        currentPage,
-        currentBranches: currentState.branches,
-        fetchedBranches,
-        defaultBranch: branchesResponse.defaultBranch,
-      });
+      // For first page, replace branches. For subsequent pages, append them
+      let branchList = [];
+      if (page === 1) {
+        if (
+          branchesResponse.defaultBranch &&
+          !branchesResponse.branches?.includes(branchesResponse.defaultBranch)
+        ) {
+          branchList = [branchesResponse.defaultBranch, ...(branchesResponse.branches || [])];
+        } else {
+          branchList = branchesResponse.branches || [];
+        }
+      } else {
+        const currentBranches = store.getState().branches;
+        const newBranchesToAdd = branchesResponse.branches || [];
+        const uniqueBranches = Array.from(new Set([...currentBranches, ...newBranchesToAdd]));
+        branchList = uniqueBranches;
+      }
 
-      syncBranchState({
-        repoKey,
+      store.setState({
         branches: branchList,
-        selectedBranch:
-          isFirstPage ? (branchesResponse.defaultBranch ?? null) : currentState.selectedBranch,
-        defaultBranch:
-          isFirstPage ? (branchesResponse.defaultBranch ?? null) : currentState.defaultBranch,
+        ...(page === 1 && {
+          selectedBranch: branchesResponse.defaultBranch ?? null,
+          defaultBranch: branchesResponse.defaultBranch ?? null,
+          loadedRepoKey: graphRepoKey,
+        }),
         hasMore: branchesResponse.hasMore || false,
         totalBranches: branchesResponse.total || 0,
-        currentPage,
+        loadingBranches: false,
+        branchError: "",
       });
-
-      updateCacheBranches(cachedHistoryItem, branchList);
+      updateCacheBranches(cachedItem, branchList);
     },
-    [
-      url,
-      setBranchError,
-      setLoadingBranches,
-      resetRepoState,
-      hydrateFromCache,
-      syncBranchState,
-      updateCacheBranches,
-    ],
+    [url, setBranchError, setLoadingBranches, page, resetRepoState, updateCacheBranches],
   );
 
   useEffect(() => {
-    if (!url) return;
+    if (!url) {
+      // resetRepoState();
+      return;
+    }
 
     const repoKey = getRepoKeyFromUrl(url);
     if (!repoKey) {
@@ -281,13 +154,18 @@ export const useRepoData = (url: string | null) => {
       return;
     }
 
-    const cachedPage = store.getState().repoBranchCache[repoKey]?.page || 1;
-    if (cachedPage > 1) {
-      fetchBranches(repoKey, cachedPage);
-      return;
-    }
+    const { defaultBranch } = store.getState();
 
-    const debounceTimeout = setTimeout(() => fetchBranches(repoKey, 1), 400);
+    let debounceTimeout: NodeJS.Timeout;
+    // Case 1: Different repo - always fetch branches (from cache or API)
+    // Case 2: Same repo but missing defaultBranch - need to fetch
+    if (loadedRepoKey !== repoKey || (loadedRepoKey === repoKey && !defaultBranch)) {
+      debounceTimeout = setTimeout(() => fetchBranches(repoKey), 400);
+    }
+    // Case 3: Same repo - only fetch if loading next page
+    if (loadedRepoKey === repoKey && page > 1) {
+      fetchBranches(repoKey);
+    }
     return () => clearTimeout(debounceTimeout);
-  }, [url, page, fetchBranches, setBranchError]);
+  }, [url, page, loadedRepoKey, fetchBranches, resetRepoState, setBranchError]);
 };

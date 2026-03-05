@@ -204,7 +204,6 @@ export interface IndividualAgentState {
 export interface GlobalAgentState {
   vulnerabilityFixPlans: { [dep: string]: Record<string, unknown> };
   context: Record<string, unknown>;
-  globalFixPlan: Record<string, unknown>;
   optimizedPlan: Record<string, unknown>;
   conflictResolutionPlan: Record<string, unknown>;
   finalStrategy: Record<string, unknown>;

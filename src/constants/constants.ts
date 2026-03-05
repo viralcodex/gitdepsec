@@ -69,6 +69,7 @@ export const PHASE_STEP_MAP: Record<string, string> = {
   intelligence_start: "intelligence",
   intelligence_complete: "intelligence",
   batch_start: "batch",
+  batch_processing_start: "batch",
   batch_processing: "batch",
   batch_processing_complete: "batch",
   batch_complete: "batch",
