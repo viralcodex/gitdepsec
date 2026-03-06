@@ -1,29 +1,10 @@
-import { writeFileSync } from "fs";
-
+import { config } from "../config/env";
 import AiService from "../service/ai_service";
-
-//PNG Image for the graph
-/**
- * Generating graph image for visualization
- * @param graph Langgraph graph
- */
-export async function generateGraphImage(graph: any) {
-  console.log("Generating graph visualization...");
-  try {
-    const graphImage = (await graph.getGraphAsync()).drawMermaidPng();
-    const arrayBuffer = await (await graphImage).arrayBuffer();
-    const filePath = `./graph_image-${(Math.random() * 100).toFixed(0)}.png`;
-    writeFileSync(filePath, new Uint8Array(arrayBuffer));
-    console.log(`Graph image saved to ${filePath}`);
-  } catch (error) {
-    console.error("Error generating or saving graph image:", error);
-  }
-}
 
 // Cache for AI service instances (keyed by model+apiKey)
 const aiServiceCache = new Map<string, AiService>();
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY ?? "gitdepsec-2026-secure-key-v1-fallback";
+const ENCRYPTION_KEY = config.encryptionKey
 
 // Session storage for user credentials (in-memory, session-based)
 // Key: sessionId, Value: { apiKey, model }

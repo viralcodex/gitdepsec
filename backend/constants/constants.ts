@@ -11,6 +11,7 @@ export const OSV_DEV_VULN_DET_URL = "https://api.osv.dev/v1/vulns/";
 
 export const DEPS_DEV_BASE_URL = "https://api.deps.dev/v3/systems";
 
+
 export const PROGRESS_STEPS = [
   "PARSING_MANIFESTS",
   "PARSING_DEPENDENCIES",
@@ -19,3 +20,5 @@ export const PROGRESS_STEPS = [
   "FETCHING_VULNERABILTIES_DETAILS",
   "FINALISING_RESULTS",
 ];
+
+export const MS_IN_MINUTE = 60 * 1000;

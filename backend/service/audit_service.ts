@@ -597,7 +597,8 @@ class AuditService {
   private processDartFiles(files: Array<{ path: string; content: string }>): void {
     files.forEach((fileContent) => {
       try {
-        const pubspecYaml = yaml.load(fileContent.content) as {
+        const normalizedYaml = this.normalizeYamlContent(fileContent.content);
+        const pubspecYaml = yaml.load(normalizedYaml) as {
           dependencies?: Record<string, string>;
           dev_dependencies?: Record<string, string>;
         };
@@ -1276,6 +1277,45 @@ class AuditService {
     // console.log("File Audited dependencies:", auditedDependencies);
 
     return auditedDependencies;
+  }
+
+  /**
+  * Normalizes YAML text by removing shared leading indentation from indented lines.
+  * This keeps relative nesting intact while tolerating heavily-indented multiline literals.
+  */
+  private normalizeYamlContent(content: string): string {
+    const lines = content.replace(/\t/g, "  ").split("\n");
+    const nonEmptyLines = lines.filter((line) => line.trim().length > 0);
+
+    if (nonEmptyLines.length === 0) {
+      return "";
+    }
+
+    const indentedLines = nonEmptyLines
+      .map((line) => ({
+        line,
+        indent: line.match(/^\s*/)?.[0].length ?? 0,
+      }))
+      .filter(({ indent }) => indent > 0);
+
+    const commonIndent = indentedLines.reduce((minIndent, { indent }) => {
+      return Math.min(minIndent, indent);
+    }, Number.POSITIVE_INFINITY);
+
+    if (!Number.isFinite(commonIndent) || commonIndent === 0) {
+      return content.trim();
+    }
+
+    return lines
+      .map((line) => {
+        if (line.trim().length === 0) {
+          return "";
+        }
+        const lineIndent = line.match(/^\s*/)?.[0].length ?? 0;
+        return line.slice(Math.min(lineIndent, commonIndent));
+      })
+      .join("\n")
+      .trim();
   }
 
   /**
